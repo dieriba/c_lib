@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "darray.h": "c",
+    "dtypes.h": "c",
+    "types.h": "c",
+    "stdbool.h": "c"
+  }
+}
