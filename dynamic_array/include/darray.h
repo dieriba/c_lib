@@ -3,9 +3,15 @@
 
 #include "dtypes.h"
 
-typedef struct _DArray		DArray;
+typedef struct _DArray			DArray;
+typedef struct _DBytesArray		DBytesArray;
 
 struct _DArray {
+	void        *data;
+	u_int64_t   len;
+};
+
+struct _DBytesArray {
 	void        *data;
 	u_int64_t   len;
 };
@@ -83,5 +89,7 @@ DArray  *d_array_append_vals		(DArray *array, 	const void *data,		u_int64_t len)
  */
 DArray  *d_array_remove_index_fast  (DArray	*array, 	u_int64_t	index);
 
-DArray	*d_array_clear_all			(DArray *arr);
+DArray  *d_array_clear_array		(DArray* arr);
+
+void    d_array_destroy_d_array		(DArray** arr);
 #endif
