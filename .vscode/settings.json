@@ -3,6 +3,9 @@
     "darray.h": "c",
     "dtypes.h": "c",
     "types.h": "c",
-    "stdbool.h": "c"
+    "stdbool.h": "c",
+    "array": "c",
+    "string": "c",
+    "string_view": "c"
   }
 }
