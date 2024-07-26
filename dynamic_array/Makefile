@@ -1,5 +1,5 @@
 #Default Cflags used for compilation
-CFLAGS := -Wall -Werror -Wextra -O2 -MMD
+CFLAGS := -Wall -Werror -Wextra -O2 -MMD -g3
 
 # Directory where are located header files
 INCLUDE_DIR := include
@@ -7,7 +7,7 @@ INCLUDE_DIR := include
 # Directory where are located some other necessary headers file
 INCLUDE_PATH_HEADER := ..
 
-# Varibla that will store flags command to include headers
+# Variable that will store flags command to include headers
 INCLUDES := -I$(INCLUDE_DIR) -I$(INCLUDE_PATH_HEADER)
 
 # Directory where are source files
@@ -71,7 +71,7 @@ $(OBJ_DIR): ; @mkdir -p $@
 test: $(TARGET)
 
 $(TARGET):   $(TEST_OBJS) $(LIB)
-		$(CC) $< -L $(LIB_FOLDER) -ldynamic_array -o $(TARGET)
+		$(CC) -g3 $< -L $(LIB_FOLDER) -ldynamic_array -o $(TARGET)
 
 # Build obj file inside obj directory, create obj directory if not created yet
 $(TEST_OBJ_DIR)/%.o: $(TEST_SRC_DIR)/%.c | $(TEST_OBJ_DIR)

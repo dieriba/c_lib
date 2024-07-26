@@ -25,31 +25,28 @@ void    test_d_array_appends_val()
     for (size_t i = 0; i < arr_length; i++)
     {
         test_array[i] = i;
+        d_array_push_back(array, &test_array[i]);
     }
-    d_array_append_vals(array, test_array, arr_length);
     int passed = memcmp(array -> data, test_array, arr_length);
     print_test_status("push 4 element inside DArray", "[0, 1, 2, 3]", !passed);
     print_test_status("len is array is 4", "array -> len = 4", array -> len == arr_length);
     arr_length = 10;
-    for (size_t i = arr_length; i < arr_length; i++)
+    for (size_t i = 4; i < arr_length; i++)
     {
         test_array[i] = i;
     }
+    array =  d_array_append_vals(array, &test_array[4], 6);
     passed = memcmp(array -> data, test_array, arr_length);
     print_test_status("append 6 more element to the array", "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]", !passed);
     print_test_status("len is array is 10", "array -> len = 10", array -> len == arr_length);
-    test_array[arr_length] = 10;
-    d_array_push_back(array, test_array + arr_length);
-    arr_length++;
-    print_test_status("append 1 more element to the array", "[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]", !passed);
-    print_test_status("len is array is 11", "array -> len = 11", array -> len == arr_length);
     for (size_t i = arr_length; i < true_arr_length; i++)
     {
         test_array[i] = i;
     }
-    passed = memcmp(array -> data, test_array, arr_length);
+    array =  d_array_append_vals(array, &test_array[10], true_arr_length - arr_length);
+    passed = memcmp(array -> data, test_array, true_arr_length);
     print_test_status("append 89 more element to the array", "[0 to 99]", !passed);
-    print_test_status("len is array is 100", "array -> len = 100", array -> len == arr_length);
+    print_test_status("len is array is 100", "array -> len = 100", array -> len == true_arr_length);
     free(test_array);
     test_array = NULL;
     d_array_destroy_d_array(&array);
@@ -85,7 +82,6 @@ void    test_d_array_remove_index_fast()
     print_test_status("len is array is 2", "array -> len = 2", array -> len == arr_length);
 
     d_array_remove_index_fast(array, 2);
-    print_test_status("remove element that does not exist", "[0, 1]", !passed);
     print_test_status("len is array is 2", "array -> len = 2", array -> len == arr_length);
 
     d_array_remove_index_fast(array, 0);

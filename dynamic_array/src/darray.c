@@ -85,7 +85,8 @@ bool d_array_try_expand(DRealArray *arr, u64 len)
 {
 	DRealArray* array = (DRealArray*)arr;
 	u64 arr_len = array -> len;
-	u64 new_arr_size = ((len == 1) * arr_len * 2) + (len > 1 * ((((len % 2) == 0) + len + arr_len) * 2));
+	u64 new_arr_size = ((len == 1) * arr_len * 2) + ((len > 1) * (len + (arr_len * 2)));
+	new_arr_size += (new_arr_size % 2) == 1;
 	array->capacity = new_arr_size - arr_len;
 	array -> data = reallocarray(array->data, new_arr_size, array->elem_size);
 	if (array -> data != NULL && array -> clear == true)
