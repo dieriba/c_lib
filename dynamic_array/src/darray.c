@@ -198,7 +198,8 @@ bool d_pointer_array_try_expand(DPointerArray *arr, u64 len)
 {
 	DRealPointerArray* array = (DRealPointerArray*)arr;
 	u64 arr_len = array -> len;
-	u64 new_arr_size = ((len == 1) * arr_len * 2) + (len > 1 * ((((len % 2) == 0) + len + arr_len) * 2)) + array -> null_terminated;
+	u64 new_arr_size = ((len == 1) * arr_len * 2) + (len > 1) * (len + (arr_len * 2)) + array -> null_terminated;
+	new_arr_size += (new_arr_size % 2) == 1;
 	array->capacity = new_arr_size - arr_len;
 	array -> pdata = reallocarray(array->pdata, new_arr_size, sizeof(void*));
 	return array -> pdata != NULL;
