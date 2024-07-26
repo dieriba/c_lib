@@ -17,6 +17,7 @@ typedef struct _DPointerArray	DPointerArray;
  * The element data will not reference the data that was used to create the element,
  * and thus deallocate the Darray will not affect the data used in the first to create the array's element.
  */
+
 struct _DArray {
 	void*	data;
 	u64   	len;
