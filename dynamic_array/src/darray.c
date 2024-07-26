@@ -1,8 +1,8 @@
-#include "darray.h"
-#include "dalloc.h"
+#include <darray.h>
+#include <dalloc.h>
 #include <string.h>
 
-#define CAPACITY 4 
+#define CAPACITY 4
 
 typedef struct _DRealArray DRealArray;
 
@@ -75,6 +75,7 @@ void    d_array_destroy_d_array		(DArray** arr)
 DArray  *d_array_clear_array		(DArray* arr)
 {
 	DRealArray* array = (DRealArray*)arr;
+	array -> capacity = array -> len;
 	array->len = 0;
 	return arr;
 }
@@ -107,13 +108,14 @@ struct _DRealPointerArray
 	DestroyElemFunc	free_func; /*if not null will be used on each element when de-allocating or clearing the array*/
 };
 
-static bool d_pointer_array_try_expand(DRealPointerArray *array, u64 len);
+static bool d_pointer_array_try_expand(DPointerArray *array, u64 len);
 
-DRealPointerArray  *d_pointer_array_new	(u64 reserved_elem, bool null_terminated)
+DPointerArray  *d_pointer_array_new	(u64 reserved_elem, bool null_terminated)
 {
 	DRealPointerArray  *array = malloc(sizeof(DRealPointerArray) * 1);
 	if (array == NULL)
 		return (NULL);
+	array -> null_terminated = null_terminated;
 	array -> capacity = (((reserved_elem > 0) * reserved_elem) + ((reserved_elem == 0) + array -> null_terminated) * (u64)CAPACITY);
 	array -> pdata = malloc(sizeof(void*) * array -> capacity);
 	array -> len = 0;
@@ -122,23 +124,24 @@ DRealPointerArray  *d_pointer_array_new	(u64 reserved_elem, bool null_terminated
 		free(array);
 		return NULL;
 	}
-	array -> null_terminated = 1;
 	if (array -> null_terminated)
 		array->pdata[0] = NULL;
-	return (DRealPointerArray*) array;
+	return (DPointerArray*) array;
 }
 
-DRealPointerArray  *d_pointer_array_append_vals		(DRealPointerArray *arr, 	const void *data,		u64 len)
+DPointerArray  *d_pointer_array_push_back		(DPointerArray *arr, 	const void *data)
 {
 	DRealPointerArray* array = (DRealPointerArray*)arr;
-	if (array -> capacity < len && d_pointer_array_try_expand(array, len) == false)
+	u64	null_terminated = (u64)array -> null_terminated;
+	if (array -> capacity - null_terminated == 0 && d_pointer_array_try_expand(arr, 1) == false)
 		return NULL;
-	array->pdata[array->len++] = data;
-	array->capacity -= len;
+	array -> pdata[array -> len++] = (void*)data;
+	if (null_terminated)
+		array -> pdata[array -> len] = NULL;
 	return arr;
 }
 
-DRealPointerArray  *d_pointer_array_remove_index_fast	(DRealPointerArray	*arr, 	u64	index)
+DPointerArray  *d_pointer_array_remove_index_fast	(DPointerArray	*arr, 	u64	index)
 {
 	DRealPointerArray* array = (DRealPointerArray*)arr;
 	if (index >= array -> len)
@@ -151,7 +154,7 @@ DRealPointerArray  *d_pointer_array_remove_index_fast	(DRealPointerArray	*arr, 	
 	return arr;
 }
 
-void    d_pointer_array_destroy_d_array		(DRealPointerArray** arr)
+void    d_pointer_array_destroy		(DPointerArray** arr)
 {
 	DRealPointerArray*	array = (DRealPointerArray*)(*arr);
 	DestroyElemFunc	free_func = array -> free_func;
@@ -171,7 +174,7 @@ void    d_pointer_array_destroy_d_array		(DRealPointerArray** arr)
 	*arr = NULL;
 }
 
-DRealPointerArray  *d_pointer_array_clear_array		(DRealPointerArray* arr)
+DPointerArray  *d_pointer_array_clear_array		(DPointerArray* arr)
 {
 	DRealPointerArray* array = (DRealPointerArray*)arr;
 	DestroyElemFunc	free_func = array -> free_func;
@@ -190,7 +193,7 @@ DRealPointerArray  *d_pointer_array_clear_array		(DRealPointerArray* arr)
 }
 
 
-bool d_pointer_array_try_expand(DRealPointerArray *arr, u64 len)
+bool d_pointer_array_try_expand(DPointerArray *arr, u64 len)
 {
 	DRealPointerArray* array = (DRealPointerArray*)arr;
 	u64 arr_len = array -> len;

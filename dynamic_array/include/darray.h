@@ -1,11 +1,10 @@
 #ifndef __D_ARRAY_H
 #define __D_ARRAY_H
 
-#include "dtypes.h"
+#include <dtypes.h>
 
 typedef struct _DArray			DArray;
 typedef struct _DPointerArray	DPointerArray;
-
 
 /**
  * DArray:
@@ -62,7 +61,6 @@ struct _DPointerArray {
  * Returns: the #DArray
  */
 #define d_array_get_val_by_index(a,data_type,i)      (((data_type*) (void *) (a)->data) [(i)])
-
 /**
  * d_array_new:
  * @clear: %TRUE if #DArray elements should be automatically cleared
@@ -156,6 +154,19 @@ DPointerArray  *d_pointer_array_new				(u64 reserved_elem, bool null_terminated)
  * Returns: the #DPointerArray
  */
 DPointerArray  *d_pointer_array_append_vals		(DPointerArray *array, 	const void *data,	u64 len);
+
+/**
+ * d_pointer_array_push_back:
+ * @a: a #DArray
+ * @v: the value to append to the #DPointerArray
+ *
+ * Adds the value on to the end of the array. The array will grow in
+ * size automatically if necessary.
+ *
+ *
+ * Returns: the #DPointerArray
+ */
+DPointerArray  *d_pointer_array_push_back		(DPointerArray *array, 	const void *data);
 
 /**
  * d_pointer_array_remove_index_fast:
