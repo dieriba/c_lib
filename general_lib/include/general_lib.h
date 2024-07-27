@@ -11,5 +11,5 @@ DArray* d_split_string_by_char(const char* string, char c);
 DArray* d_split_string_by_pattern(const char*string, const char* pattern);
 
 char    *d_itoa_i32(int32);
-char    *d_itoa_u64(u64);
+char    *d_itoa_usize(usize);
 #endif

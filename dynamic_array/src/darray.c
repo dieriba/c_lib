@@ -9,9 +9,9 @@ typedef struct _DRealArray DRealArray;
 //REAL D_ARRAY STRUCTURE ALLOCATED
 struct _DRealArray {
 	void  *data;
-	u64   len;
-	u64   capacity;
-	u64   elem_size;
+	usize   len;
+	usize   capacity;
+	usize   elem_size;
 	bool  clear: 1;
 };
 
@@ -19,14 +19,14 @@ struct _DRealArray {
 //UTILITY MACRO TO GET TO WHICH OFFSET FROM THE START OF THE ARRAY A D_ARRAY ELEMENT IS
 #define d_array_elt_pos(array,i) ((array)->data + d_array_elt_len((array),(i)))
 
-static bool d_array_try_expand(DRealArray *array, u64 len);
+static bool d_array_try_expand(DRealArray *array, usize len);
 
-DArray  *d_array_new				(bool	clear,		u64 elem_size, u64 reserved_elem)
+DArray  *d_array_new				(bool	clear,		usize elem_size, usize reserved_elem)
 {
 	DRealArray  *array = malloc(sizeof(DRealArray) * 1);
 	if (array == NULL)
 		return (NULL);
-	array -> capacity = ((reserved_elem > 0) * reserved_elem) + ((reserved_elem == 0) * (u64)CAPACITY);
+	array -> capacity = ((reserved_elem > 0) * reserved_elem) + ((reserved_elem == 0) * (usize)CAPACITY);
 	array -> clear = clear;
 	array -> elem_size = elem_size;
 	array -> data = malloc(elem_size * array -> capacity);
@@ -41,7 +41,7 @@ DArray  *d_array_new				(bool	clear,		u64 elem_size, u64 reserved_elem)
 	return (DArray*) array;
 }
 
-DArray  *d_array_append_vals		(DArray *arr, 	const void *data,		u64 len)
+DArray  *d_array_append_vals		(DArray *arr, 	const void *data,		usize len)
 {
 	DRealArray  *array = (DRealArray*) arr;
 	if (array -> capacity < len && d_array_try_expand(array, len) == false)
@@ -52,7 +52,7 @@ DArray  *d_array_append_vals		(DArray *arr, 	const void *data,		u64 len)
 	return arr;
 }
 
-DArray  *d_array_remove_index_fast	(DArray	*arr, 	u64	index)
+DArray  *d_array_remove_index_fast	(DArray	*arr, 	usize	index)
 {
 	DRealArray* array = (DRealArray*)arr;
 	if (index >= array -> len)
@@ -81,11 +81,11 @@ DArray  *d_array_clear_array		(DArray* arr)
 }
 
 
-bool d_array_try_expand(DRealArray *arr, u64 len)
+bool d_array_try_expand(DRealArray *arr, usize len)
 {
 	DRealArray* array = (DRealArray*)arr;
-	u64 arr_len = array -> len;
-	u64 new_arr_size = ((len == 1) * arr_len * 2) + ((len > 1) * (len + (arr_len * 2)));
+	usize arr_len = array -> len;
+	usize new_arr_size = ((len == 1) * arr_len * 2) + ((len > 1) * (len + (arr_len * 2)));
 	new_arr_size += (new_arr_size % 2) == 1;
 	array->capacity = new_arr_size - arr_len;
 	array -> data = reallocarray(array->data, new_arr_size, array->elem_size);
@@ -103,21 +103,21 @@ typedef void(*DestroyElemFunc)(void*);
 struct _DRealPointerArray
 {
   	void**       	pdata;
-  	u64         	len;
-	u64				capacity;
+  	usize         	len;
+	usize				capacity;
   	u8          	null_terminated : 1; /* always either 0 or 1, so it can be added to array lengths */
 	DestroyElemFunc	free_func; /*if not null will be used on each element when de-allocating or clearing the array*/
 };
 
-static bool d_pointer_array_try_expand(DPointerArray *array, u64 len);
+static bool d_pointer_array_try_expand(DPointerArray *array, usize len);
 
-DPointerArray  *d_pointer_array_new	(u64 reserved_elem, bool null_terminated)
+DPointerArray  *d_pointer_array_new	(usize reserved_elem, bool null_terminated)
 {
 	DRealPointerArray  *array = malloc(sizeof(DRealPointerArray) * 1);
 	if (array == NULL)
 		return (NULL);
 	array -> null_terminated = null_terminated;
-	array -> capacity = (((reserved_elem > 0) * reserved_elem) + ((reserved_elem == 0) + array -> null_terminated) * (u64)CAPACITY);
+	array -> capacity = (((reserved_elem > 0) * reserved_elem) + ((reserved_elem == 0) + array -> null_terminated) * (usize)CAPACITY);
 	array -> pdata = malloc(sizeof(void*) * array -> capacity);
 	array -> len = 0;
 	if (array -> pdata == NULL)
@@ -133,7 +133,7 @@ DPointerArray  *d_pointer_array_new	(u64 reserved_elem, bool null_terminated)
 DPointerArray  *d_pointer_array_push_back		(DPointerArray *arr, 	const void *data)
 {
 	DRealPointerArray* array = (DRealPointerArray*)arr;
-	u64	null_terminated = (u64)array -> null_terminated;
+	usize	null_terminated = (usize)array -> null_terminated;
 	if (array -> capacity - null_terminated == 0 && d_pointer_array_try_expand(arr, 1) == false)
 		return NULL;
 	array -> pdata[array -> len++] = (void*)data;
@@ -142,7 +142,7 @@ DPointerArray  *d_pointer_array_push_back		(DPointerArray *arr, 	const void *dat
 	return arr;
 }
 
-DPointerArray  *d_pointer_array_remove_index_fast	(DPointerArray	*arr, 	u64	index)
+DPointerArray  *d_pointer_array_remove_index_fast	(DPointerArray	*arr, 	usize	index)
 {
 	DRealPointerArray* array = (DRealPointerArray*)arr;
 	if (index >= array -> len)
@@ -194,11 +194,11 @@ DPointerArray  *d_pointer_array_clear_array		(DPointerArray* arr)
 }
 
 
-bool d_pointer_array_try_expand(DPointerArray *arr, u64 len)
+bool d_pointer_array_try_expand(DPointerArray *arr, usize len)
 {
 	DRealPointerArray* array = (DRealPointerArray*)arr;
-	u64 arr_len = array -> len;
-	u64 new_arr_size = ((len == 1) * arr_len * 2) + (len > 1) * (len + (arr_len * 2)) + array -> null_terminated;
+	usize arr_len = array -> len;
+	usize new_arr_size = ((len == 1) * arr_len * 2) + (len > 1) * (len + (arr_len * 2)) + array -> null_terminated;
 	new_arr_size += (new_arr_size % 2) == 1;
 	array->capacity = new_arr_size - arr_len;
 	array -> pdata = reallocarray(array->pdata, new_arr_size, sizeof(void*));

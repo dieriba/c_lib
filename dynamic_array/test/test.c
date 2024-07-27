@@ -17,9 +17,9 @@ void    print_test_status(char *test_description, char *expected, bool succeded)
 
 void    test_d_array_appends_val()
 {
-    u64 arr_length = 4;
-    u64 true_arr_length = 100;
-    u64 elem_size = sizeof(int);
+    usize arr_length = 4;
+    usize true_arr_length = 100;
+    usize elem_size = sizeof(int);
     DArray *array = d_array_new(false, elem_size, 0);
     int *test_array = malloc(sizeof(int) * true_arr_length);
     for (size_t i = 0; i < arr_length; i++)
@@ -54,8 +54,8 @@ void    test_d_array_appends_val()
 
 void    test_d_array_remove_index_fast()
 {
-    u64 arr_length = 4;
-    u64 elem_size = sizeof(int);
+    usize arr_length = 4;
+    usize elem_size = sizeof(int);
     DArray *array = d_array_new(false, elem_size, 0);
     int *test_array = malloc(sizeof(int) * arr_length);
     for (size_t i = 0; i < arr_length; i++)

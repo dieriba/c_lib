@@ -20,7 +20,7 @@ typedef struct _DPointerArray	DPointerArray;
 
 struct _DArray {
 	void*	data;
-	u64   	len;
+	usize   	len;
 };
 
 /**
@@ -35,7 +35,7 @@ struct _DArray {
  */
 struct _DPointerArray {
 	void**	pdata;
-	u64   	len;
+	usize   	len;
 };
 
 /**
@@ -72,7 +72,7 @@ struct _DPointerArray {
  *
  * Returns: the new #DArray
  */
-DArray  *d_array_new				(bool	clear,		u64 elem_size, u64 reserved_elem);
+DArray  *d_array_new				(bool	clear,		usize elem_size, usize reserved_elem);
 
 /**
  * d_array_append_vals:
@@ -95,7 +95,7 @@ DArray  *d_array_new				(bool	clear,		u64 elem_size, u64 reserved_elem);
  *
  * Returns: the #DArray
  */
-DArray  *d_array_append_vals		(DArray *array, 	const void *data,		u64 len);
+DArray  *d_array_append_vals		(DArray *array, 	const void *data,		usize len);
 
 /**
  * d_array_remove_index_fast:
@@ -108,7 +108,7 @@ DArray  *d_array_append_vals		(DArray *array, 	const void *data,		u64 len);
  *
  * Returns: the #DArray
  */
-DArray  *d_array_remove_index_fast  (DArray	*array, 	u64	index);
+DArray  *d_array_remove_index_fast  (DArray	*array, 	usize	index);
 
 /**
  * d_array_clear_array:
@@ -142,7 +142,7 @@ void    d_array_destroy_d_array		(DArray** array);
  *
  * Returns: the new #DArray
  */
-DPointerArray  *d_pointer_array_new				(u64 reserved_elem, bool null_terminated);
+DPointerArray  *d_pointer_array_new				(usize reserved_elem, bool null_terminated);
 
 /**
  * d_pointer_array_append_vals:
@@ -154,7 +154,7 @@ DPointerArray  *d_pointer_array_new				(u64 reserved_elem, bool null_terminated)
  *
  * Returns: the #DPointerArray
  */
-DPointerArray  *d_pointer_array_append_vals		(DPointerArray *array, 	const void *data,	u64 len);
+DPointerArray  *d_pointer_array_append_vals		(DPointerArray *array, 	const void *data,	usize len);
 
 /**
  * d_pointer_array_push_back:
@@ -180,7 +180,7 @@ DPointerArray  *d_pointer_array_push_back		(DPointerArray *array, 	const void *d
  *
  * Returns: the #DPointerArray
  */
-DPointerArray  *d_pointer_array_remove_index_fast  (DPointerArray	*array, 	u64	index);
+DPointerArray  *d_pointer_array_remove_index_fast  (DPointerArray	*array, 	usize	index);
 
 /**
  * d_pointer_array_clear_array:
