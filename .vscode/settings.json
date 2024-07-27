@@ -10,6 +10,7 @@
     "stdio.h": "c",
     "dutils.h": "c",
     "dalloc.h": "c",
-    "string.h": "c"
+    "string.h": "c",
+    "general_lib.h": "c"
   }
 }

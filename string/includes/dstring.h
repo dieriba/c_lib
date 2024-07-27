@@ -16,7 +16,7 @@ typedef struct _DString DString;
  */
 struct _DString {
 	char    *string;
-	usize     len;
+	usize     	len;
 };
 
 typedef usize(*match)(char c);
@@ -66,6 +66,17 @@ usize		d_string_get_capacity(DString* dstring);
  * Returns: the resized #DString
  */
 DString* 	d_string_resize(DString* dstring, usize len);
+
+/**
+ * d_string_increase_capacity:
+ * @dstring: The #DString to increase the capacity of.
+ * @len: The new capacity to increase the string to.
+ *
+ * Increases the capacity of the #DString to the specified length.
+ * memory where point string may move
+ * Returns: the #DString with increased capacity.
+ */
+DString* 	d_string_increase_capacity(DString* dstring, usize len);
 
 /**
  * d_string_push_char:
