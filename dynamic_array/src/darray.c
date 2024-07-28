@@ -1,5 +1,4 @@
 #include <darray.h>
-#include <dalloc.h>
 #include <string.h>
 
 #define CAPACITY 4

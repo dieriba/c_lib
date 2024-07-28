@@ -34,20 +34,6 @@ LIB_NAME := libhash_table.a
 # Library path
 LIB := $(LIB_FOLDER)/$(LIB_NAME)
 
-# Name of test's executable
-TEST_SRC_DIR := test
-
-# Variable containing name of test directory source file
-TEST_SRC := $(shell find $(TEST_SRC_DIR) -name 'test.c')
-
-# Directory where will obj file be stored
-TEST_OBJ_DIR := test/objs
-
-# All Test object file
-TEST_OBJS := $(patsubst $(TEST_SRC_DIR)/test.c, $(TEST_OBJ_DIR)/test.o, $(TEST_SRC))
-
-TARGET = test/test
-
 all : $(LIB)
 
 $(LIB) : $(OBJS)
@@ -64,21 +50,6 @@ $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c | $(OBJ_DIR)
 -include $(DEPEND)
 
 $(OBJ_DIR): ; @mkdir -p $@
-
-.PHONY : test
-
-# Rule to generate binary test executable
-test: $(TARGET)
-
-$(TARGET):   $(TEST_OBJS) $(LIB)
-		$(CC) -g3 $< -L $(LIB_FOLDER) -lhash_table -o $(TARGET)
-
-# Build obj file inside obj directory, create obj directory if not created yet
-$(TEST_OBJ_DIR)/%.o: $(TEST_SRC_DIR)/%.c | $(TEST_OBJ_DIR)
-		$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-
-# Rule that create the obj directory
-$(TEST_OBJ_DIR): ;	@mkdir -p $@
 
 # Removes all the build directories (objs, deps), executable and library and recreate them
 .PHONY : re

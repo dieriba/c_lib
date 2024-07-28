@@ -29,7 +29,7 @@ DEPEND = $(OBJS:.o=.d)
 LIB_FOLDER := lib
 
 # Library name
-LIB_NAME := liblinked_list.a
+LIB_NAME := libmemory_alloc.a
 
 # Library path
 LIB := $(LIB_FOLDER)/$(LIB_NAME)
