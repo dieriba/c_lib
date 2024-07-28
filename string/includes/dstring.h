@@ -20,6 +20,8 @@ struct _DString {
 };
 
 typedef usize(*match)(char c);
+typedef bool(*match_predicate)(char c);
+
 
 
 /**
@@ -38,6 +40,17 @@ DString* d_string_new(void);
  * Returns: the new #DString
  */
 DString* 	d_string_new_with_string(const char* str);
+
+/**
+ * d_string_new_with_substring:
+ * @str: Initial string to populate the new #DString with.
+ * @from: The starting position of the substring.
+ * @len: The length of the substring.
+ *
+ * Creates a new #DString initialized with the given substring.
+ * Returns: the new #DString
+ */
+DString* 	d_string_new_with_substring(const char* str, usize from, usize len);
 
 /**
  * d_string_new_with_reserve:
@@ -70,13 +83,13 @@ DString* 	d_string_resize(DString* dstring, usize len);
 /**
  * d_string_increase_capacity:
  * @dstring: The #DString to increase the capacity of.
- * @len: The new capacity to increase the string to.
+ * @new_capacity: The new capacity to increase the string to.
  *
- * Increases the capacity of the #DString to the specified length.
+ * Increases the capacity of the #DString to the specified new_capacity.
  * memory where point string may move
  * Returns: the #DString with increased capacity.
  */
-DString* 	d_string_increase_capacity(DString* dstring, usize len);
+DString* 	d_string_increase_capacity(DString* dstring, usize new_capacity);
 
 /**
  * d_string_push_char:
@@ -109,6 +122,27 @@ DString* 	d_string_push_str(DString* dstring, char *str_to_append);
  */
 DString*	d_string_copy(DString* dstring);
 
+/**
+ * d_string_replace_from_str:
+ * @dstring: The #DString to replace.
+ * @str: The string to replace with.
+ *
+ * Replaces the content of the #DString with the given string.
+ * Returns: the modified #DString
+ */
+DString* 	d_string_replace_from_str(DString* dstring, const char* str);
+
+/**
+ * d_string_replace_from_dstring:
+ * @dstring: The #DString to replace.
+ * @copy: The #DString to replace with.
+ *
+ * Replaces the content of the #DString with the given #DString.
+ * Returns: the modified #DString
+ */
+DString* 	d_string_replace_from_dstring(DString* dstring, const DString* copy);
+
+
 
 /**
  * d_string_compare:
@@ -122,109 +156,14 @@ DString*	d_string_copy(DString* dstring);
 int32		d_string_compare(DString* str1, DString* str2);
 
 /**
- * d_string_rfind_by_char:
- * @dstring: The #DString to search.
- * @c: The character to find.
- *
- * Finds the last occurrence of the character in the #DString.
- * Returns: The position of the character, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
- */
-usize		d_string_rfind_by_char(DString* dstring, char c);
-
-/**
- * d_string_rfind_by_str:
- * @dstring: The #DString to search.
- * @str: The string to find.
- *
- * Finds the last occurrence of the string in the #DString.
- * Returns: The position of the first char of the string, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
- */
-usize		d_string_rfind_by_str(DString* dstring, const char *str);
-
-/**
- * d_string_rfind_by_str_from:
- * @dstring: The #DString to search.
- * @str: The string to find.
- * @pos: The position to start the search from.
- *
- * Finds the last occurrence of the string in the #DString starting from a specified position.
- * Returns: The position of the first char of the string, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
- */
-usize		d_string_rfind_by_str_from(DString* dstring, const char *str, usize pos);
-
-/**
- * d_string_rfind_by_predicate:
- * @dstring: The #DString to search.
- * @fn: The predicate function to use for matching.
- *
- * Finds the last occurrence of a match based on the predicate function in the #DString.
- * Returns: The position of the match, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
- */
-usize		d_string_rfind_by_predicate(DString* dstring, match fn);
-
-/**
- * d_string_rfind_by_char_from:
- * @dstring: The #DString to search.
- * @c: The character to find.
- * @pos: The position to start the search from.
- *
- * Finds the last occurrence of the character in the #DString starting from a specified position.
- * Returns: The position of the character, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
- */
-usize		d_string_rfind_by_char_from(DString* dstring, char c, usize pos);
-
-/**
- * d_string_rfind_by_predicate_from:
- * @dstring: The #DString to search.
- * @fn: The predicate function to use for matching.
- * @pos: The position to start the search from.
- *
- * Finds the last occurrence of a match based on the predicate function in the #DString starting from a specified position.
- * Returns: The position of the match, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
- */
-usize		d_string_rfind_by_predicate_from(DString* dstring, match fn, usize pos);
-
-
-/**
- * d_string_find_by_char:
+ * d_string_find_char:
  * @dstring: The #DString to search.
  * @c: The character to find.
  *
  * Finds the first occurrence of the character in the #DString.
  * Returns: The position of the character, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
  */
-usize		d_string_find_by_char(DString* dstring, char c);
-
-/**
- * d_string_find_by_str:
- * @dstring: The #DString to search.
- * @str: The string to find.
- *
- * Finds the first occurrence of the string in the #DString.
- * Returns: The position of the first char of the string, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
- */
-usize		d_string_find_by_str(DString* dstring, const char *str);
-
-/**
- * d_string_find_by_str_from:
- * @dstring: The #DString to search.
- * @str: The string to find.
- * @pos: The position to start the search from.
- *
- * Finds the first occurrence of the string in the #DString starting from a specified position.
- * Returns: The position of the first char of the string, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
- */
-usize		d_string_find_by_str_from(DString* dstring, const char *str, usize pos);
-
-/**
- * d_string_find_by_predicate:
- * @dstring: The #DString to search.
- * @fn: The predicate function to use for matching.
- *
- * Finds the first occurrence of a match based on the predicate function in the #DString.
- * Returns: The position of the match, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
- */
-usize		d_string_find_by_predicate(DString* dstring, match fn);
+usize		d_string_find_char(DString* dstring, char c);
 
 /**
  * d_string_find_by_char_from:
@@ -235,7 +174,38 @@ usize		d_string_find_by_predicate(DString* dstring, match fn);
  * Finds the first occurrence of the character in the #DString starting from a specified position.
  * Returns: The position of the character, or MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
  */
-usize		d_string_find_by_char_from(DString* dstring, char c, usize pos);
+usize		d_string_find_char_from(DString* dstring, char c, usize pos);
+
+/**
+ * d_string_find_str:
+ * @dstring: The #DString to search.
+ * @str: The string to find.
+ *
+ * Finds the first occurrence of the string in the #DString.
+ * Returns: The position of the first char of the string, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
+ */
+usize		d_string_find_str(DString* dstring, const char *str);
+
+/**
+ * d_string_find_str_from:
+ * @dstring: The #DString to search.
+ * @str: The string to find.
+ * @pos: The position to start the search from.
+ *
+ * Finds the first occurrence of the string in the #DString starting from a specified position.
+ * Returns: The position of the first char of the string, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
+ */
+usize		d_string_find_str_from(DString* dstring, const char *str, usize pos);
+
+/**
+ * d_string_find_by_predicate:
+ * @dstring: The #DString to search.
+ * @fn: The predicate function to use for matching.
+ *
+ * Finds the first occurrence that return true based on the match_predicate function in the #DString.
+ * Returns: The position of the match, or MAX_SIZE_T_VALUE if not found.
+ */
+usize		d_string_find_by_predicate(DString* dstring, match_predicate fn);
 
 /**
  * d_string_find_by_predicate_from:
@@ -243,13 +213,77 @@ usize		d_string_find_by_char_from(DString* dstring, char c, usize pos);
  * @fn: The predicate function to use for matching.
  * @pos: The position to start the search from.
  *
- * Finds the first occurrence of a match based on the predicate function in the #DString starting from a specified position.
- * Returns: The position of the match, or MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
+ * Finds the first occurrence that return true based on the match_predicate_function in the #DString starting from a specified position.
+ * Returns: The position of the match, or MAX_SIZE_T_VALUE if not found.
  */
-usize		d_string_find_by_predicate_from(DString* dstring, match fn, usize pos);
+usize		d_string_find_by_predicate_from(DString* dstring, match_predicate fn, usize pos);
+
 
 /**
- * d_string_sub_string:
+ * d_string_rfind_char:
+ * @dstring: The #DString to search.
+ * @c: The character to find.
+ *
+ * Finds the last occurrence of the character in the #DString.
+ * Returns: The position of the character, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
+ */
+usize		d_string_rfind_char(DString* dstring, char c);
+
+/**
+ * d_string_rfind_char_from:
+ * @dstring: The #DString to search.
+ * @c: The character to find.
+ * @pos: The position to start the search from.
+ *
+ * Finds the last occurrence of the character in the #DString starting from a specified position.
+ * Returns: The position of the character, or a MAX_SIZE_T_VALUE (which is defined in header as max value of size_t) value if not found.
+ */
+usize		d_string_rfind_char_from(DString* dstring, char c, usize pos);
+
+/**
+ * d_string_rfind_str:
+ * @dstring: The #DString to search.
+ * @str: The string to find.
+ *
+ * Finds the last occurrence of the string in the #DString.
+ * Returns: The position of the first char of the string, or MAX_SIZE_T_VALUE if not found.
+ */
+usize		d_string_rfind_str(DString* dstring, const char *str);
+
+/**
+ * d_string_rfind_str_from:
+ * @dstring: The #DString to search.
+ * @str: The string to find.
+ * @pos: The position to start the search from.
+ *
+ * Finds the last occurrence of the string in the #DString starting from a specified position.
+ * Returns: The position of the first char of the string, or MAX_SIZE_T_VALUE if not found.
+ */
+usize		d_string_rfind_str_from(DString* dstring, const char *str, usize pos);
+
+/**
+ * d_string_rfind_by_predicate:
+ * @dstring: The #DString to search.
+ * @fn: The predicate function to use for matching.
+ *
+ * Finds the last occurrence that return true based on the match_predicate function in the #DString.
+ * Returns: The position of the match, or MAX_SIZE_T_VALUE if not found.
+ */
+usize		d_string_rfind_by_predicate(DString* dstring, match_predicate fn);
+
+/**
+ * d_string_rfind_by_predicate_from:
+ * @dstring: The #DString to search.
+ * @fn: The predicate function to use for matching.
+ * @pos: The position to start the search from.
+ *
+ * Finds the last occurrence that return true based on the match_predicate function in the #DString starting from a specified position.
+ * Returns: The position of the match, or MAX_SIZE_T_VALUE if not found.
+ */
+usize		d_string_rfind_by_predicate_from(DString* dstring, match_predicate fn, usize pos);
+
+/**
+ * d_string_sub_string_new:
  * @dstring: The #DString to create a substring from.
  * @pos: The starting position of the substring.
  * @len: The length of the substring.
@@ -257,7 +291,18 @@ usize		d_string_find_by_predicate_from(DString* dstring, match fn, usize pos);
  * Creates a new #DString that is a substring of the given string.
  * Returns: The new substring #DString
  */
-DString*	d_string_sub_string(DString* dstring, usize pos, usize len);
+DString*	d_string_sub_string_new(DString* dstring, usize pos, usize len);
+
+/**
+ * d_string_sub_string_in_place:
+ * @dstring: The #DString to create a substring from.
+ * @pos: The starting position of the substring.
+ * @len: The length of the substring.
+ *
+ * Modifies the original #DString to represent the substring starting at `pos` with length `len`.
+ * Returns: The modified #DString
+ */
+DString*	d_string_sub_string_in_place(DString* dstring, usize pos, usize len);
 
 /**
  * d_string_trim_left_char_in_place:
@@ -271,17 +316,6 @@ DString*	d_string_sub_string(DString* dstring, usize pos, usize len);
 DString*	d_string_trim_left_by_char_in_place(DString* dstring, char c);
 
 /**
- * d_string_trim_right_char_in_place:
- * @dstring: The #DString to trim.
- * @c: The character to trim.
- *
- * Trims characters from the right of the #DString without reallocating memory.
- * The operation modifies the original #DString.
- * Returns: The trimmed #DString
- */
-DString*	d_string_trim_right_by_char_in_place(DString* dstring, char c);
-
-/**
  * d_string_trim_left_predicate_in_place:
  * @dstring: The #DString to trim.
  * @fn: The predicate function to use for trimming.
@@ -291,18 +325,6 @@ DString*	d_string_trim_right_by_char_in_place(DString* dstring, char c);
  * Returns: The trimmed #DString
  */
 DString*	d_string_trim_left_by_predicate_in_place(DString* dstring, match fn);
-
-
-/**
- * d_string_trim_right_predicate_in_place:
- * @dstring: The #DString to trim.
- * @fn: The predicate function to use for trimming.
- *
- * Trims characters from the right of the #DString based on the predicate function without reallocating memory.
- * The operation modifies the original #DString.
- * Returns: The trimmed #DString
- */
-DString*	d_string_trim_right_by_prediacte_in_place(DString* dstring, match fn);
 
 /**
  * d_string_trim_left_char_new:
@@ -316,17 +338,6 @@ DString*	d_string_trim_right_by_prediacte_in_place(DString* dstring, match fn);
 DString*	d_string_trim_left_by_char_new(DString* dstring, char c);
 
 /**
- * d_string_trim_right_char_new:
- * @dstring: The #DString to trim.
- * @c: The character to trim.
- *
- * Trims characters from the right of the #DString and reallocates memory if necessary.
- * The operation creates a new #DString with the trimmed result.
- * Returns: The new trimmed #DString
- */
-DString*	d_string_trim_right_by_char_new(DString* dstring, char c);
-
-/**
  * d_string_trim_left_predicate_new:
  * @dstring: The #DString to trim.
  * @fn: The predicate function to use for trimming.
@@ -336,6 +347,40 @@ DString*	d_string_trim_right_by_char_new(DString* dstring, char c);
  * Returns: The new trimmed #DString
  */
 DString*	d_string_trim_left_by_predicate_new(DString* dstring, match fn);
+
+
+/**
+ * d_string_trim_right_char_in_place:
+ * @dstring: The #DString to trim.
+ * @c: The character to trim.
+ *
+ * Trims characters from the right of the #DString without reallocating memory.
+ * The operation modifies the original #DString.
+ * Returns: The trimmed #DString
+ */
+DString*	d_string_trim_right_by_char_in_place(DString* dstring, char c);
+
+/**
+ * d_string_trim_right_predicate_in_place:
+ * @dstring: The #DString to trim.
+ * @fn: The predicate function to use for trimming.
+ *
+ * Trims characters from the right of the #DString based on the predicate function without reallocating memory.
+ * The operation modifies the original #DString.
+ * Returns: The trimmed #DString
+ */
+DString*	d_string_trim_right_by_prediacte_in_place(DString* dstring, match fn);
+
+/**
+ * d_string_trim_right_char_new:
+ * @dstring: The #DString to trim.
+ * @c: The character to trim.
+ *
+ * Trims characters from the right of the #DString and reallocates memory if necessary.
+ * The operation creates a new #DString with the trimmed result.
+ * Returns: The new trimmed #DString
+ */
+DString*	d_string_trim_right_by_char_new(DString* dstring, char c);
 
 /**
  * d_string_trim_right_predicate_new:
@@ -356,4 +401,12 @@ DString*	d_string_trim_right_by_prediacte_new(DString* dstring, match fn);
  * Returns: The new #DArray representation of the string.
  */
 DArray* 	d_string_as_d_array(DString* dstring);
+
+/**
+ * d_string_destroy:
+ * @dstring: Double pointer to the #DString to destroy.
+ *
+ * Frees the memory allocated for the #DString and sets the pointer to NULL.
+ */
+void		d_string_destroy(DString** dstring);
 #endif

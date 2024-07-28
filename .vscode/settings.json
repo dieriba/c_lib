@@ -11,6 +11,10 @@
     "dutils.h": "c",
     "dalloc.h": "c",
     "string.h": "c",
-    "general_lib.h": "c"
+    "general_lib.h": "c",
+    "dtest.h": "c",
+    "initializer_list": "c",
+    "system_error": "c",
+    "ctype.h": "c"
   }
 }

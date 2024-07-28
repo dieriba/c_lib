@@ -19,9 +19,8 @@
 #define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
 #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
+#define is_eq(data1,data2,size) do { \
+    memcmp(data1,data2,size)\
+} while(0)
 
-#include <stdio.h>
-
-#define PRINT_FAILED_TEST(message) (fprintf(stderr, RED message RESET))
-#define PRINT_SUCCESS_TEST(message) (printf(GREEN message RESET))
 #endif
