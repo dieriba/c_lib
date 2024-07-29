@@ -2,6 +2,7 @@
 #define __GENERAL_LIB__H
 
 #include <darray.h>
+#include <stdlib.h>
 
 typedef bool(*DCompareFnc)(char);
 

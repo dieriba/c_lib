@@ -1,14 +1,17 @@
 #Default Cflags used for compilation
-CFLAGS := -Wall -Werror -Wextra -O2 -MMD -g3
+CFLAGS := -Wall -Wextra -O2 -MMD -g3
+
+# Directory where are located dynamic_array header files
+DYNAMIC_ARR_INCLUDE_DIR := ../dynamic_array/include
 
 # Directory where are located header files
 INCLUDE_DIR := include
 
 # Directory where are located some other necessary headers file
-INCLUDE_PATH_HEADER := ..
+HEADER_ROOT_DIR := ..
 
 # Variable that will store flags command to include headers
-INCLUDES := -I$(INCLUDE_DIR) -I$(INCLUDE_PATH_HEADER)
+INCLUDES := -I$(INCLUDE_DIR) -I$(HEADER_ROOT_DIR) -I$(DYNAMIC_ARR_INCLUDE_DIR)
 
 # Directory where are source files
 SRC_DIR := src
