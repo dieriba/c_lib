@@ -1,19 +1,21 @@
 #ifndef __D_TEST_H__
 #define __D_TEST_H__
 #include <stdio.h>
+#include <dutils.h>
 #define MAX_VALUE_SIZE_T (~(size_t)0)
 
 #define PRINT_SUCCESS_TEST(message) (printf(GREEN message RESET))
 
 typedef char*(*DbgFn)(void*);
 
-#define TEST(test_description, test_logic) do {\ 
-                                                printf("%s\n", test_description);\ 
-                                                test_logic \                                    
-                                            } while(0)
+#define TEST(test_description,test_logic) do { \
+    printf("\n%s\n", test_description); \
+    test_logic \
+} while(0)
+
 #define d_assert(test_condition,left,right,pfn) do { \
     if (test_condition) { \
-        PRINT_SUCCESS_TEST("OK"); \
+        PRINT_SUCCESS_TEST("OK "); \
     } else { \
         if (pfn != NULL) { \
             DbgFn fn = (DbgFn)pfn; \
@@ -30,7 +32,7 @@ typedef char*(*DbgFn)(void*);
 
 #define assert_eq_custom(left, right, size, pfn) do { \
     if (memcmp(left, right, size) == 0) { \
-        PRINT_SUCCESS_TEST("OK"); \
+        PRINT_SUCCESS_TEST("OK "); \
     } else { \
         if (pfn != NULL) { \
             DbgFn fn = (DbgFn)pfn; \
@@ -47,7 +49,7 @@ typedef char*(*DbgFn)(void*);
 
 #define assert_ne_custom(left, right, size, pfn) do { \
     if (memcmp(left, right, size) != 0) { \
-        PRINT_SUCCESS_TEST("OK"); \
+        PRINT_SUCCESS_TEST("OK "); \
     } else { \
         if (pfn != NULL) { \
             DbgFn fn = (DbgFn)pfn; \
@@ -65,7 +67,7 @@ typedef char*(*DbgFn)(void*);
 
 #define assert_eq_null_custom(data, pfn) do { \
     if (data == NULL) { \
-        PRINT_SUCCESS_TEST("OK"); \
+        PRINT_SUCCESS_TEST("OK "); \
     } else { \
         if (pfn != NULL) { \
             DbgFn fn = (DbgFn)pfn; \
@@ -80,7 +82,7 @@ typedef char*(*DbgFn)(void*);
 
 #define assert_ne_null_custom(data, pfn) do { \
     if (data != NULL) { \
-        PRINT_SUCCESS_TEST("OK"); \
+        PRINT_SUCCESS_TEST("OK "); \
     } else { \
         if (pfn != NULL) { \
             DbgFn fn = (DbgFn)pfn; \

@@ -1,17 +1,14 @@
 #Default Cflags used for compilation
 CFLAGS := -Wall -Wextra -MMD -g3
 
-# Directory where are located dynamic_array header files
-DYNAMIC_ARR_INCLUDE_DIR := ../dynamic_array/include
+# Directory where are located header files
+DYNAMIC_ARR_INCLUDE_DIR := ../../dynamic_array/include
 
 # Directory where are located header files
-INCLUDE_DIR := include
+GENERAL_LIB_INCLUDE_DIR := ../include
 
 # Directory where are located some other necessary headers file
-HEADER_ROOT_DIR := ..
-
-# Variable that will store flags command to include headers
-INCLUDES := -I$(INCLUDE_DIR) -I$(HEADER_ROOT_DIR) -I$(DYNAMIC_ARR_INCLUDE_DIR)
+HEADER_ROOT_DIR := ../..
 
 # Directory where are source files
 SRC_DIR := src
@@ -25,11 +22,14 @@ OBJ_DIR := objs
 # All object files
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
 
-# The dependency files that will be used in order to add header dependencies
-DEPEND = $(OBJS:.o=.d)
+# Variable that will store flags command to include headers
+INCLUDES := -I$(GENERAL_LIB_INCLUDE_DIR) -I$(HEADER_ROOT_DIR) -I$(DYNAMIC_ARR_INCLUDE_DIR)
 
 # Directory where will the builded library will be stored
-LIB_FOLDER := lib
+LIB_FOLDER := ../lib
+
+# The dependency files that will be used in order to add header dependencies
+DEPEND = $(OBJS:.o=.d)
 
 # Library name
 LIB_NAME := libgeneral_lib.a
@@ -37,15 +37,18 @@ LIB_NAME := libgeneral_lib.a
 # Library path
 LIB := $(LIB_FOLDER)/$(LIB_NAME)
 
-all : $(LIB)
+# Executable name
+TARGET := test
 
-$(LIB) : $(OBJS)
-		@mkdir -p lib
-		ar rcs $@ $^
+.PHONY: $(TARGET) 
+$(TARGET): $(OBJS) $(LIB)
+			$(CC) $^ -o $(TARGET)
 
-# Rule to generate all object file and create OBJ_DIR if not exist
-$(OBJ_DIR)/%.o : $(SRC_DIR)/%.c | $(OBJ_DIR)
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.c  | $(OBJ_DIR)
 		$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(LIB):
+		$(MAKE) -C ..
 
 # Header dependencies. Adds the rules in the .d files, if they exists, in order to
 # add headers as dependencies of obj files (see .d files).
@@ -61,9 +64,9 @@ re : fclean $(LIB)
 # Removes all the build directories (objs, deps), executable and library
 .PHONY : fclean
 fclean : clean
-		rm -rf $(LIB_FOLDER) $(TEST_OBJ_DIR) $(TARGET)
+		rm -rf $(TARGET) $(OBJ_DIR)
 
 # Removes the obj directory
 .PHONY : clean
 clean :
-		rm -rf $(OBJ_DIR)
+		rm -rf *.d
