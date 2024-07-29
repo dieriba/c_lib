@@ -1,4 +1,5 @@
 #include <darray.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define CAPACITY 4
@@ -62,11 +63,10 @@ DArray  *d_array_remove_index_fast	(DArray	*arr, 	usize	index)
 	return arr;
 }
 
-void    d_array_destroy_d_array		(DArray** arr)
+void    d_array_destroy		(DArray** arr)
 {
 	DRealArray*	array = (DRealArray*)(*arr);
 	free(array->data);
-	memset(array, 0, sizeof(DRealArray));
 	free(array);
 	*arr = NULL;
 }
