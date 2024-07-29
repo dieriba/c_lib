@@ -331,11 +331,10 @@ void    test_d_pointer_array_new(void)
 {
     usize len = 4;
     DPointerArray* array = d_pointer_array_new(len, true);
-    char* arr[] = {NULL, NULL, NULL, NULL};
     for (size_t i = 0; i < len; i++)
     {
-        char *str = array -> pdata[i];
-        d_assert_eq(str, arr, sizeof(void*) * len);
+        char* str = (char*)array -> pdata[i];
+        assert_eq_null(str);
     }
     assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
     d_pointer_array_destroy(&array);
@@ -345,27 +344,57 @@ void    test_d_pointer_array_destroy(void)
 {
     DPointerArray* array = d_pointer_array_new(0, true);
     d_pointer_array_destroy(&array);
-    assert_eq_null(array, print_d_pointer_arr_as_string);
+    assert_eq_null_custom(array, print_d_pointer_arr_as_string);
 }
 
 void    test_d_pointer_array_push_back(void)
 {
     usize len = 3;
-    DPointerArray* array = d_pointer_array_new(len, true);
-    char* arr[3] = {"bonjour", "dieriba"};
+    DPointerArray* array = d_pointer_array_new(len, true); // array of pointer should be null terminated because of `true` argument.
+    char* arr[] = {"bonjour", "dieriba"};
     d_pointer_array_push_back(array, arr[0]);
     d_pointer_array_push_back(array, arr[1]);
-    arr[2] = NULL;
+    for (size_t i = 0; i < 2; i++)
+    {
+        usize len = strlen(arr[i]);
+        char* str = array -> pdata[i];
+        d_assert_eq(str, arr[i], len);
+    }
+    char *str = array -> pdata[2];
+    assert_eq_null(str);
+    d_pointer_array_destroy(&array);
 }
 
 void    test_d_pointer_array_append_vals(void)
 {
-    
+    DPointerArray* array = d_pointer_array_new(0, true); // array of pointer should be null terminated because of `true` argument.
+    char* arr[] = {"bonjour", "dieriba", "comment", "vas", "tu", "bien", NULL};
+    d_pointer_array_append_vals(array, arr, 6);
+    for (size_t i = 0; i < 6; i++)
+    { 
+        char* str = array -> pdata[i];
+        d_assert_eq(str, arr[i], strlen(arr[i]));
+    }
+    char* str = array -> pdata[6];
+    assert_eq_null(str);
+    d_pointer_array_destroy(&array);
 }
 
 void    test_d_pointer_array_copy(void)
 {
-
+    DPointerArray* array1 = d_pointer_array_new(0, true); // array of pointer should be null terminated because of `true` argument.
+    char* arr[] = {"bonjour", "dieriba", "comment", "vas", "tu", "bien", NULL};
+    d_pointer_array_append_vals(array1, arr, 7);
+    DPointerArray* array2 = d_pointer_array_copy(array2);
+    for (size_t i = 0; i < 7; i++)
+    { 
+        char* str1 = array1 -> pdata[i];
+        char* str2 = array2 -> pdata[i];
+        d_assert_eq(str1, str2, strlen(str1));
+    }
+    assert_eq_custom(&array1 -> len, &array2 -> len, sizeof(usize), itoa_usize);
+    d_pointer_array_destroy(&array1);
+    d_pointer_array_destroy(&array2);
 }
 
 void    test_d_pointer_array_get_capacity(void)

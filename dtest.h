@@ -95,7 +95,7 @@ typedef char*(*DbgFn)(void*);
 } while (0)
 
 #define d_assert_eq(left,right,size) assert_eq_custom(left,right,size,NULL)
-#define assert_eq_null(data,pfn) assert_eq_null_custom(data,NULL)
+#define assert_eq_null(data) assert_eq_null_custom(data,NULL)
 #define d_assert_ne(left,right,size) assert_ne_custom(left,right,size,NULL)
-#define assert_ne_null(data,pfn) assert_ne_null_custom(data,NULL)
+#define assert_ne_null(data) assert_ne_null_custom(data,NULL)
 #endif

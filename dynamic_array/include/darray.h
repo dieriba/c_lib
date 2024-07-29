@@ -279,7 +279,7 @@ DPointerArray*	d_pointer_array_increase_capacity	(DPointerArray* array, usize ne
  * @return DPointerArray* A pointer to the updated `DPointerArray` with the new pointers appended. Returns NULL if
  *         the operation fails or if the `array` or `data` is NULL.
  */
-DPointerArray  *d_pointer_array_append_vals		(DPointerArray *array, 	const void *data,	usize len);
+DPointerArray  *d_pointer_array_append_vals		(DPointerArray *array, 	const void **data,	usize len);
 
 /**
  * @brief Appends a single pointer to the end of a dynamic pointer array.
