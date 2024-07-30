@@ -103,7 +103,7 @@ typedef char*(*DbgFn)(void*);
         if (pfn != NULL) { \
             DbgFn fn = (DbgFn)pfn; \
             char *_data = fn(data); \
-            fprintf(stderr, RED "assertion `data == NULL` failed\ndata: \"%s\"\n" RESET , data); \
+            fprintf(stderr, RED "assertion `data == NULL` failed\ndata: \"%s\"\n" RESET , _data); \
             free(_data); \
         } else { \
             fprintf(stderr, RED "assertion `data == NULL` failed\ndata: \"%s\"" RESET, data); \
@@ -118,7 +118,7 @@ typedef char*(*DbgFn)(void*);
         if (pfn != NULL) { \
             DbgFn fn = (DbgFn)pfn; \
             char *_data = fn(data); \
-            fprintf(stderr, RED "assertion `left == right` failed\ndata: \"%s\"\n" RESET , data); \
+            fprintf(stderr, RED "assertion `left == right` failed\ndata: \"%s\"\n" RESET , _data); \
             free(_left); \
             free(_right); \
         } else { \

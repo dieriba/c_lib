@@ -98,6 +98,8 @@ DArray  *d_array_remove_index_fast	(DArray	*arr, 	usize	index)
 
 void    d_array_destroy		(DArray** arr)
 {
+	if (arr == NULL || *arr == NULL)
+		return;
 	DRealArray*	array = (DRealArray*)(*arr);
 	free(array->data);
 	free(array);
@@ -152,7 +154,7 @@ DPointerArray  *d_pointer_array_new	(usize reserved_elem, bool null_terminated, 
 	array -> capacity = (((reserved_elem > 0) * reserved_elem) + ((reserved_elem == 0) + array -> null_terminated) * (usize)CAPACITY);
 	array -> pdata = malloc(sizeof(void*) * array -> capacity);
 	array -> len = 0;
-	array -> refcount = 0;
+	array -> refcount = 1;
 	if (array -> pdata == NULL)
 	{
 		free(array);
@@ -196,7 +198,7 @@ DPointerArray  *d_pointer_array_push_back		(DPointerArray *arr, 	const void *dat
 {
 	DRealPointerArray* array = (DRealPointerArray*)arr;
 	usize	null_terminated = (usize)array -> null_terminated;
-	if (array -> capacity - null_terminated == 0 && d_pointer_array_try_expand(arr, 1) == false)
+	if (array -> capacity - null_terminated == 0 && d_pointer_array_try_expand(arr, 8) == false)
 		return NULL;
 	array -> pdata[array -> len++] = (void*)data;
 	if (null_terminated)
@@ -207,13 +209,16 @@ DPointerArray  *d_pointer_array_push_back		(DPointerArray *arr, 	const void *dat
 DPointerArray  *d_pointer_array_remove_index_fast	(DPointerArray	*arr, 	usize	index)
 {
 	DRealPointerArray* array = (DRealPointerArray*)arr;
+	DestroyElemFunc	free_func = array -> free_func;
 	if (index >= array -> len)
 		return NULL;
-	if (array -> free_func)
-		array -> free_func(array -> pdata[index]);
-	array -> pdata[index] = array -> pdata[array -> len - 1 - array -> null_terminated];
-	array -> capacity++;
-	array -> len--;
+	void *tmp = array -> pdata[index];
+	array -> pdata[index] = array -> pdata[array -> len - 1];
+	if (free_func != NULL)
+		free_func(tmp);
+	array -> pdata[array -> len - 1] = NULL;
+	++array -> capacity;
+	--array -> len;
 	return arr;
 }
 
@@ -225,13 +230,10 @@ void    d_pointer_array_destroy		(DPointerArray** arr)
 	array->refcount -= (array->refcount > 0);
 	if (array->refcount == 0 && free_func != NULL)
 	{
-		size_t	i = 0;
-		for (; i < array -> len; i++)
+		for (size_t	i = 0; i < array -> len; i++)
 		{
 			free_func(array->pdata[i]);
-			array->pdata[i] = NULL;
 		}
-		memset(array + i, 0, sizeof(DRealPointerArray));
 	}
 	free(array->pdata);
 	free(array);
