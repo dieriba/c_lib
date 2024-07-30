@@ -16,11 +16,11 @@ char*   itoa_i32(void* data)
     return d_itoa_i32((int32)data);
 }
 
-char*   print_struct(void* _dstring)
+char*   print_d_string(void* _dstring)
 {
     DString* dstring = (DString*)_dstring;
     char *str = malloc((sizeof(char) * dstring -> len) + 1);
-    memcpy(str, dstring -> string, dstring -> len);
+    memcpy(str, dstring -> string, dstring -> len + 1);
     return str;
 }
 
@@ -28,7 +28,7 @@ void    test_d_string_destroy(void)
 {
     DString* dstring = d_string_new();
     d_string_destroy(&dstring);
-    d_assert(dstring == NULL, dstring, NULL, print_struct);
+    assert_eq_null_custom(dstring, print_d_string);
 }
 
 void    test_d_string_new_with_string(void)
@@ -69,6 +69,14 @@ void    test_d_string_new_with_substring(void)
     str = "Hello world";
     len = strlen(str);
     dstring = d_string_new_with_substring(str, from, len);
+    d_assert_eq(dstring -> string, str, len);
+    assert_eq_custom(&dstring -> len, &len, sizeof(usize), itoa_usize);
+    d_string_destroy(&dstring);
+
+    from = 0;
+    str = "Hello world";
+    len = strlen(str);
+    dstring = d_string_new_with_substring(str, from, MAX_SIZE_T_VALUE);
     d_assert_eq(dstring -> string, str, len);
     assert_eq_custom(&dstring -> len, &len, sizeof(usize), itoa_usize);
     d_string_destroy(&dstring);
@@ -123,7 +131,7 @@ void    test_d_string_push_char(void)
     {
         usize len = i + 1;
         d_string_push_char(dstring, test_str_eq[i]);
-        d_assert_eq(dstring -> string, test_str_eq, &len);
+        d_assert_eq(dstring -> string, test_str_eq, len);
         assert_eq_custom(&dstring -> len, &len, sizeof(usize), itoa_usize);
     }
     d_string_destroy(&dstring);
@@ -192,19 +200,13 @@ void		test_d_string_compare(void)
     int32 to_cmp = 0;
     d_assert(compare == 0, &compare, &to_cmp, itoa_i32);
 
-    d_string_destroy(&dstring1);
-    d_string_destroy(&dstring2);
-
-    dstring1 = d_string_new_with_string("a");
-    dstring2 = d_string_new_with_string("b");
+    dstring1 = d_string_replace_from_str(dstring1, "a");
+    dstring2 = d_string_replace_from_str(dstring2, "b");
     compare = d_string_compare(dstring1, dstring2);
     d_assert(compare < 0, &compare, &to_cmp, itoa_i32);
 
-    d_string_destroy(&dstring1);
-    d_string_destroy(&dstring2);
-
-    dstring1 = d_string_new_with_string("b");
-    dstring2 = d_string_new_with_string("a");
+    dstring1 = d_string_replace_from_str(dstring1, "b");
+    dstring2 = d_string_replace_from_str(dstring2, "a");
     compare = d_string_compare(dstring1, dstring2);
 
     d_assert(compare > 0, &compare, &to_cmp, itoa_i32);
@@ -422,20 +424,26 @@ void    test_d_string_rfind_by_predicate_from(void)
 
 void    test_d_string_sub_string_new(void)
 {
-    DString* dstring = d_string_new_with_string("Hello World!");
-    DString* dstring1 = d_string_sub_string_new(dstring, 0, 5);
-    DString* dstring2 = d_string_sub_string_new(dstring, 5, 7);
-    char *str = "Hello";
-    usize len = strlen(str);
-    d_assert_eq(dstring1 -> string, str, len);
+    char *hello = "Hello World!";
+    DString* dstring = d_string_new_with_string(hello);
+    DString* dstring1 = d_string_sub_string_new(dstring, 0, MAX_SIZE_T_VALUE);
+    DString* dstring2 = d_string_sub_string_new(dstring, 0, 5);
+    DString* dstring3 = d_string_sub_string_new(dstring, 5, 7);
+    usize len = strlen(hello);
+    d_assert_eq(dstring1 -> string, hello, len);
     d_assert_eq(&dstring1 -> len, &len, sizeof(usize));
-    str = " World!";
+    char *str = "Hello";
     len = strlen(str);
     d_assert_eq(dstring2 -> string, str, len);
     d_assert_eq(&dstring2 -> len, &len, sizeof(usize));
+    str = " World!";
+    len = strlen(str);
+    d_assert_eq(dstring3 -> string, str, len);
+    d_assert_eq(&dstring3 -> len, &len, sizeof(usize));
     d_string_destroy(dstring);
     d_string_destroy(dstring1);
     d_string_destroy(dstring2);
+    d_string_destroy(dstring3);
 }
 
 void    test_d_string_sub_string_in_place(void)

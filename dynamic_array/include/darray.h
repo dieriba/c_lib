@@ -251,7 +251,7 @@ DPointerArray*	d_pointer_array_new					(usize reserved_elem, bool null_terminate
 usize 			d_pointer_array_get_capacity				(DPointerArray* array);
 
 /**
- * @brief Increases the capacity of a dynamic pointer array.
+ * @brief mofify the capacity of a dynamic pointer array.
  *
  * Resizes the given `DPointerArray` `array` to accommodate at least `new_capacity` pointers. This function allocates
  * additional memory if necessary to meet the specified capacity. If `new_capacity` is greater than the current capacity,
