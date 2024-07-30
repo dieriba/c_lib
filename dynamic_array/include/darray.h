@@ -39,6 +39,19 @@ struct _DPointerArray {
 };
 
 /**
+ * @brief Shrinks the capacity of the dynamic array (DArray) to fit its current length.
+ * @param a a #DArray
+ *
+ * This macro reduces the array's capacity to match the number of elements it currently
+ * holds, potentially freeing unused memory.
+ *
+ * This is a macro that internally calls `d_array_modify_capacity` for convenience.
+ *
+ * @return the #DArray with its capacity reduced to fit its length.
+ */
+#define d_array_shrink_to_fit(a) d_array_modify_capacity(a, a->len) 
+
+/**
  * @brief Appends a single value to the end of a dynamic array.
  *
  * This macro provides a convenient way to append a single value `v` to the end of a `DArray` `a`. It
@@ -114,29 +127,18 @@ DArray  *d_array_copy				(DArray* array);
 usize	d_array_get_capacity		(DArray* array);
 
 /**
- * @brief Increases the capacity of a dynamic array (DArray).
+ * @brief Modifies the capacity of a dynamic array (DArray) to the specified new_capacity.
+ * @param array a pointer to the #DArray that needs its capacity modified.
+ * @param new_capacity the new desired capacity for the #DArray. This can be greater
+ *                or smaller than the current capacity.
  *
- * This function is used to increase the storage capacity of a dynamic array.
- * When the current capacity of the array is insufficient to accommodate additional
- * elements, this function can be called to expand the array's capacity to at least
- * the specified new_capacity.
+ * This function adjusts the array's storage capacity, which can be used to either
+ * increase or decrease the size of the array.
  *
- * @param arrayA pointer to the DArray that needs its capacity increased.
- * @param new_capacity The new desired capacity for the DArray. This should be greater
- *                     than the current capacity of the array.
- * @return A pointer to the updated DArray with the increased capacity. If the reallocation
- *         fails, it typically returns NULL.
- *
- * Example Usage:
- * @code
- * DArray *array = d_array_create(10); // Create a dynamic array with an initial capacity of 10
- * array = d_array_increase_capacity(array, 20); // Increase the array's capacity to 20
- * if (array == NULL) {
- *     // Handle memory allocation failure
- * }
- * @endcode
+ * @return a pointer to the updated #DArray with the modified capacity. If the
+ *          reallocation fails, it typically returns NULL.
  */
-DArray	*d_array_increase_capacity	(DArray* array, usize new_capacity);
+DArray	*d_array_modify_capacity	(DArray* array, usize new_capacity);
 
 /**
  * @brief Appends a block of values to the end of a dynamic array.
@@ -153,6 +155,17 @@ DArray	*d_array_increase_capacity	(DArray* array, usize new_capacity);
  * @return DArray* A pointer to the updated `DArray` with the new values appended. Returns NULL if the operation fails.
  */
 DArray  *d_array_append_vals		(DArray *array, 	const void *data,		usize len);
+
+/**
+ * @brief Removes the last element from the dynamic array (DArray).
+ * @array: a pointer to the `#DArray` from which an element will be removed.
+ *
+ * Removes the last element from the dynamic array (DArray). If the array is empty,
+ * this function does nothing.
+ *
+ * @return a pointer to the updated `#DArray`.
+ */
+DArray  *d_array_pop_back		(DArray *array);
 
 /**
  * @brief Removes an element from a dynamic array at a specified index quickly.

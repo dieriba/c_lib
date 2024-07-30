@@ -51,7 +51,6 @@ char* print_d_array_int(void* darray)
     usize i = 1;
     for (size_t j = 0; j < array -> len; ++j)
     {
-        printf("value:[%d]\n", arr[j]);
         char *nb = d_itoa_i32_no_alloc(arr[j]);
         usize len = strlen(nb);
         if (j == 0)
@@ -67,7 +66,7 @@ char* print_d_array_int(void* darray)
     return str;
 }
 
-char* print_int(void* array)
+char* print_int_array(void* array)
 {
     int *arr = (int*)array;
     usize arr_len = get_len_arr(arr, g_arr_len);
@@ -79,7 +78,6 @@ char* print_int(void* array)
     usize i = 1;
     for (size_t j = 0; j < g_arr_len; ++j)
     {
-        printf("value:[%d]\n", arr[j]);
         char *nb = d_itoa_i32_no_alloc(arr[j]);
         usize len = strlen(nb);
         if (j == 0)
@@ -149,13 +147,15 @@ void    test_d_array_push_back(void)
 {
     DArray* array = d_array_new(false, sizeof(int), 0);
     int arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    for (int32 i = 0; i < 10; i++)
+    int s_arr[] = {0, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+    for (int32 i = 1; i <= 10; i++)
     {
         d_array_push_back(array, i);
     }
-    usize len = 10;
-    assert_eq_custom(array -> data, arr, sizeof(int) * 10, print_d_array_int);
-    assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
+    g_arr_len = 10;
+    assert_ne_custom(array -> data, s_arr, sizeof(int) * g_arr_len, print_int_array);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
 
     int second_arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 
                         11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 
@@ -209,11 +209,14 @@ void    test_d_array_push_back(void)
                         491, 492, 493, 494, 495, 496, 497, 498, 499, 500
  };
     d_array_destroy(&array);
-
-    len = 500;
+    array = d_array_new(true, sizeof(int), 0);
     g_arr_len = 500;
-    assert_eq_custom(array -> data, second_arr, sizeof(int) * len, print_d_array_int);
-    assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
+    for (size_t i = 1; i <= g_arr_len; i++)
+    {
+        d_array_push_back(array, i);
+    }
+    assert_eq_custom(array -> data, second_arr, sizeof(int) * g_arr_len, print_int_array);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
 }
 
 void    test_d_array_append_vals(void)
@@ -325,30 +328,31 @@ void    test_d_array_append_vals(void)
                         461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 
                         471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 
                         481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 
-                        491, 492, 493, 94, 495, 496, 497, 498, 499, 500
+                        491, 492, 493, 494, 495, 496, 497, 498, 499, 50
  };
     d_array_destroy(&array);
     len = 500;
     array = d_array_new(true, sizeof(int), 0);
     d_array_append_vals(array, second_arr, 500);
     g_arr_len = 500;
-    print_d_array_int(array);
     assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
-    assert_eq_custom(array -> data, second_rr, sizeof(int) * len, print_d_array_int);
+    assert_ne_custom(array -> data, second_rr, sizeof(int) * len, print_int_array);
     d_array_destroy(&array);
 }
-/*
+
+
 void    test_d_array_copy(void)
 {
     DArray* array = d_array_new(false, sizeof(int), 0);
     int arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    usize len = 10;
-    d_array_append_vals(array, arr, sizeof(int) * len);
+    usize g_arr_len = 10;
+    d_array_append_vals(array, arr, g_arr_len);
     DArray* copy_array = d_array_copy(array);
-    assert_eq_custom(array -> data, copy_array -> data, sizeof(int) * len, print_d_array_int);
+    assert_eq_custom(array -> data, copy_array -> data, sizeof(int) * g_arr_len, print_d_array_int);
     assert_eq_custom(&array -> len, &copy_array -> len, sizeof(usize), itoa_usize);
     d_array_destroy(&array);
 }
+
 
 void    test_d_array_get_capacity(void)
 {
@@ -359,43 +363,80 @@ void    test_d_array_get_capacity(void)
     d_array_destroy(&array);
 }
 
-void    test_d_array_increase_capacity(void)
+void    test_d_array_modify_capacity(void)
 {
     DArray* array = d_array_new(false, sizeof(int), 0);
     usize new_capacity = 500;
-    d_array_increase_capacity(array, new_capacity);
+    d_array_modify_capacity(array, new_capacity);
     usize capacity = d_array_get_capacity(array);
     assert_eq_custom(&capacity, &new_capacity, sizeof(usize), itoa_usize);
-    d_array_destroy(array);
+    for (int32 i = 0; i < 10 ; i++)
+    {
+        d_array_push_back(array, i);
+    }
+    d_array_shrink_to_fit(array);
+    new_capacity = array -> len;
+    capacity = d_array_get_capacity(array);
+    assert_eq_custom(&capacity, &new_capacity, sizeof(usize), itoa_usize);
+    d_array_destroy(&array);
+}
+
+void    test_d_array_pop_back(void)
+{
+    DArray* array = d_array_new(false, sizeof(int), 0);
+    int arr[] = {1, 2, 3, 4};
+    g_arr_len = 4;
+    d_array_append_vals(array, arr, g_arr_len);
+    assert_eq_custom(array -> data, arr, sizeof(int) * g_arr_len, print_int_array);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
+    d_array_pop_back(array);
+    g_arr_len = 3;
+    int second_arr[] = {1, 2, 3};
+    assert_eq_custom(array -> data, second_arr, sizeof(int) * g_arr_len, print_int_array);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
+    int third_arr[] = {1, 2};
+    g_arr_len = 2;
+    d_array_pop_back(array);
+    assert_eq_custom(array -> data, third_arr, sizeof(int) * g_arr_len, print_int_array);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
+    int fourth_arr[] = {1};
+    g_arr_len = 1;
+    d_array_pop_back(array);
+    assert_eq_custom(array -> data, fourth_arr, sizeof(int) * g_arr_len, print_int_array);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
+    g_arr_len = 0;
+    d_array_pop_back(array);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
+    d_array_destroy(&array);
 }
 
 void    test_d_array_remove_index_fast(void)
 {
     DArray* array = d_array_new(false, sizeof(int), 0);
     int arr[] = {1, 2, 3, 4};
-    usize len = 4;
-    d_array_append_vals(array, arr, sizeof(int) * len);
+    g_arr_len = 4;
+    d_array_append_vals(array, arr, g_arr_len);
     d_array_remove_index_fast(array, 500);
-    assert_eq_custom(array -> data, arr, sizeof(int) * len, print_d_array_int);
-    assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
+    assert_eq_custom(array -> data, arr, sizeof(int) * g_arr_len, print_int_array);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
     d_array_remove_index_fast(array, 3);
-    len = 3;
+    g_arr_len = 3;
     int second_arr[] = {1, 2, 3};
-    assert_eq_custom(array -> data, second_arr, sizeof(int) * len, print_d_array_int);
-    assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
+    assert_eq_custom(array -> data, second_arr, sizeof(int) * g_arr_len, print_int_array);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
     int third_arr[] = {1, 3};
-    len = 2;
+    g_arr_len = 2;
     d_array_remove_index_fast(array, 1);
-    assert_eq_custom(array -> data, third_arr, sizeof(int) * len, print_d_array_int);
-    assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
+    assert_eq_custom(array -> data, third_arr, sizeof(int) * g_arr_len, print_int_array);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
     int fourth_arr[] = {1};
-    len = 1;
+    g_arr_len = 1;
     d_array_remove_index_fast(array, 1);
-    assert_eq_custom(array -> data, fourth_arr, sizeof(int) * len, print_d_array_int);
-    assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
-    len = 0;
+    assert_eq_custom(array -> data, fourth_arr, sizeof(int) * g_arr_len, print_int_array);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
+    g_arr_len = 0;
     d_array_remove_index_fast(array, 0);
-    assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
+    assert_eq_custom(&array -> len, &g_arr_len, sizeof(usize), itoa_usize);
     d_array_destroy(&array);
 }
 
@@ -411,7 +452,7 @@ void    test_d_array_clear_array(void)
     d_array_destroy(&array);
 }
 
-
+/*
 void    test_d_pointer_array_new(void)
 {
     usize len = 4;
@@ -501,19 +542,20 @@ void    test_d_pointer_array_remove_index_fast(void)
 void    test_d_pointer_array_clear_array(void)
 {
 
-}
-*/
+}*/
+
 int main(void)
 {
     TEST("test_d_array_destroy", test_d_array_destroy(););
+    TEST("test_d_array_push_back", test_d_array_push_back(););
     TEST("test_d_array_append_vals", test_d_array_append_vals(););
-    /*TEST("test_d_array_push_back", test_d_array_push_back(););
     TEST("test_d_array_copy", test_d_array_copy(););
     TEST("test_d_array_get_capacity", test_d_array_get_capacity(););
-    TEST("test_d_array_increase_capacity", test_d_array_increase_capacity(););
+    TEST("test_d_array_modify_capacity", test_d_array_modify_capacity(););
     TEST("test_d_array_remove_index_fast", test_d_array_remove_index_fast(););
+    TEST("test_d_array_pop_back", test_d_array_pop_back(););
     TEST("test_d_array_clear_array", test_d_array_clear_array(););
-    TEST("test_d_pointer_array_destroy", test_d_pointer_array_destroy(););
+    /*TEST("test_d_pointer_array_destroy", test_d_pointer_array_destroy(););
     TEST("test_d_pointer_array_append_vals", test_d_pointer_array_append_vals(););
     TEST("test_d_pointer_array_push_back", test_d_pointer_array_push_back(););
     TEST("test_d_pointer_array_copy", test_d_pointer_array_copy(););

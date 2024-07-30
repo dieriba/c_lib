@@ -52,6 +52,39 @@ DArray  *d_array_append_vals		(DArray *arr, 	const void *data,		usize len)
 	return arr;
 }
 
+DArray	*d_array_copy(DArray* array)
+{
+	DRealArray* rarray = (DRealArray*)array;
+	DArray* new_array = d_array_new(rarray -> clear, rarray -> elem_size, rarray -> len * 2);
+	d_array_append_vals(new_array, rarray -> data, rarray -> len);
+	return new_array;
+}
+
+usize d_array_get_capacity(DArray* array)
+{
+	DRealArray* rarray = (DRealArray*) array;
+	return rarray -> capacity;
+}
+
+DArray* d_array_modify_capacity(DArray* array, usize new_capacity)
+{
+	DRealArray* rarray = (DRealArray*) array;
+	if (new_capacity == rarray -> capacity)
+		return array;
+	rarray -> capacity = new_capacity;
+	array -> data = reallocarray(array -> data, rarray -> len + new_capacity, rarray -> elem_size);
+	if (array -> data == NULL)
+		return NULL;
+	return array;
+}
+
+DArray  *d_array_pop_back	(DArray	*arr)
+{
+	DRealArray* array = (DRealArray*)arr;
+	array -> len -= (array -> len > 0);
+	return arr;
+}
+
 DArray  *d_array_remove_index_fast	(DArray	*arr, 	usize	index)
 {
 	DRealArray* array = (DRealArray*)arr;
