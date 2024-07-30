@@ -6,6 +6,8 @@
 typedef struct _DArray			DArray;
 typedef struct _DPointerArray	DPointerArray;
 
+typedef void(*DestroyElemFunc)(void*);
+
 /**
  * DArray:
  * @param data a pointer to the element data. The data may be moved as
@@ -226,24 +228,12 @@ void    d_array_destroy				(DArray** array);
  * @param null_terminated A boolean flag indicating whether the array should be NULL-terminated. If true, a NULL pointer
  *                        will be added as the last element in the array.
  *
+ * @param free_func  The free function that will be called on each element when destroying the d_array, the free_func
+ * 					 must be declared as such `void fn_name(void*)`.
+ * 
  * @return DPointerArray* A pointer to the newly created `DPointerArray`. Returns NULL if the allocation fails.
  */
-DPointerArray*	d_pointer_array_new					(usize reserved_elem, bool null_terminated);
-
-/**
- * @brief Creates a copy of a dynamic pointer array.
- *
- * Allocates and initializes a new `DPointerArray` that is a copy of the given `DPointerArray` `copy`. The new array
- * will contain all the pointers from the original array but will be a separate instance with its own allocated memory.
- * This operation duplicates both the pointers and the internal structure of the original array, allowing you to work
- * with two distinct arrays independently.
- *
- * @param copy A pointer to the `DPointerArray` to be copied. Must not be NULL.
- *
- * @return DPointerArray* A pointer to the newly created `DPointerArray` that is a copy of the original. Returns NULL
- *         if the operation fails or if the `copy` is NULL.
- */
-DPointerArray*	d_pointer_array_copy				(DPointerArray* copy);
+DPointerArray*	d_pointer_array_new					(usize reserved_elem, bool null_terminated, DestroyElemFunc free_func);
 
 /**
  * @brief Retrieves the current capacity of a dynamic pointer array.
@@ -258,7 +248,7 @@ DPointerArray*	d_pointer_array_copy				(DPointerArray* copy);
  * @return usize The current capacity of the `DPointerArray`, representing the number of pointers it can hold.
  *               Returns 0 if the `array` is NULL.
  */
-usize 			d_pointer_get_capacity				(DPointerArray* array);
+usize 			d_pointer_array_get_capacity				(DPointerArray* array);
 
 /**
  * @brief Increases the capacity of a dynamic pointer array.
@@ -275,7 +265,7 @@ usize 			d_pointer_get_capacity				(DPointerArray* array);
  * @return DPointerArray* A pointer to the updated `DPointerArray` with increased capacity. Returns NULL if the operation
  *         fails, if the `array` is NULL, or if `new_capacity` is less than or equal to the current capacity.
  */
-DPointerArray*	d_pointer_array_increase_capacity	(DPointerArray* array, usize new_capacity);
+DPointerArray*	d_pointer_array_modify_capacity	(DPointerArray* array, usize new_capacity);
 
 /**
  * @brief Appends a block of pointers to the end of a dynamic pointer array.

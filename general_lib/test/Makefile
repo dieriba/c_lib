@@ -13,6 +13,14 @@ HEADER_ROOT_DIR := ../..
 # Directory where are source files
 SRC_DIR := src
 
+# Directory where are source files
+GENRAL_LIB_SRC_DIR := ../src
+
+# Directory where are source files
+GENRAL_LIB_SRC_DIR := $(shell find $(GENRAL_LIB_SRC_DIR) -name '*.c')
+
+
+
 # All source files
 SRC := $(shell find $(SRC_DIR) -name '*.c')
 
@@ -20,7 +28,7 @@ SRC := $(shell find $(SRC_DIR) -name '*.c')
 OBJ_DIR := objs
 
 # All object files
-OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
+OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC)) 
 
 # Variable that will store flags command to include headers
 INCLUDES := -I$(GENERAL_LIB_INCLUDE_DIR) -I$(HEADER_ROOT_DIR) -I$(DYNAMIC_ARR_INCLUDE_DIR)

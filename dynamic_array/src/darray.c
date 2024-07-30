@@ -129,8 +129,6 @@ bool d_array_try_expand(DRealArray *arr, usize len)
 /*-------------------------------------------------DPointerArray-------------------------------------------------*/
 
 typedef struct _DRealPointerArray  DRealPointerArray;
-typedef void(*DestroyElemFunc)(void*);
-
 
 struct _DRealPointerArray
 {
@@ -139,19 +137,22 @@ struct _DRealPointerArray
 	usize				capacity;
   	u8          	null_terminated : 1; /* always either 0 or 1, so it can be added to array lengths */
 	DestroyElemFunc	free_func; /*if not null will be used on each element when de-allocating or clearing the array*/
+	usize	refcount;
 };
 
 static bool d_pointer_array_try_expand(DPointerArray *array, usize len);
 
-DPointerArray  *d_pointer_array_new	(usize reserved_elem, bool null_terminated)
+DPointerArray  *d_pointer_array_new	(usize reserved_elem, bool null_terminated, DestroyElemFunc free_func)
 {
 	DRealPointerArray  *array = malloc(sizeof(DRealPointerArray) * 1);
 	if (array == NULL)
 		return (NULL);
+	array -> free_func = free_func;
 	array -> null_terminated = null_terminated;
 	array -> capacity = (((reserved_elem > 0) * reserved_elem) + ((reserved_elem == 0) + array -> null_terminated) * (usize)CAPACITY);
 	array -> pdata = malloc(sizeof(void*) * array -> capacity);
 	array -> len = 0;
+	array -> refcount = 0;
 	if (array -> pdata == NULL)
 	{
 		free(array);
@@ -160,6 +161,35 @@ DPointerArray  *d_pointer_array_new	(usize reserved_elem, bool null_terminated)
 	if (array -> null_terminated)
 		array->pdata[0] = NULL;
 	return (DPointerArray*) array;
+}
+
+DPointerArray  *d_pointer_array_append_vals		(DPointerArray *arr, const void **data,	usize len)
+{
+	DRealPointerArray* array = (DRealPointerArray*) arr;
+	if (array -> capacity < len && d_pointer_array_try_expand(arr, len) == false)
+		return NULL;
+	memcpy(array -> pdata + array -> len, data, sizeof(void*) * len);
+	array -> capacity -= len;
+	array -> len += len;
+	if (array -> null_terminated)
+		array -> pdata[array -> len] = NULL;
+	return arr;
+}
+
+usize 			d_pointer_array_get_capacity				(DPointerArray* array)
+{
+	DRealPointerArray* rarray = (DRealPointerArray*)array;
+	return rarray -> capacity;
+}
+
+DPointerArray*	d_pointer_array_modify_capacity(DPointerArray* array, usize new_capacity)
+{
+	DRealPointerArray* rarray = (DRealPointerArray*)array;
+	if (new_capacity == 0)
+		return array;
+	rarray -> capacity = new_capacity;
+	array -> pdata = reallocarray(array -> pdata, array -> len + new_capacity, sizeof(void*));
+	return array;
 }
 
 DPointerArray  *d_pointer_array_push_back		(DPointerArray *arr, 	const void *data)
@@ -192,7 +222,8 @@ void    d_pointer_array_destroy		(DPointerArray** arr)
 	DRealPointerArray*	array = (DRealPointerArray*)(*arr);
 	DestroyElemFunc	free_func = array -> free_func;
 
-	if (free_func)
+	array->refcount -= (array->refcount > 0);
+	if (array->refcount == 0 && free_func != NULL)
 	{
 		size_t	i = 0;
 		for (; i < array -> len; i++)

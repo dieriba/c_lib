@@ -328,7 +328,7 @@ void    test_d_array_append_vals(void)
                         461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 
                         471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 
                         481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 
-                        491, 492, 493, 494, 495, 496, 497, 498, 499, 50
+                        491, 492, 493, 494, 495, 496, 497, 498, 499, 500
  };
     d_array_destroy(&array);
     len = 500;
@@ -336,7 +336,7 @@ void    test_d_array_append_vals(void)
     d_array_append_vals(array, second_arr, 500);
     g_arr_len = 500;
     assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
-    assert_ne_custom(array -> data, second_rr, sizeof(int) * len, print_int_array);
+    assert_eq_custom(array -> data, second_rr, sizeof(int) * len, print_int_array);
     d_array_destroy(&array);
 }
 
@@ -452,32 +452,33 @@ void    test_d_array_clear_array(void)
     d_array_destroy(&array);
 }
 
-/*
+
 void    test_d_pointer_array_new(void)
 {
     usize len = 4;
-    DPointerArray* array = d_pointer_array_new(len, true);
-    for (size_t i = 0; i < len; i++)
-    {
-        char* str = (char*)array -> pdata[i];
-        assert_eq_null(str);
-    }
+    DPointerArray* array = d_pointer_array_new(len, true, NULL);
+
+    char* str = (char*)array -> pdata[0];
+    assert_eq_null(str);
+    len = 0;
     assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
     d_pointer_array_destroy(&array);
 }
 
 void    test_d_pointer_array_destroy(void)
 {
-    DPointerArray* array = d_pointer_array_new(0, true);
+    DPointerArray* array = d_pointer_array_new(0, true, NULL);
     d_pointer_array_destroy(&array);
     assert_eq_null_custom(array, print_d_pointer_arr_as_string);
 }
 
+
 void    test_d_pointer_array_push_back(void)
 {
     usize len = 3;
-    DPointerArray* array = d_pointer_array_new(len, true); // array of pointer should be null terminated because of `true` argument.
-    char* arr[] = {"bonjour", "dieriba"};
+    DPointerArray* array = d_pointer_array_new(len, true, NULL); // array of pointer should be null terminated because of `true` argument.
+
+    char* arr[] = {"Dieriba", "Comment ca va"};
     d_pointer_array_push_back(array, arr[0]);
     d_pointer_array_push_back(array, arr[1]);
     for (size_t i = 0; i < 2; i++)
@@ -493,8 +494,8 @@ void    test_d_pointer_array_push_back(void)
 
 void    test_d_pointer_array_append_vals(void)
 {
-    DPointerArray* array = d_pointer_array_new(0, true); // array of pointer should be null terminated because of `true` argument.
-    char* arr[] = {"bonjour", "dieriba", "comment", "vas", "tu", "bien", NULL};
+    DPointerArray* array = d_pointer_array_new(0, true, NULL); // array of pointer should be null terminated because of `true` argument.
+    char* arr[] = {"bonjour", "dieriba", "comment", "vas", "tu", "bien"};
     d_pointer_array_append_vals(array, arr, 6);
     for (size_t i = 0; i < 6; i++)
     { 
@@ -506,26 +507,14 @@ void    test_d_pointer_array_append_vals(void)
     d_pointer_array_destroy(&array);
 }
 
-void    test_d_pointer_array_copy(void)
-{
-    DPointerArray* array1 = d_pointer_array_new(0, true); // array of pointer should be null terminated because of `true` argument.
-    char* arr[] = {"bonjour", "dieriba", "comment", "vas", "tu", "bien", NULL};
-    d_pointer_array_append_vals(array1, arr, 7);
-    DPointerArray* array2 = d_pointer_array_copy(array2);
-    for (size_t i = 0; i < 7; i++)
-    { 
-        char* str1 = array1 -> pdata[i];
-        char* str2 = array2 -> pdata[i];
-        d_assert_eq(str1, str2, strlen(str1));
-    }
-    assert_eq_custom(&array1 -> len, &array2 -> len, sizeof(usize), itoa_usize);
-    d_pointer_array_destroy(&array1);
-    d_pointer_array_destroy(&array2);
-}
 
 void    test_d_pointer_array_get_capacity(void)
 {
-
+    DPointerArray* array = d_pointer_array_new(false, true, NULL);
+    usize capacity = d_pointer_array_get_capacity(array);
+    usize default_capacity = 8;
+    assert_eq_custom(&capacity, &default_capacity, sizeof(usize), itoa_usize);
+    d_pointer_array_destroy(&array);
 }
 
 void    test_d_pointer_array_increase_capacity(void)
@@ -534,15 +523,24 @@ void    test_d_pointer_array_increase_capacity(void)
 }
 
 
+/*
 void    test_d_pointer_array_remove_index_fast(void)
 {
 
 }
 
+*/
 void    test_d_pointer_array_clear_array(void)
 {
-
-}*/
+    DPointerArray* array = d_pointer_array_new(4, true, NULL);
+    char *arr[] = {"1", "2", "3", "4"};
+    usize len = 4;
+    d_pointer_array_append_vals(array, arr, len);
+    d_pointer_array_clear_array(array);
+    len = 0;
+    assert_eq_custom(&array -> len, &len, sizeof(usize), itoa_usize);
+    d_pointer_array_destroy(&array);
+}
 
 int main(void)
 {
@@ -555,12 +553,12 @@ int main(void)
     TEST("test_d_array_remove_index_fast", test_d_array_remove_index_fast(););
     TEST("test_d_array_pop_back", test_d_array_pop_back(););
     TEST("test_d_array_clear_array", test_d_array_clear_array(););
-    /*TEST("test_d_pointer_array_destroy", test_d_pointer_array_destroy(););
+    TEST("test_d_pointer_array_destroy", test_d_pointer_array_destroy(););
+    TEST("test_d_pointer_array_new", test_d_pointer_array_new(););
     TEST("test_d_pointer_array_append_vals", test_d_pointer_array_append_vals(););
     TEST("test_d_pointer_array_push_back", test_d_pointer_array_push_back(););
-    TEST("test_d_pointer_array_copy", test_d_pointer_array_copy(););
     TEST("test_d_pointer_array_get_capacity", test_d_pointer_array_get_capacity(););
-    TEST("test_d_pointer_array_increase_capacity", test_d_pointer_array_increase_capacity(););
-    TEST("test_d_pointer_array_remove_index_fast", test_d_pointer_array_remove_index_fast(););
-    TEST("test_d_pointer_array_clear_array", test_d_pointer_array_clear_array(););*/
+   // TEST("test_d_pointer_array_increase_capacity", test_d_pointer_array_increase_capacity(););
+  //  TEST("test_d_pointer_array_remove_index_fast", test_d_pointer_array_remove_index_fast(););
+    TEST("test_d_pointer_array_clear_array", test_d_pointer_array_clear_array(););
 }
