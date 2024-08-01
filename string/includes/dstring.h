@@ -2,7 +2,6 @@
 #define __D_STRING__H__
 
 #include <dtypes.h>
-#include <darray.h>
 typedef struct _DString DString;
 
 
@@ -24,7 +23,6 @@ struct _DString {
 };
 
 typedef usize(*match)(char c);
-typedef bool(*match_predicate)(char c);
 
 
 
@@ -378,7 +376,7 @@ usize		d_string_find_str(DString* dstring, const char *str);
  *                Must not be NULL.
  * @param fn A function pointer to the predicate function that determines whether a character
  *           satisfies the condition. The predicate function should have the following signature:
- *           `bool (*match_predicate)(char)`. If fn is NULL, the function may return `MAX_SIZE_T` as an invalid
+ *           `bool (*match)(char)`. If fn is NULL, the function may return `MAX_SIZE_T` as an invalid
  *           input indication.
  * @param pos The index in the _DString from which to start the search. If `pos` is greater than
  *            the length of the _DString, the function will return `MAX_SIZE_T`.
@@ -387,7 +385,7 @@ usize		d_string_find_str(DString* dstring, const char *str);
  *         the predicate function. Returns `MAX_SIZE_T` if no character satisfies the predicate,
  *         if `pos` is greater than the length of the _DString, or if the input parameters are invalid.
  */
-usize		d_string_find_by_predicate_from(DString* dstring, match_predicate fn, usize pos);
+usize		d_string_find_by_predicate_from(DString* dstring, match fn, usize pos);
 
 /**
  * @brief Finds the index of the first character in a dynamic string that satisfies a predicate function.
@@ -403,14 +401,14 @@ usize		d_string_find_by_predicate_from(DString* dstring, match_predicate fn, usi
  *                Must not be NULL.
  * @param fn A function pointer to the predicate function that determines whether a character
  *           satisfies the condition. The predicate function should have the following signature:
- *           `bool (*match_predicate)(char)`. If fn is NULL, the function may return `MAX_SIZE_T` as an invalid
+ *           `bool (*match)(char)`. If fn is NULL, the function may return `MAX_SIZE_T` as an invalid
  *           input indication.
  *
  * @return usize The index of the first character in the _DString that satisfies the predicate function.
  *         Returns `MAX_SIZE_T` if no character satisfies the predicate or if the input parameters
  *         are invalid.
  */
-usize		d_string_find_by_predicate(DString* dstring, match_predicate fn);
+usize		d_string_find_by_predicate(DString* dstring, match fn);
 
 /**
  * @brief Finds the last occurrence of a character in a dynamic string starting from a specified position.
@@ -515,7 +513,7 @@ usize		d_string_rfind_str(DString* dstring, const char *str);
  *                Must not be NULL.
  * @param fn A function pointer to the predicate function that determines whether a character
  *           satisfies the condition. The predicate function should have the following signature:
- *           `bool (*match_predicate)(char)`. If fn is NULL, the function may return `MAX_SIZE_T` as an invalid
+ *           `bool (*match)(char)`. If fn is NULL, the function may return `MAX_SIZE_T` as an invalid
  *           input indication.
  * @param pos The index in the _DString from which to start the search, moving backward. If `pos` is greater
  *            than the length of the _DString, the function will treat it as starting from the end of the string.
@@ -524,7 +522,7 @@ usize		d_string_rfind_str(DString* dstring, const char *str);
  *         Returns `MAX_SIZE_T` if no character satisfies the predicate, if `pos` is greater than the length of the
  *         _DString, or if the input parameters are invalid.
  */
-usize		d_string_rfind_by_predicate_from(DString* dstring, match_predicate fn, usize pos);
+usize		d_string_rfind_by_predicate_from(DString* dstring, match fn, usize pos);
 
 /**
  * @brief Finds the index of the last character in a dynamic string that satisfies a predicate function.
@@ -540,32 +538,14 @@ usize		d_string_rfind_by_predicate_from(DString* dstring, match_predicate fn, us
  *                Must not be NULL.
  * @param fn A function pointer to the predicate function that determines whether a character
  *           satisfies the condition. The predicate function should have the following signature:
- *           `bool (*match_predicate)(char)`. If fn is NULL, the function may return `MAX_SIZE_T` as an invalid
+ *           `bool (*match)(char)`. If fn is NULL, the function may return `MAX_SIZE_T` as an invalid
  *           input indication.
  *
  * @return usize The index of the last character in the _DString that satisfies the predicate function.
  *         Returns `MAX_SIZE_T` if no character satisfies the predicate or if the input parameters are invalid.
  */
-usize		d_string_rfind_by_predicate(DString* dstring, match_predicate fn);
+usize		d_string_rfind_by_predicate(DString* dstring, match fn);
 
-
-/**
- * @brief Creates a new dynamic string that is a substring of the given dynamic string.
- *
- * Creates a new _DString that is a substring of the specified _DString, starting from the index
- * `pos` and spanning `len` characters. The new _DString will contain the characters from `pos` to
- * `pos + len - 1` of the original _DString. If `pos` or `pos + len` is out of range 
- * no operation will be done on the string.
- *
- * @param dstring A pointer to the original _DString from which to create the substring.
- *                Must not be NULL.
- * @param pos The starting index of the substring within the original _DString.
- * @param len The length of the substring.
- *
- * @return DString* A new _DString containing the substring starting from `pos` with the specified length.
- *         Returns NULL if `pos` or `len` is out of range or if the input parameters are invalid.
- */
-DString*	d_string_sub_string_new(DString* dstring, usize pos, usize len);
 
 /**
  * @brief Truncates the dynamic string to become a substring starting from a specified position.
@@ -684,7 +664,7 @@ DString*	d_string_trim_right_by_char_in_place(DString* dstring, char c);
  * The operation modifies the original #DString.
  * @return The trimmed #DString
  */
-DString*	d_string_trim_right_by_prediacte_in_place(DString* dstring, match fn);
+DString*	d_string_trim_right_by_predicate_in_place(DString* dstring, match fn);
 
 /**
  * @brief Creates a new dynamic string with trailing occurrences of a specified character removed.
@@ -723,7 +703,7 @@ DString*	d_string_trim_right_by_char_new(DString* dstring, char c);
  * @return DString* A pointer to the new _DString with trailing characters removed based on the predicate function.
  *         Returns NULL if the input parameters are invalid.
  */
-DString*	d_string_trim_right_by_prediacte_new(DString* dstring, match fn);
+DString*	d_string_trim_right_by_predicate_new(DString* dstring, match fn);
 
 /**
  * @brief Converts a dynamic string to a dynamic array of characters.
@@ -738,7 +718,7 @@ DString*	d_string_trim_right_by_prediacte_new(DString* dstring, match fn);
  * @return DArray* A pointer to a new `DArray` containing the characters from the _DString.
  *         Returns NULL if the input _DString is NULL or if the conversion fails.
  */
-DArray* 	d_string_as_d_array(DString* dstring);
+//DArray* 	d_string_as_d_array(DString* dstring);
 
 /**
  * @brief Frees the memory allocated for a dynamic string and its internal resources.

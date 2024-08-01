@@ -1,14 +1,14 @@
 #Default Cflags used for compilation
-CFLAGS := -Wall -Werror -Wextra -O2 -MMD -g3
+CFLAGS := -Wall -Wextra -MMD -g3
 
 # Directory where are located header files
-INCLUDE_DIR := includes
+GENERAL_LIB_INCLUDE_DIR := ../../general_lib/include
 
 # Directory where are located some other necessary headers file
-INCLUDE_PATH_HEADER := ..
+HEADER_ROOT_DIR := ../..
 
-# Variable that will store flags command to include headers
-INCLUDES := -I$(INCLUDE_DIR) -I$(INCLUDE_PATH_HEADER)
+# Directory where are located some other necessary headers file
+STRING_INCLUDE_DIR := ../includes
 
 # Directory where are source files
 SRC_DIR := src
@@ -22,27 +22,39 @@ OBJ_DIR := objs
 # All object files
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
 
-# The dependency files that will be used in order to add header dependencies
-DEPEND = $(OBJS:.o=.d)
+# Variable that will store flags command to include headers
+INCLUDES := -I$(GENERAL_LIB_INCLUDE_DIR) -I$(HEADER_ROOT_DIR) -I$(STRING_INCLUDE_DIR)
 
 # Directory where will the builded library will be stored
-LIB_FOLDER := lib
+LIB_FOLDER := ../lib
+
+# The dependency files that will be used in order to add header dependencies
+DEPEND = $(OBJS:.o=.d)
 
 # Library name
 LIB_NAME := libdynamic_string.a
 
-# Library path
-LIB := $(LIB_FOLDER)/$(LIB_NAME)
+# Dynamic Arr Lib
+STRING_LIB := $(LIB_FOLDER)/$(LIB_NAME)
 
-all : $(LIB)
+# General lil
+GENERAL_LIB := ../../general_lib/lib/libgeneral_lib.a
 
-$(LIB) : $(OBJS)
-		@mkdir -p lib
-		ar rcs $@ $^
+# Executable name
+TARGET := test
 
-# Rule to generate all object file and create OBJ_DIR if not exist
-$(OBJ_DIR)/%.o : $(SRC_DIR)/%.c | $(OBJ_DIR)
+.PHONY: $(TARGET) 
+$(TARGET): $(OBJS) $(STRING_LIB) $(GENERAL_LIB)
+			$(CC) $^ -o $(TARGET)
+
+$(OBJ_DIR)/%.o : $(SRC_DIR)/%.c  | $(OBJ_DIR)
 		$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(STRING_LIB):
+		$(MAKE) -C ..
+
+$(GENERAL_LIB):
+		$(MAKE) -C ../../general_lib
 
 # Header dependencies. Adds the rules in the .d files, if they exists, in order to
 # add headers as dependencies of obj files (see .d files).
@@ -58,9 +70,9 @@ re : fclean $(LIB)
 # Removes all the build directories (objs, deps), executable and library
 .PHONY : fclean
 fclean : clean
-		rm -rf $(LIB_FOLDER) $(TEST_OBJ_DIR) $(TARGET)
+		rm -rf $(TARGET) $(OBJ_DIR)
 
 # Removes the obj directory
 .PHONY : clean
 clean :
-		rm -rf $(OBJ_DIR)
+		rm -rf *.d

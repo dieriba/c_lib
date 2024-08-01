@@ -8,12 +8,12 @@
 
 char*   itoa_usize(void* data)
 {
-    return d_itoa_usize((usize)data);
+    return d_itoa_usize(*((usize*)data));
 }
 
 char*   itoa_i32(void* data)
 {
-    return d_itoa_i32((int32)data);
+    return d_itoa_i32(*((int32*)data));
 }
 
 char*   print_d_string(void* _dstring)
@@ -170,22 +170,6 @@ void    test_d_string_push_c_str(void)
     d_string_destroy(&dstring);
 }
 
-void    test_d_string_copy(void)
-{
-    char *test_str_arr[] = {"hello", ""};
-
-    for (size_t i = 0; i < 2; i++)
-    {
-        DString* dstring = d_string_new_from_c_string(test_str_arr[i]);
-        DString* dstring_copy = d_string_copy(dstring);
-        usize len = strlen(test_str_arr[i]);
-        d_assert_eq(dstring -> string, dstring_copy -> string, len);
-        assert_eq_custom(&dstring -> len, &dstring_copy -> len, sizeof(usize), itoa_usize);
-        d_string_destroy(&dstring);
-        d_string_destroy(&dstring_copy);
-    }
-}
-
 void    test_d_string_replace_from_str(void)
 {
     DString* dstring = d_string_new_from_c_string("Dieriba");
@@ -296,9 +280,11 @@ void    test_d_string_find_str_from(void)
     d_string_destroy(&dstring);
 }
 
-bool   is_upper(char c)
+usize   is_upper(char c)
 {
-    return (c >= 'A' && c <= 'Z');
+    if (c >= 'A' && c <= 'Z')
+        return 0;
+    return MAX_SIZE_T_VALUE;
 }
 
 void    test_d_string_find_by_predicate(void)
@@ -439,30 +425,6 @@ void    test_d_string_rfind_by_predicate_from(void)
     d_string_destroy(&dstring);
 }
 
-void    test_d_string_sub_string_new(void)
-{
-    char *hello = "Hello World!";
-    DString* dstring = d_string_new_from_c_string(hello);
-    DString* dstring1 = d_string_sub_string_new(dstring, 0, MAX_SIZE_T_VALUE);
-    DString* dstring2 = d_string_sub_string_new(dstring, 0, 5);
-    DString* dstring3 = d_string_sub_string_new(dstring, 5, 7);
-    usize len = strlen(hello);
-    d_assert_eq(dstring1 -> string, hello, len);
-    d_assert_eq(&dstring1 -> len, &len, sizeof(usize));
-    char *str = "Hello";
-    len = strlen(str);
-    d_assert_eq(dstring2 -> string, str, len);
-    d_assert_eq(&dstring2 -> len, &len, sizeof(usize));
-    str = " World!";
-    len = strlen(str);
-    d_assert_eq(dstring3 -> string, str, len);
-    d_assert_eq(&dstring3 -> len, &len, sizeof(usize));
-    d_string_destroy(dstring);
-    d_string_destroy(dstring1);
-    d_string_destroy(dstring2);
-    d_string_destroy(dstring3);
-}
-
 void    test_d_string_sub_string_in_place(void)
 {
     DString* dstring = d_string_new_from_c_string("Hello World!");
@@ -490,15 +452,17 @@ void    test_d_string_trim_left_by_char_in_place(void)
     str = "dieribaaa";
     d_string_replace_from_str(dstring, "aaaadieribaaa");
     d_string_trim_left_by_char_in_place(dstring, 'a');
-    usize len = strlen(str);
+    len = strlen(str);
     d_assert_eq(dstring -> string, str, len);
     assert_eq_custom(&dstring -> len, &len, sizeof(usize), itoa_usize);
     d_string_destroy(&dstring);
 }
 
-bool is_num(char c)
+usize is_num(char c)
 {
-    return (c >= '0' && c <= '9');
+    if (c >= '0' && c <= '9')
+        return 1;
+    return MAX_SIZE_T_VALUE;
 }
 
 void    test_d_string_trim_left_by_predicate_in_place(void)
@@ -512,7 +476,7 @@ void    test_d_string_trim_left_by_predicate_in_place(void)
     str = "dieribaaa";
     d_string_replace_from_str(dstring, "845454554500dieribaaa");
     d_string_trim_left_by_predicate_in_place(dstring, is_num);
-    usize len = strlen(str);
+    len = strlen(str);
     d_assert_eq(dstring -> string, str, len);
     assert_eq_custom(&dstring -> len, &len, sizeof(usize), itoa_usize);
     d_string_destroy(&dstring);
@@ -522,7 +486,7 @@ void    test_d_string_trim_left_by_predicate_in_place(void)
 void    test_d_string_trim_left_by_char_new(void)
 {
     DString* dstring = d_string_new_from_c_string("              bonjour");
-    DString* dstring1 = d_string_trim_left_by_char_in_new(dstring, ' ');
+    DString* dstring1 = d_string_trim_left_by_char_new(dstring, ' ');
     char *str = "bonjour";
     usize len = strlen(str);
     
@@ -532,9 +496,9 @@ void    test_d_string_trim_left_by_char_new(void)
     
     d_string_destroy(&dstring1);
     d_string_replace_from_str(dstring, "aaaadieribaaa");
-    dstring1 = d_string_trim_left_by_char_in_new(dstring, 'a');
+    dstring1 = d_string_trim_left_by_char_new(dstring, 'a');
     
-    usize len = strlen(str);
+    len = strlen(str);
     d_assert_eq(dstring1 -> string, str, len);
     assert_eq_custom(&dstring1 -> len, &len, sizeof(usize), itoa_usize);
     
@@ -558,7 +522,7 @@ void    test_d_string_trim_left_by_predicate_new(void)
     d_string_replace_from_str(dstring, "845454554500dieribaaa");
     dstring1 = d_string_trim_left_by_predicate_new(dstring, is_num);
     
-    usize len = strlen(str);
+    len = strlen(str);
     d_assert_eq(dstring1 -> string, str, len);
     assert_eq_custom(&dstring1 -> len, &len, sizeof(usize), itoa_usize);
     
@@ -577,15 +541,10 @@ void    test_d_string_trim_right_by_char_in_place(void)
     str = "aaadierib";
     d_string_replace_from_str(dstring, "aaadieribaaaa");
     d_string_trim_right_by_char_in_place(dstring, 'a');
-    usize len = strlen(str);
+    len = strlen(str);
     d_assert_eq(dstring -> string, str, len);
     assert_eq_custom(&dstring -> len, &len, sizeof(usize), itoa_usize);
     d_string_destroy(&dstring);
-}
-
-bool is_num(char c)
-{
-    return (c >= '0' && c <= '9');
 }
 
 void    test_d_string_trim_right_by_predicate_in_place(void)
@@ -599,7 +558,7 @@ void    test_d_string_trim_right_by_predicate_in_place(void)
     str = "dieribaaa";
     d_string_replace_from_str(dstring, "dieribaaa845454554500");
     d_string_trim_right_by_predicate_in_place(dstring, is_num);
-    usize len = strlen(str);
+    len = strlen(str);
     d_assert_eq(dstring -> string, str, len);
     assert_eq_custom(&dstring -> len, &len, sizeof(usize), itoa_usize);
     d_string_destroy(&dstring);
@@ -609,7 +568,7 @@ void    test_d_string_trim_right_by_predicate_in_place(void)
 void    test_d_string_trim_right_by_char_new(void)
 {
     DString* dstring = d_string_new_from_c_string("bonjour              ");
-    DString* dstring1 = d_string_trim_right_by_char_in_new(dstring, ' ');
+    DString* dstring1 = d_string_trim_right_by_char_new(dstring, ' ');
     char *str = "bonjour";
     usize len = strlen(str);
     
@@ -619,9 +578,9 @@ void    test_d_string_trim_right_by_char_new(void)
     
     d_string_destroy(&dstring1);
     d_string_replace_from_str(dstring, "dieribaaaa");
-    dstring1 = d_string_trim_right_by_char_in_new(dstring, 'a');
+    dstring1 = d_string_trim_right_by_char_new(dstring, 'a');
     
-    usize len = strlen(str);
+    len = strlen(str);
     d_assert_eq(dstring1 -> string, str, len);
     assert_eq_custom(&dstring1 -> len, &len, sizeof(usize), itoa_usize);
     
@@ -645,7 +604,7 @@ void    test_d_string_trim_right_by_predicate_new(void)
     d_string_replace_from_str(dstring, "dieribaaa845454554500");
     dstring1 = d_string_trim_right_by_predicate_new(dstring, is_num);
     
-    usize len = strlen(str);
+    len = strlen(str);
     d_assert_eq(dstring1 -> string, str, len);
     assert_eq_custom(&dstring1 -> len, &len, sizeof(usize), itoa_usize);
     
@@ -664,8 +623,7 @@ int main()
     TEST("test_d_string_push_char", test_d_string_push_char(););
     TEST("test_d_string_push_c_str", test_d_string_push_c_str(););
     TEST("test_d_string_push_str_with_len", test_d_string_push_str_with_len(););
-    TEST("test_d_string_copy", test_d_string_copy(););
-    TEST("test_d_string_replace", test_d_string_replace(););
+    TEST("test_d_string_replace_from_str", test_d_string_replace_from_str(););
     TEST("test_d_string_replace_from_dstring", test_d_string_replace_from_dstring(););
     TEST("test_d_string_compare", test_d_string_compare(););
     TEST("test_d_string_find_char", test_d_string_find_char(););
@@ -680,7 +638,6 @@ int main()
     TEST("test_d_string_rfind_str_from", test_d_string_rfind_str_from(););
     TEST("test_d_string_rfind_by_predicate", test_d_string_rfind_by_predicate(););
     TEST("test_d_string_rfind_by_predicate_from", test_d_string_rfind_by_predicate_from(););
-    TEST("test_d_string_sub_string_new", test_d_string_sub_string_new(););
     TEST("test_d_string_sub_string_in_place", test_d_string_sub_string_in_place(););
     TEST("test_d_string_trim_left_by_char_in_place", test_d_string_trim_left_by_char_in_place(););
     TEST("test_d_string_trim_left_by_predicate_in_place", test_d_string_trim_left_by_predicate_in_place(););
