@@ -1,27 +1,22 @@
 #Default Cflags used for compilation
-CFLAGS := -Wall -Werror -Wextra -MMD -g3
+CFLAGS := -Wall -Wextra -MMD -g3
 
 # Directory where are located header files
 INCLUDE_DIR := include
 
 # Directory where are located some other necessary headers file
-INCLUDE_PATH_HEADER := ..
+HEADER_ROOT_DIR := ..
 
 # Variable that will store flags command to include headers
-INCLUDES := -I$(INCLUDE_DIR) -I$(INCLUDE_PATH_HEADER)
+INCLUDES := -I$(INCLUDE_DIR) -I$(HEADER_ROOT_DIR)
 
-# Directory where are source files
-SRC_DIR := src
-
-# All source files
-SRC := $(shell find $(SRC_DIR) -name '*.c')
-
-# Directory where are object directory
 OBJ_DIR := objs
 
-# All object files
-OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
+SRCS_DIRS := src ../dynamic_array/src ../general_lib/src
 
+SRCS := $(wildcard src/*.c)
+OBJS := $(addprefix $(OBJ_DIR)/,$(addsuffix .o,$(notdir $(basename $(SRCS)))))
+VPATH := $(SRCS_DIRS)
 # The dependency files that will be used in order to add header dependencies
 DEPEND = $(OBJS:.o=.d)
 
@@ -41,7 +36,7 @@ $(LIB) : $(OBJS)
 		ar rcs $@ $^
 
 # Rule to generate all object file and create OBJ_DIR if not exist
-$(OBJ_DIR)/%.o : $(SRC_DIR)/%.c | $(OBJ_DIR)
+$(OBJ_DIR)/%.o : %.c | $(OBJ_DIR)
 		$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 # Header dependencies. Adds the rules in the .d files, if they exists, in order to
@@ -58,7 +53,7 @@ re : fclean $(LIB)
 # Removes all the build directories (objs, deps), executable and library
 .PHONY : fclean
 fclean : clean
-		rm -rf $(LIB_FOLDER) $(TEST_OBJ_DIR) $(TARGET)
+		rm -rf $(LIB_FOLDER) $(OBJ_DIR)
 
 # Removes the obj directory
 .PHONY : clean

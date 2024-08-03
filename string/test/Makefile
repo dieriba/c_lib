@@ -7,6 +7,8 @@ GENERAL_LIB_INCLUDE_DIR := ../../general_lib/include
 # Directory where are located some other necessary headers file
 HEADER_ROOT_DIR := ../..
 
+DYNAMIC_ARR_INCLUDE_DIR := ../../dynamic_array/include
+
 # Directory where are located some other necessary headers file
 STRING_INCLUDE_DIR := ../includes
 
@@ -23,7 +25,7 @@ OBJ_DIR := objs
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC))
 
 # Variable that will store flags command to include headers
-INCLUDES := -I$(GENERAL_LIB_INCLUDE_DIR) -I$(HEADER_ROOT_DIR) -I$(STRING_INCLUDE_DIR)
+INCLUDES := -I$(GENERAL_LIB_INCLUDE_DIR) -I$(HEADER_ROOT_DIR) -I$(STRING_INCLUDE_DIR) -I$(DYNAMIC_ARR_INCLUDE_DIR)
 
 # Directory where will the builded library will be stored
 LIB_FOLDER := ../lib

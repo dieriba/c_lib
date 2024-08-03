@@ -2,6 +2,7 @@
 #define __D_STRING__H__
 
 #include <dtypes.h>
+#include <darray.h>
 typedef struct _DString DString;
 
 
@@ -70,6 +71,40 @@ DString* 	d_string_new_from_c_string(const char* str);
 DString* 	d_string_new_from_dstring(DString* dstring);
 
 /**
+ * @brief Creates a duplicate of a dynamic string as a standard null-terminated C string.
+ *
+ * Allocates memory and creates a duplicate of the content of the given `_DString` structure as a standard
+ * null-terminated C string. The duplicated string is a separate memory allocation and must be freed by the caller.
+ * If `dstring` is `NULL`, the behavior is undefined.
+ *
+ * @param dstring A pointer to the `_DString` structure to be duplicated. The behavior is undefined if `dstring` is `NULL`.
+ *
+ * @return char* A pointer to the newly allocated null-terminated C string that contains the same content as the dynamic string.
+ *               Returns `NULL` if memory allocation fails.
+ */
+char*		d_string_strdup(DString* dstring);
+
+/**
+ * @brief Extracts a substring from a dynamic string starting at a specified position.
+ *
+ * Allocates and returns a new null-terminated C string containing a substring of the `_DString` structure `dstring`.
+ * The substring is extracted starting from the specified position `pos` and extending for `len` characters. If `pos` is out of bounds,
+ * `NULL` is returned. If `len` extends beyond the end of the string or if `pos + len` exceeds the string length, the substring will
+ * include all characters from `pos` to the end of the string.
+ *
+ * @param dstring A pointer to the `_DString` structure from which to extract the substring. The behavior is undefined if `dstring` is `NULL`.
+ * @param pos The starting index in `dstring` from which to begin the substring extraction. If `pos` is greater than or equal to the length of `dstring`,
+ *            `NULL` is returned.
+ * @param len The number of characters to include in the substring. If `pos + len` exceeds the length of `dstring`, the substring will include all characters
+ *            from `pos` to the end of the string.
+ *
+ * @return char* A pointer to the newly allocated null-terminated C string containing the substring. Returns `NULL` if memory allocation fails,
+ *         or if `pos` is out of bounds.
+ */
+char*		d_string_substr(DString* dstring, usize pos, usize len);
+
+
+/**
  * @brief Creates a new dynamic string with an initial reserved capacity.
  *
  * Allocates and initializes a new _DString structure with the specified initial
@@ -115,6 +150,27 @@ DString* 	d_string_new_with_reserve(usize reserve);
  *         parameters are invalid (e.g., `pos` is out of range and `str` is not NULL).
  */
 DString* 	d_string_new_with_substring(const char* str, usize pos, usize len);
+
+/**
+ * @brief Modifies a dynamic string to represent a substring starting from a specified position.
+ *
+ * Adjusts the `_DString` to contain a substring starting from the specified position `pos` and extending for `len` characters. 
+ * This operation changes the original `_DString` to represent the new substring. If `pos` is greater than or equal to the length of 
+ * the string, the function will return `NULL`, indicating an invalid operation. If `pos + len` exceeds the end of the string, the 
+ * substring will include all characters from `pos` to the end of the string. The function does not allocate new memory; it only adjusts
+ * the existing `_DString`. The behavior is undefined if `dstring` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure to be modified. The behavior is undefined if `dstring` is `NULL`.
+ * @param pos The starting index in the `_DString` from which to begin the substring.
+ *            If `pos` is greater than or equal to the length of the string, the function will return `NULL`.
+ * @param len The number of characters to include in the substring. If `pos + len` exceeds the end of the string, the substring will
+ *            include all characters from `pos` to the end of the string.
+ *
+ * @return DString* A pointer to the modified `_DString` structure containing the substring, or `NULL` if `pos` is greater than
+ *         or equal to the length of the string, or if memory allocation fails.
+ */
+DString*	d_string_sub_string_in_place(DString* dstring, usize pos, usize len);
+
 
 /**
  * @brief Retrieves the current capacity of a dynamic string.
@@ -278,8 +334,6 @@ DString* 	d_string_replace_from_str(DString* dstring, const char* str);
  */
 DString* 	d_string_replace_from_dstring(DString* dstring, const DString* copy);
 
-
-
 /**
  * @brief Compares two dynamic strings.
  *
@@ -324,23 +378,46 @@ int32		d_string_compare_againg_c_string(DString* dstring, char* c_str);
 
 
 /**
- * @brief Finds the index of the first character in a dynamic string that is not equal to a specified character.
+ * @brief Finds the index of the first occurrence of a specified character in a dynamic string, starting from a given position.
  *
- * Searches for the first occurrence of a character in the `_DString` that is not equal to the specified character `c`,
- * starting from the given position `pos`. If such a character is found, its index is returned. If all characters from `pos`
- * to the end of the string are equal to `c`, or if `pos` is out of range, the function will return `MAX_SIZE_T`, which is
- * defined as the maximum value of `size_t`. The internal behavior is undefined if `dstring` is `NULL`.
+ * Searches for the first occurrence of the character `c` in the `_DString`, starting from the specified position `pos` and moving
+ * forward towards the end of the string. If the character is found, its index is returned. If the character is not found or if `pos`
+ * is out of range, the function will return `MAX_SIZE_T`, which is defined as the maximum value of `size_t`. The behavior is undefined
+ * if `dstring` is `NULL`.
  *
- * @param dstring A pointer to the `_DString` structure in which to search. 
+ * @param dstring A pointer to the `_DString` structure in which to search.
  *                The behavior is undefined if `dstring` is `NULL`.
- * @param c The character to compare against.
- * @param pos The starting index from which to begin the search. If `pos` is greater than or equal to the length of the
- *            dynamic string, the function will return `MAX_SIZE_T`.
+ * @param c The character to find.
+ * @param pos The starting index from which to begin the search. If `pos` is greater than or equal to the length of the dynamic string,
+ *            the function will return `MAX_SIZE_T`.
  *
- * @return usize The index of the first character in `_DString` that is not equal to `c`, starting from `pos`. 
- *         Returns `MAX_SIZE_T` if no such character is found, if `pos` is out of range.
+ * @return usize The index of the first occurrence of `c` in `_DString`, starting from `pos` and moving forward. 
+ *         Returns `MAX_SIZE_T` if the character is not found, if `pos` is out of range.
  */
-usize		d_string_find_first_not_matching_char_from_index(DString* dstring, char c, usize pos);
+usize		d_string_find_first_matching_char_from_index(DString* dstring, char c, usize pos);
+
+
+
+/**
+ * @brief Finds the first occurrence of a character in a dynamic string.
+ *
+ * Searches for the first occurrence of the specified character in the given _DString.
+ * The function returns the index of the character within the string. If the character
+ * is not found, it returns `MAX_SIZE_T`, which represents the maximum value of `size_t`,
+ * indicating that the character is absent. The search is performed starting from the
+ * beginning of the string.
+ *
+ * @param dstring A pointer to the _DString structure in which to search for the character.
+ *                Must not be NULL.
+ * @param c The character to search for in the _DString.
+ *
+ * @return usize The index of the first occurrence of the character in the _DString.
+ *         Returns `MAX_SIZE_T` if the character is not found.
+ */
+usize		d_string_find_first_matching_char_from_start(DString* dstring, char c);
+
+
+
 
 /**
  * @brief Finds the index of the first character in a dynamic string that is not equal to a specified character.
@@ -359,43 +436,61 @@ usize		d_string_find_first_not_matching_char_from_index(DString* dstring, char c
  */
 usize		d_string_find_first_not_matching_char_from_start(DString* dstring, char c);
 
+
 /**
- * @brief Finds the index of the first character in a dynamic string that is not present in a specified set of characters.
+ * @brief Finds the index of the first character in a dynamic string that is not equal to a specified character.
  *
- * Searches for the first occurrence of a character in the `_DString` that is not in the set of characters specified by `str`,
+ * Searches for the first occurrence of a character in the `_DString` that is not equal to the specified character `c`,
  * starting from the given position `pos`. If such a character is found, its index is returned. If all characters from `pos`
- * to the end of the string are present in the set, or if `pos` is out of range, the function will return `MAX_SIZE_T`, which is
- * defined as the maximum value of `size_t`. The behavior is undefined if `dstring` or `str` is `NULL`.
+ * to the end of the string are equal to `c`, or if `pos` is out of range, the function will return `MAX_SIZE_T`, which is
+ * defined as the maximum value of `size_t`. The internal behavior is undefined if `dstring` is `NULL`.
  *
- * @param dstring A pointer to the `_DString` structure in which to search.
+ * @param dstring A pointer to the `_DString` structure in which to search. 
  *                The behavior is undefined if `dstring` is `NULL`.
- * @param str A pointer to a null-terminated C string containing the set of characters to check against.
- *            The behavior is undefined if `str` is `NULL`.
+ * @param c The character to compare against.
  * @param pos The starting index from which to begin the search. If `pos` is greater than or equal to the length of the
  *            dynamic string, the function will return `MAX_SIZE_T`.
  *
- * @return usize The index of the first character in `_DString` that is not in the set of characters specified by `str`,
- *         starting from `pos`. Returns `MAX_SIZE_T` if no such character is found, if `pos` is out of range.
+ * @return usize The index of the first character in `_DString` that is not equal to `c`, starting from `pos`. 
+ *         Returns `MAX_SIZE_T` if no such character is found, if `pos` is out of range.
  */
-usize		d_string_find_first_char_not_of_str_from_index(DString* dstring, char* str, usize pos);
+usize		d_string_find_first_not_matching_char_from_index(DString* dstring, char c, usize pos);
 
 
 /**
- * @brief Finds the first character in a dynamic string that is not part of a given C string.
+ * @brief Finds the last occurrence of a specified character in a dynamic string, searching backwards from a given position.
  *
- * Searches the `_DString` structure `dstring` for the first character that is not included in the null-terminated C string `str`.
- * The search starts from the beginning of `dstring`. If such a character is found, its index is returned. If no such character is found,
- * the function returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. The behavior is undefined if `dstring` or `str`
- * is `NULL`.
+ * Searches the `_DString` structure `dstring` for the last occurrence of the character `c`, starting from the specified position `pos` and proceeding backwards to the beginning of the string.
+ * If `pos` is greater than or equal to the length of the string, the search will start from the end of the string. If the character is found, its index is returned. 
+ * If the character is not found, or if `pos` is out of range, the function returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. 
+ * The behavior is undefined if `dstring` is `NULL`.
  *
  * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
- * @param str A pointer to a null-terminated C string containing characters to be excluded from the search. The behavior is undefined if `str` is `NULL`.
+ * @param c The character to search for in the dynamic string.
+ * @param pos The starting index in `dstring` from which to begin the reverse search. If `pos` is greater than or equal to the length of the string,
+ *            the search starts from the end of the string.
  *
- * @return usize The index of the first character in `dstring` that is not in `str`. If all characters are in `str` or `dstring` is empty,
- *         returns `MAX_SIZE_T`.
+ * @return usize The index of the last occurrence of the character `c` in `dstring`, starting from `pos` and searching backwards. If the character is not found,
+ *         or if `pos` is out of range, returns `MAX_SIZE_T`.
  */
-usize		d_string_find_first_char_not_of_str_from_start(DString* dstring, char* str);
+usize		d_string_find_last_matching_char_from_index(DString* dstring, char c, usize pos);
 
+
+/**
+ * @brief Finds the index of the last occurrence of a specified character in a dynamic string, starting from the end and moving backwards.
+ *
+ * Searches for the last occurrence of the character `c` in the `_DString`, starting from the end of the string and moving backwards
+ * towards the beginning. If the character is found, its index is returned. If the character is not found, the function will return 
+ * `MAX_SIZE_T`, which is defined as the maximum value of `size_t`. The behavior is undefined if `dstring` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search.
+ *                The behavior is undefined if `dstring` is `NULL`.
+ * @param c The character to find.
+ *
+ * @return usize The index of the last occurrence of `c` in `_DString`, starting from the end and moving backwards.
+ *         Returns `MAX_SIZE_T` if the character is not found.
+ */
+usize		d_string_find_last_matching_char_from_end(DString* dstring, char c);
 
 /**
  * @brief Finds the index of the first character in a dynamic string that is not equal to a specified character, searching backwards.
@@ -415,7 +510,7 @@ usize		d_string_find_first_char_not_of_str_from_start(DString* dstring, char* st
  * @return usize The index of the first character in `_DString` that is not equal to `c`, starting from `pos` and searching backwards.
  *         Returns `MAX_SIZE_T` if no such character is found.
  */
-usize		d_string_find_last_of_matching_char_from_index(DString* dstring, char c, usize pos);
+usize		d_string_find_last_not_matching_char_from_index(DString* dstring, char c, usize pos);
 
 /**
  * @brief Finds the index of the first character in a dynamic string that is not equal to a specified character, searching backwards.
@@ -432,7 +527,192 @@ usize		d_string_find_last_of_matching_char_from_index(DString* dstring, char c, 
  * @return usize The index of the first character in `_DString` that is not equal to `c`, starting from the end of the string
  *         and moving backwards. Returns `MAX_SIZE_T` if no such character is found.
  */
-usize		d_string_find_last_of_matching_char_from_end(DString* dstring, char c);
+usize		d_string_find_last_not_matching_char_from_end(DString* dstring, char c);
+
+
+/**
+ * @brief Finds the index of the first occurrence of a specified substring in a dynamic string, starting from a given position.
+ *
+ * Searches for the first occurrence of the substring specified by `str` in the `_DString`, starting from the specified position `pos`
+ * and moving forward towards the end of the string. If the substring is found, its starting index is returned. If the substring is not
+ * found or if `pos` is out of range, the function will return `MAX_SIZE_T`, which is defined as the maximum value of `size_t`. 
+ * The behavior is undefined if `dstring` or `str` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search.
+ *                The behavior is undefined if `dstring` is `NULL`.
+ * @param str A pointer to a null-terminated C string representing the substring to find.
+ *            The behavior is undefined if `str` is `NULL`.
+ * @param pos The starting index from which to begin the search. If `pos` is greater than or equal to the length of the dynamic string,
+ *            the function will return `MAX_SIZE_T`.
+ *
+ * @return usize The index of the first occurrence of the substring `str` in `_DString`, starting from `pos` and moving forward.
+ *         Returns `MAX_SIZE_T` if the substring is not found, if `pos` is out of range.
+ */
+usize		d_string_find_first_matching_str_from_index(DString* dstring, const char *str, usize pos);
+
+
+/**
+ * @brief Finds the index of the first occurrence of a specified substring in a dynamic string, starting from the beginning.
+ *
+ * Searches for the first occurrence of the substring specified by `str` in the `_DString`, starting from the beginning of the string
+ * and moving forward towards the end. If the substring is found, its starting index is returned. If the substring is not found,
+ * the function will return `MAX_SIZE_T`, which is defined as the maximum value of `size_t`. The behavior is undefined if `dstring` or `str`
+ * is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search.
+ *                The behavior is undefined if `dstring` is `NULL`.
+ * @param str A pointer to a null-terminated C string representing the substring to find.
+ *            The behavior is undefined if `str` is `NULL`.
+ *
+ * @return usize The index of the first occurrence of the substring `str` in `_DString`, starting from the beginning and moving forward.
+ *         Returns `MAX_SIZE_T` if the substring is not found.
+ */
+usize		d_string_find_first_matching_str_from_start(DString* dstring, const char *str);
+
+/**
+ * @brief Finds the last occurrence of a specified substring in a dynamic string, searching backwards from a given position.
+ *
+ * Searches the `_DString` structure `dstring` for the last occurrence of the substring `str`, starting from the specified position `pos` and proceeding backwards to the beginning of the string.
+ * If `pos` is greater than or equal to the length of the string, the search will start from the end of the string. If the substring is found, the index of the first character of the last occurrence
+ * is returned. If the substring is not found, or if `pos` is out of range, the function returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. 
+ * The behavior is undefined if `dstring` or `str` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
+ * @param str A pointer to the null-terminated substring to search for in the dynamic string. The behavior is undefined if `str` is `NULL`.
+ * @param pos The starting index in `dstring` from which to begin the reverse search. If `pos` is greater than or equal to the length of the string,
+ *            the search starts from the end of the string.
+ *
+ * @return usize The index of the first character of the last occurrence of the substring `str` in `dstring`, starting from `pos` and searching backwards. 
+ *         If the substring is not found, or if `pos` is out of range, returns `MAX_SIZE_T`.
+ */
+usize		d_string_find_last_matching_str_from_index(DString* dstring, const char *str, usize pos);
+
+
+/**
+ * @brief Finds the index of the last occurrence of a specified substring in a dynamic string, starting from the end and moving backwards.
+ *
+ * Searches for the last occurrence of the substring specified by `str` in the `_DString`, starting from the end of the string and moving backwards
+ * towards the beginning. If the substring is found, its starting index is returned. If the substring is not found, the function will return
+ * `MAX_SIZE_T`, which is defined as the maximum value of `size_t`. The behavior is undefined if `dstring` or `str` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search.
+ *                The behavior is undefined if `dstring` is `NULL`.
+ * @param str A pointer to a null-terminated C string representing the substring to find.
+ *            The behavior is undefined if `str` is `NULL`.
+ *
+ * @return usize The index of the last occurrence of the substring `str` in `_DString`, starting from the end and moving backwards.
+ *         Returns `MAX_SIZE_T` if the substring is not found.
+ */
+usize		d_string_find_last_matching_str_from_end(DString* dstring, const char *str);
+
+
+
+/**
+ * @brief Finds the first occurrence of any character from a given set of characters in a dynamic string, starting from a specified position.
+ *
+ * Searches the `_DString` structure `dstring` for the first occurrence of any character present in the null-terminated C string `str`,
+ * starting from the specified position `pos`. If such a character is found, its index is returned. If none of the characters in `str`
+ * are found after `pos`, or if `pos` is greater than or equal to the length of `dstring`, the function returns `MAX_SIZE_T`,
+ * which is the maximum value representable by `size_t`. The behavior is undefined if `dstring` or `str` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
+ * @param str A pointer to a null-terminated C string containing the set of characters to search for. The behavior is undefined if `str` is `NULL`.
+ * @param pos The starting index in `dstring` from which to begin the search. If `pos` is greater than or equal to the length of `dstring`,
+ *            the function returns `MAX_SIZE_T`.
+ *
+ * @return usize The index of the first character in `dstring` that matches any character in `str` starting from `pos`.
+ *         If no such character is found or if `pos` is out of range, returns `MAX_SIZE_T`.
+ */
+usize		d_string_find_first_char_in_str_from_index(DString* dstring, char* str, usize pos);
+
+/**
+ * @brief Finds the first occurrence of any character from a given set of characters in a dynamic string, starting from the beginning.
+ *
+ * Searches the `_DString` structure `dstring` for the first occurrence of any character present in the null-terminated C string `str`,
+ * starting from the beginning of `dstring`. If such a character is found, its index is returned. If none of the characters in `str`
+ * are found in `dstring`, the function returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. The behavior is undefined
+ * if `dstring` or `str` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
+ * @param str A pointer to a null-terminated C string containing the set of characters to search for. The behavior is undefined if `str` is `NULL`.
+ *
+ * @return usize The index of the first character in `dstring` that matches any character in `str`.
+ *         If no such character is found, returns `MAX_SIZE_T`.
+ */
+usize		d_string_find_first_char_in_str_from_start(DString* dstring, char* str);
+
+
+/**
+ * @brief Finds the index of the first character in a dynamic string that is not present in a specified set of characters.
+ *
+ * Searches for the first occurrence of a character in the `_DString` that is not in the set of characters specified by `str`,
+ * starting from the given position `pos`. If such a character is found, its index is returned. If all characters from `pos`
+ * to the end of the string are present in the set, or if `pos` is out of range, the function will return `MAX_SIZE_T`, which is
+ * defined as the maximum value of `size_t`. The behavior is undefined if `dstring` or `str` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search.
+ *                The behavior is undefined if `dstring` is `NULL`.
+ * @param str A pointer to a null-terminated C string containing the set of characters to check against.
+ *            The behavior is undefined if `str` is `NULL`.
+ * @param pos The starting index from which to begin the search. If `pos` is greater than or equal to the length of the
+ *            dynamic string, the function will return `MAX_SIZE_T`.
+ *
+ * @return usize The index of the first character in `_DString` that is not in the set of characters specified by `str`,
+ *         starting from `pos`. Returns `MAX_SIZE_T` if no such character is found, if `pos` is out of range.
+ */
+usize		d_string_find_first_char_not_in_str_from_index(DString* dstring, char* str, usize pos);
+
+
+/**
+ * @brief Finds the first character in a dynamic string that is not part of a given C string.
+ *
+ * Searches the `_DString` structure `dstring` for the first character that is not included in the null-terminated C string `str`.
+ * The search starts from the beginning of `dstring`. If such a character is found, its index is returned. If no such character is found,
+ * the function returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. The behavior is undefined if `dstring` or `str`
+ * is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
+ * @param str A pointer to a null-terminated C string containing characters to be excluded from the search. The behavior is undefined if `str` is `NULL`.
+ *
+ * @return usize The index of the first character in `dstring` that is not in `str`. If all characters are in `str` or `dstring` is empty,
+ *         returns `MAX_SIZE_T`.
+ */
+usize		d_string_find_first_char_not_in_str_from_start(DString* dstring, char* str);
+
+/**
+ * @brief Finds the last occurrence of any character from a given set of characters in a dynamic string, searching backwards from a specified position.
+ *
+ * Searches the `_DString` structure `dstring` for the last occurrence of any character present in the null-terminated C string `str`,
+ * starting from the specified position `pos` and proceeding backwards to the beginning of the string. If such a character is found,
+ * its index is returned. If none of the characters in `str` are found in the specified range, or if `pos` is out of range, the function
+ * returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. The behavior is undefined if `dstring` or `str` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
+ * @param str A pointer to a null-terminated C string containing the set of characters to search for. The behavior is undefined if `str` is `NULL`.
+ * @param pos The starting index in `dstring` from which to begin the backward search. If `pos` is greater than or equal to the length of `dstring`,
+ *            the function starts from the end of the string.
+ *
+ * @return usize The index of the last character in `dstring` that matches any character in `str`, searching backwards from `pos`.
+ *         If no such character is found, or if `pos` is out of range, returns `MAX_SIZE_T`.
+ */
+usize		d_string_find_last_char_in_str_from_index(DString* dstring, char* str, usize pos);
+
+/**
+ * @brief Finds the last occurrence of any character from a given set of characters in a dynamic string, searching from the end.
+ *
+ * Searches the `_DString` structure `dstring` for the last occurrence of any character present in the null-terminated C string `str`,
+ * starting from the end of `dstring` and proceeding backwards to the beginning of the string. If such a character is found,
+ * its index is returned. If none of the characters in `str` are found, the function returns `MAX_SIZE_T`, which is the maximum value
+ * representable by `size_t`. The behavior is undefined if `dstring` or `str` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
+ * @param str A pointer to a null-terminated C string containing the set of characters to search for. The behavior is undefined if `str` is `NULL`.
+ *
+ * @return usize The index of the last character in `dstring` that matches any character in `str`, searching from the end of the string.
+ *         If no such character is found, returns `MAX_SIZE_T`.
+ */
+usize		d_string_find_last_char_in_str_from_end(DString* dstring, char* str);
+
 
 /**
  * @brief Finds the index of the first character in a dynamic string that is not present in a specified set of characters, searching backwards.
@@ -453,7 +733,7 @@ usize		d_string_find_last_of_matching_char_from_end(DString* dstring, char c);
  * @return usize The index of the first character in `_DString` that is not in the set of characters specified by `str`,
  *         starting from `pos` and searching backwards. Returns `MAX_SIZE_T` if no such character is found, if `pos` is out of range,
  */
-usize		d_string_find_last_char_not_of_str_from_index(DString* dstring, char* str, usize pos);
+usize		d_string_find_last_char_not_in_str_from_index(DString* dstring, char* str, usize pos);
 
 
 /**
@@ -472,157 +752,7 @@ usize		d_string_find_last_char_not_of_str_from_index(DString* dstring, char* str
  * @return usize The index of the first character in `_DString` that is not in the set of characters specified by `str`,
  *         starting from the end of the string and moving backwards. Returns `MAX_SIZE_T` if no such character is found.
  */
-usize		d_string_find_last_char_not_of_str_from_end(DString* dstring, char* str);
-
-/**
- * @brief Finds the first character in a dynamic string that does not match a specified predicate function, starting from a given position.
- *
- * Searches the `_DString` structure `dstring` for the first character that does not satisfy the condition defined by the predicate function `fn`.
- * The search begins at the specified position `pos` and continues to the end of the string. A character is considered not to match the predicate
- * if the predicate function returns `0` for that character. If such a character is found, its index is returned. If all characters from `pos` onward
- * satisfy the predicate (i.e., `fn` returns non-zero for all characters), or if `pos` is greater than or equal to the length of the string, the function
- * returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. The behavior is undefined if `dstring` or `fn` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
- * @param fn A pointer to a predicate function that takes a character as input and returns a non-zero value if the character matches the condition,
- *           or `0` otherwise. The behavior is undefined if `fn` is `NULL`.
- * @param pos The starting index in `dstring` from which to begin the search. If `pos` is greater than or equal to the length of the string,
- *            the function returns `MAX_SIZE_T`.
- *
- * @return usize The index of the first character in `dstring` starting from `pos` that does not satisfy the predicate (i.e., where `fn` returns `0`).
- *         If all characters from `pos` onward satisfy the predicate, or if `pos` is out of range, returns `MAX_SIZE_T`.
- */
-usize		d_string_find_first_not_of_predicate_from_index(DString* dstring, match fn, usize pos);
-
-/**
- * @brief Finds the first character in a dynamic string that does not match a specified predicate function.
- *
- * Searches the `_DString` structure `dstring` for the first character that does not satisfy the condition defined by the predicate function `fn`.
- * The search starts from the beginning of `dstring`. A character is considered not to match the predicate if the predicate function returns `0` for that character.
- * If such a character is found, its index is returned. If all characters satisfy the predicate (i.e., `fn` returns non-zero for all characters),
- * the function returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. The behavior is undefined if `dstring` or `fn` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
- * @param fn A pointer to a predicate function that takes a character as input and returns a non-zero value if the character matches the condition,
- *           or `0` otherwise. The behavior is undefined if `fn` is `NULL`.
- *
- * @return usize The index of the first character in `dstring` that does not satisfy the predicate (i.e., where `fn` returns `0`). If all characters satisfy the predicate,
- *         returns `MAX_SIZE_T`.
- */
-usize		d_string_find_first_not_of_predicate_from_start(DString* dstring, match fn);
-
-/**
- * @brief Finds the first character in a dynamic string, searching backwards from a given position, that does not match a specified predicate function.
- *
- * Searches the `_DString` structure `dstring` for the first character (in reverse order) that does not satisfy the condition defined by the predicate function `fn`.
- * The search begins at the specified position `pos` and proceeds backwards to the beginning of the string. If `pos` is greater than or equal to the length of the string,
- * the search will start from the end of the string. A character is considered not to match the predicate if the predicate function returns `0` for that character.
- * If such a character is found, its index is returned. If all characters from the start of the string to `pos` (or to the end if `pos` is out of bounds) satisfy
- * the predicate (i.e., `fn` returns non-zero for all characters), the function returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. 
- * The behavior is undefined if `dstring` or `fn` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
- * @param fn A pointer to a predicate function that takes a character as input and returns a non-zero value if the character matches the condition,
- *           or `0` otherwise. The behavior is undefined if `fn` is `NULL`.
- * @param pos The starting index in `dstring` from which to begin the reverse search. If `pos` is greater than or equal to the length of the string,
- *            the search starts from the end of the string.
- *
- * @return usize The index of the first character in `dstring` starting from `pos` and searching backwards that does not satisfy the predicate (i.e., where `fn` returns `0`).
- *         If all characters from `pos` backwards (or from the end of the string if `pos` is out of range) satisfy the predicate, returns `MAX_SIZE_T`.
- */
-usize		d_string_find_last_not_of_predicate_from_index(DString* dstring, match fn, usize pos);
-
-/**
- * @brief Finds the first character in a dynamic string, searching backwards, that does not match a specified predicate function.
- *
- * Searches the `_DString` structure `dstring` for the first character (in reverse order) that does not satisfy the condition defined by the predicate function `fn`.
- * The search begins from the end of the string and proceeds backwards to the beginning. A character is considered not to match the predicate if the predicate function returns `0` for that character.
- * If such a character is found, its index is returned. If all characters in the string satisfy the predicate (i.e., `fn` returns non-zero for all characters), the function returns `MAX_SIZE_T`,
- * which is the maximum value representable by `size_t`. The behavior is undefined if `dstring` or `fn` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
- * @param fn A pointer to a predicate function that takes a character as input and returns a non-zero value if the character matches the condition,
- *           or `0` otherwise. The behavior is undefined if `fn` is `NULL`.
- *
- * @return usize The index of the first character in `dstring` searched backwards from the end that does not satisfy the predicate (i.e., where `fn` returns `0`).
- *         If all characters in `dstring` satisfy the predicate, returns `MAX_SIZE_T`.
- */
-usize		d_string_find_last_not_of_predicate_from_end(DString* dstring, match fn);
-
-/**
- * @brief Finds the index of the first occurrence of a specified character in a dynamic string, starting from a given position.
- *
- * Searches for the first occurrence of the character `c` in the `_DString`, starting from the specified position `pos` and moving
- * forward towards the end of the string. If the character is found, its index is returned. If the character is not found or if `pos`
- * is out of range, the function will return `MAX_SIZE_T`, which is defined as the maximum value of `size_t`. The behavior is undefined
- * if `dstring` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure in which to search.
- *                The behavior is undefined if `dstring` is `NULL`.
- * @param c The character to find.
- * @param pos The starting index from which to begin the search. If `pos` is greater than or equal to the length of the dynamic string,
- *            the function will return `MAX_SIZE_T`.
- *
- * @return usize The index of the first occurrence of `c` in `_DString`, starting from `pos` and moving forward. 
- *         Returns `MAX_SIZE_T` if the character is not found, if `pos` is out of range.
- */
-usize		d_string_find_first_matching_char_from_index(DString* dstring, char c, usize pos);
-
-/**
- * @brief Finds the first occurrence of a character in a dynamic string.
- *
- * Searches for the first occurrence of the specified character in the given _DString.
- * The function returns the index of the character within the string. If the character
- * is not found, it returns `MAX_SIZE_T`, which represents the maximum value of `size_t`,
- * indicating that the character is absent. The search is performed starting from the
- * beginning of the string.
- *
- * @param dstring A pointer to the _DString structure in which to search for the character.
- *                Must not be NULL.
- * @param c The character to search for in the _DString.
- *
- * @return usize The index of the first occurrence of the character in the _DString.
- *         Returns `MAX_SIZE_T` if the character is not found.
- */
-usize		d_string_find_first_matching_char_from_start(DString* dstring, char c);
-
-/**
- * @brief Finds the index of the first occurrence of a specified substring in a dynamic string, starting from a given position.
- *
- * Searches for the first occurrence of the substring specified by `str` in the `_DString`, starting from the specified position `pos`
- * and moving forward towards the end of the string. If the substring is found, its starting index is returned. If the substring is not
- * found or if `pos` is out of range, the function will return `MAX_SIZE_T`, which is defined as the maximum value of `size_t`. 
- * The behavior is undefined if `dstring` or `str` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure in which to search.
- *                The behavior is undefined if `dstring` is `NULL`.
- * @param str A pointer to a null-terminated C string representing the substring to find.
- *            The behavior is undefined if `str` is `NULL`.
- * @param pos The starting index from which to begin the search. If `pos` is greater than or equal to the length of the dynamic string,
- *            the function will return `MAX_SIZE_T`.
- *
- * @return usize The index of the first occurrence of the substring `str` in `_DString`, starting from `pos` and moving forward.
- *         Returns `MAX_SIZE_T` if the substring is not found, if `pos` is out of range.
- */
-usize		d_string_find_matching_str_from_index(DString* dstring, const char *str, usize pos);
-
-/**
- * @brief Finds the index of the first occurrence of a specified substring in a dynamic string, starting from the beginning.
- *
- * Searches for the first occurrence of the substring specified by `str` in the `_DString`, starting from the beginning of the string
- * and moving forward towards the end. If the substring is found, its starting index is returned. If the substring is not found,
- * the function will return `MAX_SIZE_T`, which is defined as the maximum value of `size_t`. The behavior is undefined if `dstring` or `str`
- * is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure in which to search.
- *                The behavior is undefined if `dstring` is `NULL`.
- * @param str A pointer to a null-terminated C string representing the substring to find.
- *            The behavior is undefined if `str` is `NULL`.
- *
- * @return usize The index of the first occurrence of the substring `str` in `_DString`, starting from the beginning and moving forward.
- *         Returns `MAX_SIZE_T` if the substring is not found.
- */
-usize		d_string_find_matching_str_from_start(DString* dstring, const char *str);
+usize		d_string_find_last_char_not_in_str_from_end(DString* dstring, char* str);
 
 /**
  * @brief Finds the index of the first character in a dynamic string that matches a given predicate function, starting from a specified position.
@@ -664,76 +794,6 @@ usize		d_string_find_first_matching_predicate_from_index(DString* dstring, match
  */
 usize		d_string_find_first_matching_predicate_from_start(DString* dstring, match fn);
 
-/**
- * @brief Finds the last occurrence of a specified character in a dynamic string, searching backwards from a given position.
- *
- * Searches the `_DString` structure `dstring` for the last occurrence of the character `c`, starting from the specified position `pos` and proceeding backwards to the beginning of the string.
- * If `pos` is greater than or equal to the length of the string, the search will start from the end of the string. If the character is found, its index is returned. 
- * If the character is not found, or if `pos` is out of range, the function returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. 
- * The behavior is undefined if `dstring` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
- * @param c The character to search for in the dynamic string.
- * @param pos The starting index in `dstring` from which to begin the reverse search. If `pos` is greater than or equal to the length of the string,
- *            the search starts from the end of the string.
- *
- * @return usize The index of the last occurrence of the character `c` in `dstring`, starting from `pos` and searching backwards. If the character is not found,
- *         or if `pos` is out of range, returns `MAX_SIZE_T`.
- */
-usize		d_string_find_last_matching_char_from_index(DString* dstring, char c, usize pos);
-
-
-/**
- * @brief Finds the index of the last occurrence of a specified character in a dynamic string, starting from the end and moving backwards.
- *
- * Searches for the last occurrence of the character `c` in the `_DString`, starting from the end of the string and moving backwards
- * towards the beginning. If the character is found, its index is returned. If the character is not found, the function will return 
- * `MAX_SIZE_T`, which is defined as the maximum value of `size_t`. The behavior is undefined if `dstring` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure in which to search.
- *                The behavior is undefined if `dstring` is `NULL`.
- * @param c The character to find.
- *
- * @return usize The index of the last occurrence of `c` in `_DString`, starting from the end and moving backwards.
- *         Returns `MAX_SIZE_T` if the character is not found.
- */
-usize		d_string_find_last_matching_char_from_end(DString* dstring, char c);
-
-/**
- * @brief Finds the last occurrence of a specified substring in a dynamic string, searching backwards from a given position.
- *
- * Searches the `_DString` structure `dstring` for the last occurrence of the substring `str`, starting from the specified position `pos` and proceeding backwards to the beginning of the string.
- * If `pos` is greater than or equal to the length of the string, the search will start from the end of the string. If the substring is found, the index of the first character of the last occurrence
- * is returned. If the substring is not found, or if `pos` is out of range, the function returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. 
- * The behavior is undefined if `dstring` or `str` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
- * @param str A pointer to the null-terminated substring to search for in the dynamic string. The behavior is undefined if `str` is `NULL`.
- * @param pos The starting index in `dstring` from which to begin the reverse search. If `pos` is greater than or equal to the length of the string,
- *            the search starts from the end of the string.
- *
- * @return usize The index of the first character of the last occurrence of the substring `str` in `dstring`, starting from `pos` and searching backwards. 
- *         If the substring is not found, or if `pos` is out of range, returns `MAX_SIZE_T`.
- */
-usize		d_string_find_last_matching_str_from_index(DString* dstring, const char *str, usize pos);
-
-/**
- * @brief Finds the index of the last occurrence of a specified substring in a dynamic string, starting from the end and moving backwards.
- *
- * Searches for the last occurrence of the substring specified by `str` in the `_DString`, starting from the end of the string and moving backwards
- * towards the beginning. If the substring is found, its starting index is returned. If the substring is not found, the function will return
- * `MAX_SIZE_T`, which is defined as the maximum value of `size_t`. The behavior is undefined if `dstring` or `str` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure in which to search.
- *                The behavior is undefined if `dstring` is `NULL`.
- * @param str A pointer to a null-terminated C string representing the substring to find.
- *            The behavior is undefined if `str` is `NULL`.
- *
- * @return usize The index of the last occurrence of the substring `str` in `_DString`, starting from the end and moving backwards.
- *         Returns `MAX_SIZE_T` if the substring is not found.
- */
-usize		d_string_find_last_matching_str_from_end(DString* dstring, const char *str);
-
 
 /**
  * @brief Finds the last character in a dynamic string, searching backwards from a given position, that matches a specified predicate function.
@@ -773,26 +833,80 @@ usize		d_string_find_last_matching_predicate_from_index(DString* dstring, match 
  */
 usize		d_string_find_last_matching_predicate_from_end(DString* dstring, match fn);
 
+/**
+ * @brief Finds the first character in a dynamic string that does not match a specified predicate function, starting from a given position.
+ *
+ * Searches the `_DString` structure `dstring` for the first character that does not satisfy the condition defined by the predicate function `fn`.
+ * The search begins at the specified position `pos` and continues to the end of the string. A character is considered not to match the predicate
+ * if the predicate function returns `0` for that character. If such a character is found, its index is returned. If all characters from `pos` onward
+ * satisfy the predicate (i.e., `fn` returns non-zero for all characters), or if `pos` is greater than or equal to the length of the string, the function
+ * returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. The behavior is undefined if `dstring` or `fn` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
+ * @param fn A pointer to a predicate function that takes a character as input and returns a non-zero value if the character matches the condition,
+ *           or `0` otherwise. The behavior is undefined if `fn` is `NULL`.
+ * @param pos The starting index in `dstring` from which to begin the search. If `pos` is greater than or equal to the length of the string,
+ *            the function returns `MAX_SIZE_T`.
+ *
+ * @return usize The index of the first character in `dstring` starting from `pos` that does not satisfy the predicate (i.e., where `fn` returns `0`).
+ *         If all characters from `pos` onward satisfy the predicate, or if `pos` is out of range, returns `MAX_SIZE_T`.
+ */
+usize		d_string_find_first_not_matching_predicate_from_index(DString* dstring, match fn, usize pos);
 
 /**
- * @brief Modifies a dynamic string to represent a substring starting from a specified position.
+ * @brief Finds the first character in a dynamic string that does not match a specified predicate function.
  *
- * Adjusts the `_DString` to contain a substring starting from the specified position `pos` and extending for `len` characters. 
- * This operation changes the original `_DString` to represent the new substring. If `pos` is greater than or equal to the length of 
- * the string, the function will return `NULL`, indicating an invalid operation. If `pos + len` exceeds the end of the string, the 
- * substring will include all characters from `pos` to the end of the string. The function does not allocate new memory; it only adjusts
- * the existing `_DString`. The behavior is undefined if `dstring` is `NULL`.
+ * Searches the `_DString` structure `dstring` for the first character that does not satisfy the condition defined by the predicate function `fn`.
+ * The search starts from the beginning of `dstring`. A character is considered not to match the predicate if the predicate function returns `0` for that character.
+ * If such a character is found, its index is returned. If all characters satisfy the predicate (i.e., `fn` returns non-zero for all characters),
+ * the function returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. The behavior is undefined if `dstring` or `fn` is `NULL`.
  *
- * @param dstring A pointer to the `_DString` structure to be modified. The behavior is undefined if `dstring` is `NULL`.
- * @param pos The starting index in the `_DString` from which to begin the substring.
- *            If `pos` is greater than or equal to the length of the string, the function will return `NULL`.
- * @param len The number of characters to include in the substring. If `pos + len` exceeds the end of the string, the substring will
- *            include all characters from `pos` to the end of the string.
+ * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
+ * @param fn A pointer to a predicate function that takes a character as input and returns a non-zero value if the character matches the condition,
+ *           or `0` otherwise. The behavior is undefined if `fn` is `NULL`.
  *
- * @return DString* A pointer to the modified `_DString` structure containing the substring, or `NULL` if `pos` is greater than
- *         or equal to the length of the string, or if memory allocation fails.
+ * @return usize The index of the first character in `dstring` that does not satisfy the predicate (i.e., where `fn` returns `0`). If all characters satisfy the predicate,
+ *         returns `MAX_SIZE_T`.
  */
-DString*	d_string_sub_string_in_place(DString* dstring, usize pos, usize len);
+usize		d_string_find_first_not_matching_predicate_from_start(DString* dstring, match fn);
+
+/**
+ * @brief Finds the first character in a dynamic string, searching backwards from a given position, that does not match a specified predicate function.
+ *
+ * Searches the `_DString` structure `dstring` for the first character (in reverse order) that does not satisfy the condition defined by the predicate function `fn`.
+ * The search begins at the specified position `pos` and proceeds backwards to the beginning of the string. If `pos` is greater than or equal to the length of the string,
+ * the search will start from the end of the string. A character is considered not to match the predicate if the predicate function returns `0` for that character.
+ * If such a character is found, its index is returned. If all characters from the start of the string to `pos` (or to the end if `pos` is out of bounds) satisfy
+ * the predicate (i.e., `fn` returns non-zero for all characters), the function returns `MAX_SIZE_T`, which is the maximum value representable by `size_t`. 
+ * The behavior is undefined if `dstring` or `fn` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
+ * @param fn A pointer to a predicate function that takes a character as input and returns a non-zero value if the character matches the condition,
+ *           or `0` otherwise. The behavior is undefined if `fn` is `NULL`.
+ * @param pos The starting index in `dstring` from which to begin the reverse search. If `pos` is greater than or equal to the length of the string,
+ *            the search starts from the end of the string.
+ *
+ * @return usize The index of the first character in `dstring` starting from `pos` and searching backwards that does not satisfy the predicate (i.e., where `fn` returns `0`).
+ *         If all characters from `pos` backwards (or from the end of the string if `pos` is out of range) satisfy the predicate, returns `MAX_SIZE_T`.
+ */
+usize		d_string_find_last_not_matching_predicate_from_index(DString* dstring, match fn, usize pos);
+
+/**
+ * @brief Finds the first character in a dynamic string, searching backwards, that does not match a specified predicate function.
+ *
+ * Searches the `_DString` structure `dstring` for the first character (in reverse order) that does not satisfy the condition defined by the predicate function `fn`.
+ * The search begins from the end of the string and proceeds backwards to the beginning. A character is considered not to match the predicate if the predicate function returns `0` for that character.
+ * If such a character is found, its index is returned. If all characters in the string satisfy the predicate (i.e., `fn` returns non-zero for all characters), the function returns `MAX_SIZE_T`,
+ * which is the maximum value representable by `size_t`. The behavior is undefined if `dstring` or `fn` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure in which to search. The behavior is undefined if `dstring` is `NULL`.
+ * @param fn A pointer to a predicate function that takes a character as input and returns a non-zero value if the character matches the condition,
+ *           or `0` otherwise. The behavior is undefined if `fn` is `NULL`.
+ *
+ * @return usize The index of the first character in `dstring` searched backwards from the end that does not satisfy the predicate (i.e., where `fn` returns `0`).
+ *         If all characters in `dstring` satisfy the predicate, returns `MAX_SIZE_T`.
+ */
+usize		d_string_find_last_not_matching_predicate_from_end(DString* dstring, match fn);
 
 /**
  * @brief Trims characters from the beginning of a dynamic string based on a specified character.
@@ -810,6 +924,22 @@ DString*	d_string_sub_string_in_place(DString* dstring, usize pos, usize len);
 DString*	d_string_trim_left_by_char_in_place(DString* dstring, char c);
 
 /**
+ * @brief Creates a new dynamic string by trimming characters from the beginning of an existing dynamic string based on a specified character.
+ *
+ * Allocates and initializes a new `_DString` that represents a substring of the original `_DString` with all occurrences of the specified
+ * character `c` removed from the beginning. The new string starts from the first character that is not equal to `c`. If the resulting string
+ * is empty after trimming, the new `_DString` will represent an empty string. If the original `_DString` is empty or if all characters
+ * are equal to `c`, the resulting string will be empty. The behavior is undefined if `dstring` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure from which to create the new trimmed string. The behavior is undefined if `dstring` is `NULL`.
+ * @param c The character to be removed from the beginning of the string.
+ *
+ * @return DString* A pointer to the newly created `_DString` structure with leading occurrences of the character `c` removed.
+ *         Returns `NULL` if memory allocation fails.
+ */
+DString*	d_string_trim_left_by_char_new(DString* dstring, char c);
+
+/**
  * @brief Trims characters from the beginning of a dynamic string based on a specified predicate function.
  *
  * Modifies the `_DString` to remove all characters from the beginning of the string that satisfy the condition defined by the predicate
@@ -825,22 +955,6 @@ DString*	d_string_trim_left_by_char_in_place(DString* dstring, char c);
  * @return DString* A pointer to the modified `_DString` structure with leading characters removed based on the predicate function.
  */
 DString*	d_string_trim_left_by_predicate_in_place(DString* dstring, match fn);
-
-/**
- * @brief Creates a new dynamic string by trimming characters from the beginning of an existing dynamic string based on a specified character.
- *
- * Allocates and initializes a new `_DString` that represents a substring of the original `_DString` with all occurrences of the specified
- * character `c` removed from the beginning. The new string starts from the first character that is not equal to `c`. If the resulting string
- * is empty after trimming, the new `_DString` will represent an empty string. If the original `_DString` is empty or if all characters
- * are equal to `c`, the resulting string will be empty. The behavior is undefined if `dstring` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure from which to create the new trimmed string. The behavior is undefined if `dstring` is `NULL`.
- * @param c The character to be removed from the beginning of the string.
- *
- * @return DString* A pointer to the newly created `_DString` structure with leading occurrences of the character `c` removed.
- *         Returns `NULL` if memory allocation fails.
- */
-DString*	d_string_trim_left_by_char_new(DString* dstring, char c);
 
 /**
  * @brief Creates a new dynamic string by trimming characters from the beginning of an existing dynamic string based on a specified predicate function.
@@ -877,6 +991,23 @@ DString*	d_string_trim_left_by_predicate_new(DString* dstring, match fn);
 DString*	d_string_trim_right_by_char_in_place(DString* dstring, char c);
 
 /**
+ * @brief Creates a new dynamic string by trimming characters from the end of an existing dynamic string based on a specified character.
+ *
+ * Allocates and initializes a new `_DString` that represents a substring of the original `_DString` with all occurrences of the specified
+ * character `c` removed from the end. The new string starts from the first character that is not equal to `c` when traversed from the end.
+ * If the resulting string is empty after trimming, the new `_DString` will represent an empty string. If the original `_DString` is empty
+ * or if all characters are equal to `c`, the resulting string will be empty. The behavior is undefined if `dstring` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure from which to create the new trimmed string. The behavior is undefined if `dstring` is `NULL`.
+ * @param c The character to be removed from the end of the string.
+ *
+ * @return DString* A pointer to the newly created `_DString` structure with trailing occurrences of the character `c` removed.
+ *         Returns `NULL` if memory allocation fails.
+ */
+DString*	d_string_trim_right_by_char_new(DString* dstring, char c);
+
+
+/**
  * @brief Trims characters from the end of a dynamic string based on a specified predicate function.
  *
  * Modifies the `_DString` to remove all characters from the end of the string that satisfy the condition defined by the predicate function `fn`.
@@ -893,21 +1024,6 @@ DString*	d_string_trim_right_by_char_in_place(DString* dstring, char c);
  */
 DString*	d_string_trim_right_by_predicate_in_place(DString* dstring, match fn);
 
-/**
- * @brief Creates a new dynamic string by trimming characters from the end of an existing dynamic string based on a specified character.
- *
- * Allocates and initializes a new `_DString` that represents a substring of the original `_DString` with all occurrences of the specified
- * character `c` removed from the end. The new string starts from the first character that is not equal to `c` when traversed from the end.
- * If the resulting string is empty after trimming, the new `_DString` will represent an empty string. If the original `_DString` is empty
- * or if all characters are equal to `c`, the resulting string will be empty. The behavior is undefined if `dstring` is `NULL`.
- *
- * @param dstring A pointer to the `_DString` structure from which to create the new trimmed string. The behavior is undefined if `dstring` is `NULL`.
- * @param c The character to be removed from the end of the string.
- *
- * @return DString* A pointer to the newly created `_DString` structure with trailing occurrences of the character `c` removed.
- *         Returns `NULL` if memory allocation fails.
- */
-DString*	d_string_trim_right_by_char_new(DString* dstring, char c);
 
 /**
  * @brief Creates a new dynamic string by trimming characters from the end of an existing dynamic string based on a specified predicate function.
@@ -941,6 +1057,38 @@ DString*	d_string_trim_right_by_predicate_new(DString* dstring, match fn);
  */
 //DArray*		d_string_convert_as_d_array(DString* dstring);
 
+/**
+ * @brief Splits a dynamic string into substrings based on a set of delimiter characters.
+ *
+ * Splits the `_DString` structure `dstring` into substrings using any character from the null-terminated C string `str` as delimiters.
+ * The function returns a pointer to a `DPointerArray` containing the resulting substrings. Each element of the array is a dynamically
+ * allocated null-terminated C string representing one of the substrings obtained by splitting `dstring` at the delimiters. If `dstring`
+ * or `str` is `NULL`, the behavior is undefined.
+ *
+ * @param dstring A pointer to the `_DString` structure to be split. The behavior is undefined if `dstring` is `NULL`.
+ * @param str A pointer to a null-terminated C string containing the delimiter characters. The behavior is undefined if `str` is `NULL`.
+ *
+ * @return DPointerArray* A pointer to a `DPointerArray` containing the substrings obtained by splitting `dstring` using characters from `str` as delimiters.
+ *         Each element of the array is a dynamically allocated null-terminated C string. Returns `NULL` if memory allocation fails.
+ */
+DPointerArray*		d_string_split_by_char_of_str(DString* dstring, char* str);
+
+/**
+ * @brief Splits a dynamic string into an array of dynamically allocated strings based on a delimiter character.
+ *
+ * Splits the `_DString` structure `dstring` into multiple substrings using the specified delimiter character `c`.
+ * The resulting substrings are stored in a dynamically allocated `DPointerArray`, where each element is a pointer
+ * to a heap-allocated, null-terminated string. If the delimiter `c` is not found in `dstring`, the entire string 
+ * is returned as the only element in the array. If `dstring` is `NULL`, the behavior is undefined.
+ *
+ * @param dstring A pointer to the `_DString` structure to be split. The behavior is undefined if `dstring` is `NULL`.
+ * @param c The character used as the delimiter for splitting.
+ *
+ * @return DPointerArray* A pointer to a `DPointerArray` structure containing the resulting substrings. Each element
+ *                        in the array is a heap-allocated, null-terminated string. If `dstring` is `NULL`, the behavior
+ *                        is undefined.
+ */
+DPointerArray*		d_string_split_by_char(DString* dstring, char c);
 
 /**
  * @brief Deallocates memory used by a dynamic string and sets its pointer to NULL.

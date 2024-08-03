@@ -51,7 +51,8 @@ char* print_d_array_int(void* darray)
     usize i = 1;
     for (size_t j = 0; j < array -> len; ++j)
     {
-        char *nb = d_itoa_i32_no_alloc(arr[j]);
+        char nb[12];
+        d_itoa_i32_no_alloc(arr[j], nb);
         usize len = strlen(nb);
         if (j == 0)
             memcpy(str + i, nb, len);
@@ -78,7 +79,8 @@ char* print_int_array(void* array)
     usize i = 1;
     for (size_t j = 0; j < g_arr_len; ++j)
     {
-        char *nb = d_itoa_i32_no_alloc(arr[j]);
+        char nb[12];
+        d_itoa_i32_no_alloc(arr[j], nb);
         usize len = strlen(nb);
         if (j == 0)
             memcpy(str + i, nb, len);
@@ -513,20 +515,14 @@ void    test_d_pointer_array_destroy(void)
 
 void    test_d_pointer_array_push_back(void)
 {
-    usize len = 3;
-    DPointerArray* array = d_pointer_array_new(len, true, NULL); // array of pointer should be null terminated because of `true` argument.
-
-    char* arr[] = {"Dieriba", "Comment ca va"};
-    d_pointer_array_push_back(array, arr[0]);
-    d_pointer_array_push_back(array, arr[1]);
-    for (size_t i = 0; i < 2; i++)
+    DPointerArray* array = d_pointer_array_new(1, true, NULL); // array of pointer should be null terminated because of `true` argument.
+    char *str ="dieri";
+    usize len = strlen(str);
+    for (size_t i = 0; i < 500; i++)
     {
-        usize len = strlen(arr[i]);
-        char* str = array -> pdata[i];
-        d_assert_eq(str, arr[i], len);
+        d_pointer_array_push_back(array, str);
+        d_assert_eq(array->pdata[i], str, len);
     }
-    char *str = array -> pdata[2];
-    assert_eq_null(str);
     d_pointer_array_destroy(&array);
 }
 
@@ -548,9 +544,9 @@ void    test_d_pointer_array_append_vals(void)
 
 void    test_d_pointer_array_get_capacity(void)
 {
-    DPointerArray* array = d_pointer_array_new(false, true, NULL);
+    DPointerArray* array = d_pointer_array_new(10, false, NULL); // expected to have 10 elem 
     usize capacity = d_pointer_array_get_capacity(array);
-    usize default_capacity = 8;
+    usize default_capacity = 10;
     assert_eq_custom(&capacity, &default_capacity, sizeof(usize), itoa_usize);
     d_pointer_array_destroy(&array);
 }

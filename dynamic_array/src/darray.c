@@ -150,8 +150,8 @@ DPointerArray  *d_pointer_array_new	(usize reserved_elem, bool null_terminated, 
 	if (array == NULL)
 		return (NULL);
 	array -> free_func = free_func;
-	array -> null_terminated = null_terminated;
-	array -> capacity = (((reserved_elem > 0) * reserved_elem) + ((reserved_elem == 0) + array -> null_terminated) * (usize)CAPACITY);
+	array -> null_terminated = (usize)null_terminated;
+	array -> capacity = ((reserved_elem > 0) * reserved_elem) + ((reserved_elem == 0) * (usize)CAPACITY) + (usize)null_terminated;
 	array -> pdata = malloc(sizeof(void*) * array -> capacity);
 	array -> len = 0;
 	array -> refcount = 1;
@@ -198,9 +198,10 @@ DPointerArray  *d_pointer_array_push_back		(DPointerArray *arr, 	const void *dat
 {
 	DRealPointerArray* array = (DRealPointerArray*)arr;
 	usize	null_terminated = (usize)array -> null_terminated;
-	if (array -> capacity - null_terminated == 0 && d_pointer_array_try_expand(arr, 8) == false)
+	if (array -> capacity - null_terminated == 0 && d_pointer_array_try_expand(arr, 1) == false)
 		return NULL;
 	array -> pdata[array -> len++] = (void*)data;
+	--array -> capacity;
 	if (null_terminated)
 		array -> pdata[array -> len] = NULL;
 	return arr;
@@ -264,7 +265,6 @@ bool d_pointer_array_try_expand(DPointerArray *arr, usize len)
 	DRealPointerArray* array = (DRealPointerArray*)arr;
 	usize arr_len = array -> len;
 	usize new_arr_size = ((len == 1) * arr_len * 2) + (len > 1) * (len + (arr_len * 2)) + array -> null_terminated;
-	new_arr_size += (new_arr_size % 2) == 1;
 	array->capacity = new_arr_size - arr_len;
 	array -> pdata = reallocarray(array->pdata, new_arr_size, sizeof(void*));
 	return array -> pdata != NULL;

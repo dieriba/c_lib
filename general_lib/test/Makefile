@@ -5,6 +5,9 @@ CFLAGS := -Wall -Wextra -MMD -g3
 DYNAMIC_ARR_INCLUDE_DIR := ../../dynamic_array/include
 
 # Directory where are located header files
+DSTRING_INCLUDE_DIR := ../../string/includes
+
+# Directory where are located header files
 GENERAL_LIB_INCLUDE_DIR := ../include
 
 # Directory where are located some other necessary headers file
@@ -31,7 +34,7 @@ OBJ_DIR := objs
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC)) 
 
 # Variable that will store flags command to include headers
-INCLUDES := -I$(GENERAL_LIB_INCLUDE_DIR) -I$(HEADER_ROOT_DIR) -I$(DYNAMIC_ARR_INCLUDE_DIR)
+INCLUDES := -I$(GENERAL_LIB_INCLUDE_DIR) -I$(HEADER_ROOT_DIR) -I$(DYNAMIC_ARR_INCLUDE_DIR) -I$(DSTRING_INCLUDE_DIR)
 
 # Directory where will the builded library will be stored
 LIB_FOLDER := ../lib

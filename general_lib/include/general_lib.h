@@ -4,15 +4,15 @@
 #include <darray.h>
 #include <stdlib.h>
 #include <dtypes.h>
-#include <dstring.h>
 #include <string.h>
+#include <dstring.h>
 
 typedef bool(*DCompareFnc)(char);
 
 //DPointerArray* d_split_string_by_predicate_fn(const char *string, DCompareFnc predicate);
 //DPointerArray* d_split_string_by_str(const char* string, const char*);
 DPointerArray* d_split_string_by_char(const char* string, char c);
-DPointerArray* d_split_string_by_char_of_str(const char* string, const char* delims);
+DPointerArray* d_split_string_by_char_of_str(const char* string, char* delims);
 //DPointerArray* d_split_string_by_pattern(const char*string, const char* pattern);
 
 /**
@@ -70,7 +70,7 @@ char    *d_itoa_i32(int32 nb);
  * 
  * @note Ensure the buffer is sufficiently large to hold the result. For a 32-bit integer, the buffer should be at least 12 bytes.
  */
-char* d_itoa_i32_no_alloc(int32 nb, const char* buffer);
+char* d_itoa_i32_no_alloc(int32 nb, char* buffer);
 
 /**
  * @brief Converts a `usize` value to a string.
@@ -99,5 +99,5 @@ char    *d_itoa_usize(usize nb);
  * @note For 64-bit platforms, ensure the buffer is at least 21 bytes to accommodate the maximum number of digits in a `size_t` value plus the null terminator.
  *       For 32-bit platforms, a minimum of 12 bytes is sufficient.
  */
-char    *d_itoa_usize_no_alloc(usize nb, const char* buffer);
+char    *d_itoa_usize_no_alloc(usize nb, char* buffer);
 #endif
