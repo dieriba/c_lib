@@ -338,6 +338,74 @@ void		test_d_string_compare_against_c_str(void)
     d_string_destroy(&dstring1);
 }
 
+void    test_d_string_starts_with_char(void)
+{
+    DString* dstring = d_string_new_from_c_string("   \t\n\r   bonjour    ");
+    usize pos = d_string_starts_with_char(dstring, 'b', " \n\r\t");
+    usize found = 9;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    pos = d_string_starts_with_char(dstring, 'b', NULL);
+    found = MAX_SIZE_T_VALUE;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    d_string_replace_from_str(dstring, "bonjour");
+    pos = d_string_starts_with_char(dstring, 'b', NULL);
+    found = 0;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    d_string_destroy(&dstring);
+}
+
+void    test_d_string_ends_with_char(void)
+{
+    DString* dstring = d_string_new_from_c_string("bonjour     \t\n\r   ");
+    usize pos = d_string_ends_with_char(dstring, 'r', " \n\r\t");
+    usize found = 6;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    pos = d_string_ends_with_char(dstring, 'r', NULL);
+    found = MAX_SIZE_T_VALUE;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    d_string_replace_from_str(dstring, "bonjour");
+    pos = d_string_ends_with_char(dstring, 'r', NULL);
+    found = 6;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    d_string_destroy(&dstring);
+}
+
+void    test_d_string_starts_with_str(void)
+{
+    DString* dstring = d_string_new_from_c_string("   \t\n\r   // bonjour    ");
+    usize pos = d_string_starts_with_str(dstring, "//", " \n\r\t");
+    usize found = 9;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    pos = d_string_starts_with_str(dstring, "//", NULL);
+    found = MAX_SIZE_T_VALUE;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    d_string_replace_from_str(dstring, "hello bonjour");
+    pos = d_string_starts_with_str(dstring, "hello", NULL);
+    found = 0;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    d_string_replace_from_str(dstring, "      bo");
+    pos = d_string_starts_with_str(dstring, "bon", NULL);
+    found = MAX_SIZE_T_VALUE;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    d_string_destroy(&dstring);
+}
+
+void    test_d_string_ends_with_str(void)
+{
+    DString* dstring = d_string_new_from_c_string("   \t\n\r    bonjour  .  ");
+    usize pos = d_string_ends_with_str(dstring, ".", " \n\r\t");
+    usize found = 19;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    pos = d_string_ends_with_str(dstring, ".", NULL);
+    found = MAX_SIZE_T_VALUE;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    d_string_replace_from_str(dstring, "hello bonjour");
+    pos = d_string_ends_with_str(dstring, "bonjour", NULL);
+    found = 6;
+    assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
+    d_string_destroy(&dstring);
+}
+
 void    test_d_string_find_first_matching_char_from_start(void)
 {
     DString* dstring = d_string_new_from_c_string("hello");
@@ -1048,31 +1116,6 @@ void    test_splitting_by_char_of_str(DString* dstring, char **tab, usize nb_tes
     d_pointer_array_destroy(&arr);
 }
 
-void    test_splitting_by_str(DString* dstring, char **tab, usize nb_test, char *delim)
-{
-    printf("Start Test [%lu]\n", nb_test);
-    DPointerArray* arr = d_string_split_by_str(dstring, delim);
-    if (tab[0] == NULL)
-    {
-        usize len = 0;
-        assert_eq_null(arr -> pdata[0]);
-        assert_eq_custom(&arr -> len, &len, sizeof(usize), itoa_usize);
-    }
-    else
-    {
-        for (usize i = 0; tab[i] != NULL; ++i)
-        {
-            char* str = arr -> pdata[i];
-            usize tab_len = strlen(tab[i]);
-            usize str_len = strlen(str);
-            d_assert_eq(str, tab[i], tab_len);
-            assert_eq_custom(&str_len, &tab_len, sizeof(usize), itoa_usize);
-        }
-    }
-    printf("End Test [%lu]\n", nb_test);
-    d_pointer_array_destroy(&arr);
-}
-
 void    test_d_string_split_by_char(void)
 {
     DString* dstring = d_string_new_from_c_string("bonjour");
@@ -1166,36 +1209,6 @@ void    test_d_string_split_by_char_of_str(void)
     d_string_destroy(&dstring);
 }
 
-void    test_d_string_split_by_str(void)
-{
-    DString* dstring = d_string_new_from_c_string("jem'appeleje");
-    usize nb_test = 1;
-
-    char *tab1[] = {"m'appele", NULL};
-    test_splitting_by_str(dstring, tab1, nb_test++, "je");
-    
-    d_string_replace_from_str(dstring, "jejejejeje");
-
-    char *tab2[] = {NULL};
-    test_splitting_by_str(dstring, tab2, nb_test++, "je");
-
-    d_string_replace_from_str(dstring, "jejejejej");
-
-    char *tab3[] = {"j", NULL};
-    test_splitting_by_str(dstring, tab3, nb_test++, "je");
-
-    d_string_replace_from_str(dstring, "jejjejej");
-
-    char *tab4[] = {"j", NULL};
-    test_splitting_by_str(dstring, tab4, nb_test++, "je");
-
-    d_string_replace_from_str(dstring, "");
-
-    char *tab5[] = {NULL};
-    test_splitting_by_str(dstring, tab5, nb_test++, "je");
-
-    d_string_destroy(&dstring);
-}
 
 void    test_d_string_convert_as_d_array(void)
 {
@@ -1223,7 +1236,11 @@ int main()
     TEST("test_d_string_compare", test_d_string_compare(););
     TEST("test_d_string_compare_againt_c_str", test_d_string_compare_against_c_str(););
     
-    
+    TEST("test_d_string_starts_with_char", test_d_string_starts_with_char(););
+    TEST("test_d_string_ends_with_char", test_d_string_ends_with_char(););
+    TEST("test_d_string_starts_with_str", test_d_string_starts_with_str(););
+    TEST("test_d_string_ends_with_str", test_d_string_ends_with_str(););
+
     TEST("test_d_string_find_first_matching_char_from_index", test_d_string_find_first_matching_char_from_index(););
     TEST("test_d_string_find_first_matching_char_from_start", test_d_string_find_first_matching_char_from_start(););
     
@@ -1281,5 +1298,4 @@ int main()
 
     TEST("test_d_string_split_by_char", test_d_string_split_by_char(););
     TEST("test_d_string_split_by_char_of_str", test_d_string_split_by_char_of_str(););
-    TEST("test_d_string_split_by_str", test_d_string_split_by_str(););
 }

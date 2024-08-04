@@ -168,6 +168,11 @@ DString* 	d_string_push_str_with_len(DString* dstring, const char *str_to_append
     return dstring;
 }
 
+char        d_string_get_char_at(DString* dstring, usize i)
+{
+    return dstring -> string[i];
+}
+
 DString* 	d_string_push_c_str(DString* dstring, const char *str_to_append)
 {
     return d_string_push_str_with_len(dstring, str_to_append, strlen(str_to_append));
@@ -206,6 +211,59 @@ int32		d_string_compare(DString* dstring1, DString* dstring2)
 int32		d_string_compare_againg_c_string(DString* dstring, char* c_str)
 {
     return strcmp(dstring -> string, c_str);
+}
+
+usize       d_string_starts_with_char(DString* dstring, char c, char* ignore_set)
+{
+    usize pos = 0;
+    
+    if (ignore_set != NULL)
+        pos = d_string_find_first_char_not_in_str_from_start(dstring, ignore_set);
+    if (pos == MAX_SIZE_T_VALUE)
+        return MAX_SIZE_T_VALUE;
+    usize start_with_c = (usize)(d_string_get_char_at(dstring, pos) == c);
+    return (start_with_c * pos) + ((start_with_c != 1) * MAX_SIZE_T_VALUE);
+}
+
+usize       d_string_ends_with_char(DString* dstring, char c, char* ignore_set)
+{
+    if (dstring -> len == 0)
+        return MAX_SIZE_T_VALUE;
+    usize pos = dstring -> len - 1;
+    if (ignore_set != NULL)
+        pos = d_string_find_last_char_not_in_str_from_end(dstring, ignore_set);
+    if (pos == MAX_SIZE_T_VALUE)
+        return MAX_SIZE_T_VALUE;
+    usize end_with_c = (usize)(d_string_get_char_at(dstring, pos) == c);
+    return (end_with_c * pos) + ((end_with_c != 1) * MAX_SIZE_T_VALUE);
+}
+
+usize       d_string_starts_with_str(DString* dstring, char* str, char* ignore_set)
+{
+    usize pos = 0;
+    if (ignore_set != NULL)
+        pos = d_string_find_first_char_not_in_str_from_start(dstring, ignore_set);
+    usize len = dstring -> len;
+    usize str_len = strlen(str);
+    if (pos == MAX_SIZE_T_VALUE || len - pos < str_len)
+        return MAX_SIZE_T_VALUE;
+    usize start_with_str = memcmp(dstring -> string + pos, str, str_len) == 0;
+    return (start_with_str * pos) + ((start_with_str != 1) * MAX_SIZE_T_VALUE);
+}
+
+usize       d_string_ends_with_str(DString* dstring, char* str, char* ignore_set)
+{
+    usize len;
+    if ((len = dstring -> len) == 0)
+        return MAX_SIZE_T_VALUE;
+    usize pos = len - 1;
+    if (ignore_set != NULL)
+        pos = d_string_find_last_char_not_in_str_from_end(dstring, ignore_set);
+    usize str_len = strlen(str);
+    if (pos == MAX_SIZE_T_VALUE || pos < str_len - 1)
+        return MAX_SIZE_T_VALUE;
+    usize ends_with_str = memcmp(dstring -> string + (pos - (str_len - 1)), str, str_len) == 0;
+    return (ends_with_str * (pos - (str_len - 1))) + ((ends_with_str != 1) * MAX_SIZE_T_VALUE);
 }
 
 usize		d_string_find_first_matching_char_from_index(DString* dstring, char c, usize pos)

@@ -356,6 +356,23 @@ DString* 	d_string_replace_from_dstring(DString* dstring, const DString* copy);
 int32		d_string_compare(DString* dstring1, DString* dstring2);
 
 /**
+ * @brief Retrieves the character at a specified index in the dynamic string.
+ *
+ * This function returns the character located at the specified index `i` in the `_DString`. If the index `i` is within the valid range
+ * (i.e., `i` is less than the length of the string), the character at that index is returned. If the index `i` is out of range (greater than or
+ * equal to the length of the string), the behavior is undefined. The function assumes that the caller has ensured that `dstring` is not `NULL`
+ * and that the index is valid.
+ *
+ * @param dstring A pointer to the `_DString` structure from which to retrieve the character.
+ *                The behavior is undefined if `dstring` is `NULL`.
+ * @param i The index of the character to retrieve. The index must be within the valid range of the string.
+ *
+ * @return char The character at the specified index `i` in the dynamic string.
+ *              The behavior is undefined if `i` is out of range or if `dstring` is `NULL`.
+ */
+char		d_string_get_char_at(DString* dstring, usize i);
+
+/**
  * @brief Compares a dynamic string with a null-terminated C string.
  *
  * Compares the content of the `_DString` structure `dstring` with the null-terminated C string `c_str`. The comparison is done lexicographically,
@@ -376,6 +393,81 @@ int32		d_string_compare(DString* dstring1, DString* dstring2);
  */
 int32		d_string_compare_againg_c_string(DString* dstring, char* c_str);
 
+/**
+ * @brief Checks if a dynamic string starts with a specified character, optionally ignoring leading characters from a given set.
+ *
+ * This function determines whether the `_DString` starts with the character `c`, considering an optional set of characters to ignore at the beginning
+ * of the string. If the `ignore_set` is not `NULL`, the function will first skip over any characters at the start of the string that are found in the `ignore_set`.
+ * If, after skipping these characters, the first character of the remaining string matches `c`, the function returns the index where `c` is found.
+ * If the character `c` is not found at the start (after skipping ignored characters) or if the string is empty after ignoring characters, the function returns `MAX_SIZE_T`,
+ * which is defined as the maximum value of `size_t`. The behavior is undefined if `dstring` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure to be checked.
+ *                The behavior is undefined if `dstring` is `NULL`.
+ * @param c The character to check for at the start of the string, after ignoring any leading characters specified by `ignore_set`.
+ * @param ignore_set A string containing characters to ignore at the start of the `_DString`. If `ignore_set` is `NULL`, no characters are ignored.
+ *
+ * @return usize The index of the first occurrence of `c` after skipping any characters from `ignore_set`. Returns `MAX_SIZE_T` if `c` is not found at the start
+ *               or if the string is empty after ignoring characters.
+ */
+usize		d_string_starts_with_char(DString* dstring, char c, char* ignore_set);
+
+/**
+ * @brief Checks if a dynamic string ends with a specified character, optionally ignoring trailing characters from a given set.
+ *
+ * This function determines whether the `_DString` ends with the character `c`, considering an optional set of characters to ignore at the end
+ * of the string. If the `ignore_set` is not `NULL`, the function will first skip over any characters at the end of the string that are found in the `ignore_set`.
+ * If, after skipping these characters, the last character of the remaining string matches `c`, the function returns the index where `c` is found.
+ * If the character `c` is not found at the end (after skipping ignored characters) or if the string is effectively empty after ignoring characters, the function returns `MAX_SIZE_T`,
+ * which is defined as the maximum value of `size_t`. The behavior is undefined if `dstring` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure to be checked.
+ *                The behavior is undefined if `dstring` is `NULL`.
+ * @param c The character to check for at the end of the string, after ignoring any trailing characters specified by `ignore_set`.
+ * @param ignore_set A string containing characters to ignore at the end of the `_DString`. If `ignore_set` is `NULL`, no characters are ignored.
+ *
+ * @return usize The index of the last occurrence of `c` after skipping any characters from `ignore_set`. Returns `MAX_SIZE_T` if `c` is not found at the end
+ *               or if the string is empty after ignoring characters.
+ */
+usize		d_string_ends_with_char(DString* dstring, char c, char* ignore_set);
+
+/**
+ * @brief Checks if a dynamic string starts with a specified substring, optionally ignoring leading characters from a given set.
+ *
+ * This function determines whether the `_DString` starts with the substring `str`, considering an optional set of characters to ignore at the beginning
+ * of the string. If the `ignore_set` is not `NULL`, the function will first skip over any characters at the start of the string that are found in the `ignore_set`.
+ * If, after skipping these characters, the remaining string starts with `str`, the function returns the index where `str` begins (after skipping the ignored characters).
+ * If the substring `str` is not found at the start (after skipping ignored characters) or if the string is empty after ignoring characters, the function returns `MAX_SIZE_T`,
+ * which is defined as the maximum value of `size_t`. The behavior is undefined if `dstring` or `str` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure to be checked.
+ *                The behavior is undefined if `dstring` is `NULL`.
+ * @param str The substring to check for at the start of the string, after ignoring any leading characters specified by `ignore_set`.
+ * @param ignore_set A string containing characters to ignore at the start of the `_DString`. If `ignore_set` is `NULL`, no characters are ignored.
+ *
+ * @return usize The index where `str` begins after skipping any characters from `ignore_set`. Returns `MAX_SIZE_T` if `str` is not found at the start
+ *               or if the string is empty after ignoring characters.
+ */
+usize		d_string_starts_with_str(DString* dstring, char* str, char* ignore_set);
+
+/**
+ * @brief Checks if a dynamic string ends with a specified substring, optionally ignoring trailing characters from a given set.
+ *
+ * This function determines whether the `_DString` ends with the substring `str`, considering an optional set of characters to ignore at the end
+ * of the string. If the `ignore_set` is not `NULL`, the function will first skip over any characters at the end of the string that are found in the `ignore_set`.
+ * If, after skipping these characters, the remaining string ends with `str`, the function returns the starting index of `str` within the dynamic string.
+ * If the substring `str` is not found at the end (after skipping ignored characters) or if the string is effectively empty after ignoring characters, the function returns `MAX_SIZE_T`,
+ * which is defined as the maximum value of `size_t`. The behavior is undefined if `dstring` or `str` is `NULL`.
+ *
+ * @param dstring A pointer to the `_DString` structure to be checked.
+ *                The behavior is undefined if `dstring` is `NULL`.
+ * @param str The substring to check for at the end of the string, after ignoring any trailing characters specified by `ignore_set`.
+ * @param ignore_set A string containing characters to ignore at the end of the `_DString`. If `ignore_set` is `NULL`, no characters are ignored.
+ *
+ * @return usize The index where `str` starts if it is found at the end of the string after skipping any characters from `ignore_set`.
+ *               Returns `MAX_SIZE_T` if `str` is not found at the end or if the string is empty after ignoring characters.
+ */
+usize		d_string_ends_with_str(DString* dstring, char* str, char* ignore_set);
 
 /**
  * @brief Finds the index of the first occurrence of a specified character in a dynamic string, starting from a given position.
