@@ -57,6 +57,7 @@
     "stdexcept": "cpp",
     "streambuf": "cpp",
     "typeinfo": "cpp",
-    "dstring.h": "c"
+    "dstring.h": "c",
+    "unistd.h": "c"
   }
 }

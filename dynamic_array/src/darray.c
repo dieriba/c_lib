@@ -72,7 +72,7 @@ DArray* d_array_modify_capacity(DArray* array, usize new_capacity)
 	if (new_capacity == rarray -> capacity)
 		return array;
 	rarray -> capacity = new_capacity;
-	array -> data = reallocarray(array -> data, rarray -> len + new_capacity, rarray -> elem_size);
+	array -> data = realloc(array -> data, rarray -> len + new_capacity * rarray -> elem_size);
 	if (array -> data == NULL)
 		return NULL;
 	return array;
@@ -122,7 +122,7 @@ bool d_array_try_expand(DRealArray *arr, usize len)
 	usize new_arr_size = ((len == 1) * arr_len * 2) + ((len > 1) * (len + (arr_len * 2)));
 	new_arr_size += (new_arr_size % 2) == 1;
 	array->capacity = new_arr_size - arr_len;
-	array -> data = reallocarray(array->data, new_arr_size, array->elem_size);
+	array -> data = realloc(array->data, new_arr_size * array->elem_size);
 	if (array -> data != NULL && array -> clear == true)
 		memset(d_array_elt_pos(array, arr_len + len), 0, d_array_elt_len(array, new_arr_size - (arr_len + len)));
 	return array -> data != NULL;
@@ -190,7 +190,7 @@ DPointerArray*	d_pointer_array_modify_capacity(DPointerArray* array, usize new_c
 	if (new_capacity == 0)
 		return array;
 	rarray -> capacity = new_capacity;
-	array -> pdata = reallocarray(array -> pdata, array -> len + new_capacity, sizeof(void*));
+	array -> pdata = realloc(array -> pdata, array -> len + new_capacity * sizeof(void*));
 	return array;
 }
 
@@ -266,6 +266,6 @@ bool d_pointer_array_try_expand(DPointerArray *arr, usize len)
 	usize arr_len = array -> len;
 	usize new_arr_size = ((len == 1) * arr_len * 2) + (len > 1) * (len + (arr_len * 2)) + array -> null_terminated;
 	array->capacity = new_arr_size - arr_len;
-	array -> pdata = reallocarray(array->pdata, new_arr_size, sizeof(void*));
+	array -> pdata = realloc(array->pdata, new_arr_size * sizeof(void*));
 	return array -> pdata != NULL;
 }

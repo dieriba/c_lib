@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <general_lib.h>
 #include <string.h>
+#include <unistd.h>
 
 usize g_arr_len = 0;
 

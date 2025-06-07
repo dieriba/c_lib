@@ -5,6 +5,7 @@
 #include <general_lib.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 char*   itoa_usize(void* data)
 {
