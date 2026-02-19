@@ -1,11 +1,11 @@
 #ifndef __GENERAL_LIB__H
 #define __GENERAL_LIB__H
 
-#include <darray.h>
 #include <stdlib.h>
-#include <dtypes.h>
 #include <string.h>
-#include <dstring.h>
+#include "d_array.h"
+#include "d_types.h"
+#include "d_string.h"
 
 typedef bool(*DCompareFnc)(char);
 

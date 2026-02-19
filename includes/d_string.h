@@ -1,10 +1,10 @@
 #ifndef __D_STRING__H__
 #define __D_STRING__H__
 
-#include <dtypes.h>
-#include <darray.h>
-typedef struct _DString DString;
+#include "d_types.h"
+#include "d_array.h"
 
+typedef struct _DString DString;
 
 /**
  * @brief Represents a dynamic string structure.

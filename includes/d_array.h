@@ -1,7 +1,7 @@
 #ifndef __D_ARRAY_H
 #define __D_ARRAY_H
 
-#include <dtypes.h>
+#include "d_types.h"
 
 typedef struct _DArray			DArray;
 typedef struct _DPointerArray	DPointerArray;

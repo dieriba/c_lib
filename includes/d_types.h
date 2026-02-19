@@ -2,7 +2,6 @@
 #define __D_TYPES_H
 
 #include <sys/types.h>
-#include <stdbool.h>
 #define MAX_SIZE_T_VALUE (~(size_t)0)
 
 typedef int8_t int8;
