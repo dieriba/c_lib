@@ -1,4 +1,4 @@
-#include <general_lib.h>
+#include "d_general_lib.h"
 
 
 /*DPointerArray* d_split_string_by_predicate_fn(const char *string, DCompareFnc predicate)

@@ -1,9 +1,10 @@
-#include "dtest.h"
-#include "dtypes.h"
-#include "dutils.h"
-
 #include <string.h>
 #include <stdio.h>
+
+#include "dtest.h"
+#include "d_types.h"
+#include "d_utils.h"
+
 
 #define PRINT_SUCCESS_TEST(message) (printf(GREEN message RESET "\n"))
 

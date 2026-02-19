@@ -1,7 +1,8 @@
-#include "dstring.h"
 #include <string.h>
-#include <general_lib.h>
 #include <stdlib.h>
+#include "d_types.h"
+#include "d_string.h"
+#include "d_general_lib.h"
 
 #define CAPACITY 8
 
