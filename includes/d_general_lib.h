@@ -5,7 +5,7 @@
 #include <string.h>
 #include "d_array.h"
 #include "d_types.h"
-#include "d_string.h"
+#include "d_dyn_string.h"
 
 typedef bool(*DCompareFnc)(char);
 
