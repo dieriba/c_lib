@@ -7,6 +7,12 @@
 typedef struct _DStringView DStringView;
 typedef bool (*match)(char c);
 
+#define d_string_view_new_from_str(str)            \
+    do                                             \
+    {                                              \
+        d_string_view_from_parts(str, sizeof(str)) \
+    } while (0)
+
 DStringView d_string_view_from_parts(const char *data, usize len);
 DStringView d_string_view_from_c_string(const char *c_str);
 DStringView d_string_view_from_dyn_string(const DynString *dstring);
