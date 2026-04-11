@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include "dtest.h"
+#include "d_test.h"
 #include "d_types.h"
 #include "d_utils.h"
 

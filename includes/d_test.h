@@ -1,4 +1,5 @@
 #include <stdbool.h>
+#include "d_types.h"
 
 #define TEST(test, name)
 

@@ -162,7 +162,7 @@ char d_dyn_string_get_char_at(DynString *dstring, usize i)
     return dstring->string[i];
 }
 
-DynString *d_dyn_string_increase_capacity_if_needed(DynString *dstring, usize to_copy)
+static DynString *increase_capacity_if_needed(DynString *dstring, usize to_copy)
 {
     if (dstring == NULL)
         return NULL;
@@ -196,7 +196,7 @@ DynString *d_dyn_string_resize(DynString *dstring, usize len)
     if (len > dstring->len)
     {
         usize count = len - dstring->len;
-        if (d_dyn_string_increase_capacity_if_needed(dstring, count) == NULL)
+        if (increase_capacity_if_needed(dstring, count) == NULL)
             return NULL;
         memset(dstring->string + dstring->len, 0, count + 1);
     }
@@ -211,7 +211,7 @@ DynString *d_dyn_string_resize(DynString *dstring, usize len)
 
 DynString *d_dyn_string_push_char(DynString *dstring, char c)
 {
-    if (d_dyn_string_increase_capacity_if_needed(dstring, 1) == NULL)
+    if (increase_capacity_if_needed(dstring, 1) == NULL)
         return NULL;
 
     dstring->string[dstring->len++] = c;
@@ -224,7 +224,7 @@ DynString *d_dyn_string_push_str_with_len(DynString *dstring, const char *str_to
     if (dstring == NULL || str_to_append == NULL)
         return NULL;
 
-    if (d_dyn_string_increase_capacity_if_needed(dstring, len) == NULL)
+    if (increase_capacity_if_needed(dstring, len) == NULL)
         return NULL;
 
     memcpy(dstring->string + dstring->len, str_to_append, len);
@@ -256,7 +256,7 @@ DynString *d_dyn_string_replace_from_str(DynString *dstring, const char *str)
 
     if (to_copy > dstring->len)
     {
-        if (d_dyn_string_increase_capacity_if_needed(dstring, to_copy - dstring->len) == NULL)
+        if (increase_capacity_if_needed(dstring, to_copy - dstring->len) == NULL)
             return NULL;
     }
 
@@ -278,7 +278,7 @@ DynString *d_dyn_string_replace_from_dstring(DynString *dstring, const DynString
 
     if (to_copy->len > dstring->len)
     {
-        if (d_dyn_string_increase_capacity_if_needed(dstring, to_copy->len - dstring->len) == NULL)
+        if (increase_capacity_if_needed(dstring, to_copy->len - dstring->len) == NULL)
             return NULL;
     }
 

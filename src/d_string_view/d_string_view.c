@@ -99,7 +99,7 @@ DStringView d_string_view_from_dyn_string(const DynString *dstring)
     if (dstring == NULL)
         return d_string_view_from_parts(NULL, 0);
 
-    return d_string_view_from_parts(d_dyn_string_get_data(dstring), d_dyn_string_get_len(dstring));
+    return d_string_view_from_parts(d_dyn_string_get_string(dstring), d_dyn_string_get_len(dstring));
 }
 
 bool d_string_view_is_empty(DStringView view)
@@ -143,7 +143,7 @@ DStringView d_string_view_subview(DStringView view, usize pos, usize len)
 
 int32 d_string_view_compare(DStringView view1, DStringView view2)
 {
-    
+
     return 0;
 }
 

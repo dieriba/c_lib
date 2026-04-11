@@ -19,7 +19,7 @@ void d_dyn_string_destroy(DynString **dstring);
 ** Basic accessors
 */
 usize d_dyn_string_get_capacity(DynString *dstring);
-char* d_dyn_string_get_data(DynString* dstring);
+char* d_dyn_string_get_string(DynString* dstring);
 usize d_dyn_string_get_len(DynString* dstring);
 char d_dyn_string_get_char_at(DynString *dstring, usize i);
 
@@ -27,7 +27,6 @@ char d_dyn_string_get_char_at(DynString *dstring, usize i);
 ** Capacity management
 */
 DynString *d_dyn_string_resize(DynString *dstring, usize len);
-DynString *d_dyn_string_increase_capacity_if_needed(DynString *dstring, usize to_copy);
 
 /*
 ** Mutation
