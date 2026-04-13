@@ -2,11 +2,8 @@
 #include <stdlib.h>
 #include "d_types.h"
 #include "d_dyn_string.h"
+#include "container.h"
 #include "d_general_lib.h"
-
-#define DYN_STRING_DEFAULT_CAPACITY 0x10
-#define DYN_STRING_GROWTH_POLICY 2
-#define DYN_STRING_GROWTH_LIMIT (MAX_SIZE_T_VALUE / DYN_STRING_GROWTH_POLICY)
 
 struct _DynString
 {
@@ -21,7 +18,7 @@ DynString *d_dyn_string_new(void)
     if (dstring == NULL)
         return NULL;
 
-    dstring->string = malloc(DYN_STRING_DEFAULT_CAPACITY + 1);
+    dstring->string = malloc(DEFAULT_CAPACITY + 1);
     if (dstring->string == NULL)
     {
         free(dstring);
@@ -29,7 +26,7 @@ DynString *d_dyn_string_new(void)
     }
 
     dstring->len = 0;
-    dstring->capacity = DYN_STRING_DEFAULT_CAPACITY;
+    dstring->capacity = DEFAULT_CAPACITY;
     dstring->string[0] = '\0';
     return dstring;
 }
@@ -40,7 +37,7 @@ DynString *d_dyn_string_new_from_c_string(const char *str)
         return d_dyn_string_new();
 
     usize len = strlen(str);
-    usize capacity = len + DYN_STRING_DEFAULT_CAPACITY;
+    usize capacity = len + DEFAULT_CAPACITY;
 
     DynString *dstring = malloc(sizeof(DynString));
     if (dstring == NULL)
@@ -72,7 +69,7 @@ DynString *d_dyn_string_new_with_reserve(usize reserve)
     if (dstring == NULL)
         return NULL;
 
-    reserve = (reserve == 0) ? DYN_STRING_DEFAULT_CAPACITY : reserve;
+    reserve = (reserve == 0) ? DEFAULT_CAPACITY : reserve;
 
     dstring->string = malloc(reserve + 1);
     if (dstring->string == NULL)
@@ -97,7 +94,7 @@ DynString *d_dyn_string_new_with_sub_string(const char *str, usize pos, usize le
         return NULL;
 
     len = (pos + len > str_len) ? (str_len - pos) : len;
-    usize capacity = len + DYN_STRING_DEFAULT_CAPACITY;
+    usize capacity = len + DEFAULT_CAPACITY;
 
     DynString *dstring = malloc(sizeof(DynString));
     if (dstring == NULL)
@@ -162,30 +159,9 @@ char d_dyn_string_get_char_at(DynString *dstring, usize i)
     return dstring->string[i];
 }
 
-static DynString *increase_capacity_if_needed(DynString *dstring, usize to_copy)
+static Result increase_d_dyn_string_capacity_if_needed(intptr_t **ptr_data, usize *capacity, usize nb_elem, usize elem_size, usize nb_elem_to_copy)
 {
-    if (dstring == NULL)
-        return NULL;
-
-    if (MAX_SIZE_T_VALUE - dstring->len < to_copy)
-        return NULL;
-
-    usize needed = dstring->len + to_copy;
-    if (needed <= dstring->capacity)
-        return dstring;
-
-    if (needed > DYN_STRING_GROWTH_LIMIT)
-        return NULL;
-
-    usize new_capacity = needed * DYN_STRING_GROWTH_POLICY;
-
-    char *tmp = realloc(dstring->string, new_capacity + 1);
-    if (tmp == NULL)
-        return NULL;
-
-    dstring->string = tmp;
-    dstring->capacity = new_capacity;
-    return dstring;
+    return container_increase_capacity_if_needed(ptr_data, capacity, nb_elem, elem_size, nb_elem_to_copy, true);
 }
 
 DynString *d_dyn_string_resize(DynString *dstring, usize len)
@@ -196,7 +172,7 @@ DynString *d_dyn_string_resize(DynString *dstring, usize len)
     if (len > dstring->len)
     {
         usize count = len - dstring->len;
-        if (increase_capacity_if_needed(dstring, count) == NULL)
+        if (increase_d_dyn_string_capacity_if_needed(&dstring->string, &dstring->capacity, dstring->len, sizeof(char), count) == ERROR)
             return NULL;
         memset(dstring->string + dstring->len, 0, count + 1);
     }
@@ -211,7 +187,7 @@ DynString *d_dyn_string_resize(DynString *dstring, usize len)
 
 DynString *d_dyn_string_push_char(DynString *dstring, char c)
 {
-    if (increase_capacity_if_needed(dstring, 1) == NULL)
+    if (increase_d_dyn_string_capacity_if_needed(&dstring->string, &dstring->capacity, dstring->len, sizeof(char), 1) == ERROR)
         return NULL;
 
     dstring->string[dstring->len++] = c;
@@ -224,7 +200,7 @@ DynString *d_dyn_string_push_str_with_len(DynString *dstring, const char *str_to
     if (dstring == NULL || str_to_append == NULL)
         return NULL;
 
-    if (increase_capacity_if_needed(dstring, len) == NULL)
+    if (increase_d_dyn_string_capacity_if_needed(&dstring->string, &dstring->capacity, dstring->len, sizeof(char), len) == ERROR)
         return NULL;
 
     memcpy(dstring->string + dstring->len, str_to_append, len);
@@ -256,7 +232,7 @@ DynString *d_dyn_string_replace_from_str(DynString *dstring, const char *str)
 
     if (to_copy > dstring->len)
     {
-        if (increase_capacity_if_needed(dstring, to_copy - dstring->len) == NULL)
+        if (increase_d_dyn_string_capacity_if_needed(&dstring->string, &dstring->capacity, dstring->len, sizeof(char), to_copy - dstring->len) == ERROR)
             return NULL;
     }
 
@@ -278,7 +254,7 @@ DynString *d_dyn_string_replace_from_dstring(DynString *dstring, const DynString
 
     if (to_copy->len > dstring->len)
     {
-        if (increase_capacity_if_needed(dstring, to_copy->len - dstring->len) == NULL)
+        if (increase_d_dyn_string_capacity_if_needed(&dstring->string, &dstring->capacity, dstring->len, sizeof(char), to_copy->len - dstring->len) == ERROR)
             return NULL;
     }
 

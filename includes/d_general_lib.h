@@ -3,8 +3,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "d_array.h"
 #include "d_types.h"
+#include "d_dyn_array.h"
 #include "d_dyn_string.h"
 
 typedef bool(*DCompareFnc)(char);

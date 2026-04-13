@@ -5,6 +5,19 @@
 #include "d_types.h"
 #include "d_utils.h"
 
+typedef enum OPERANDS
+{
+    _NULL,
+    _NOT_NULL
+} OPERANDS;
+
+typedef enum PRINT_TYPE
+{
+    BOOL,
+    USIZE,
+    INT,
+    STRING
+} PRINT_TYPE;
 
 #define PRINT_SUCCESS_TEST(message) (printf(GREEN message RESET "\n"))
 

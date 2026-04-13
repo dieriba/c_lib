@@ -5,25 +5,28 @@
 
 typedef void (*PrintFn)(void *);
 
+/* Function prototype for test functions. */
+typedef void (*DUnitTestFunction)(void);
+
+typedef struct DUnitTest
+{
+    const char *name;
+    DUnitTestFunction test_func;
+} DUnitTest;
+
+typedef struct DGroupTest
+{
+    const DUnitTest *tests;
+    const usize number_of_tests;
+} DGroupTest;
+
 typedef enum CHECK
 {
     EQ,
     NEQ,
 } CHECK;
 
-typedef enum OPERANDS
-{
-    _NULL,
-    _NOT_NULL
-} OPERANDS;
-
-typedef enum PRINT_TYPE
-{
-    BOOL,
-    USIZE,
-    INT,
-    STRING
-} PRINT_TYPE;
+#define d_setup_run_tests(tests)
 
 void d_assert(CHECK check_for, void *left, void *right, usize size, PrintFn print_function);
 void d_assert_int(CHECK check_for, long long left, long long right);

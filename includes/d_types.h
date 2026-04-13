@@ -3,6 +3,7 @@
 
 #include <sys/types.h>
 #include <stdbool.h>
+#include <stdint.h>
 #define MAX_SIZE_T_VALUE (~(size_t)0)
 
 typedef int8_t int8;
@@ -15,4 +16,11 @@ typedef u_int16_t u16;
 typedef u_int32_t u32;
 typedef u_int64_t u64;
 typedef size_t usize;
+
+typedef enum Result
+{
+    OK,
+    ERROR
+} Result;
+
 #endif
