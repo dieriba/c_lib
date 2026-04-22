@@ -159,7 +159,7 @@ char d_dyn_string_get_char_at(DynString *dstring, usize i)
     return dstring->string[i];
 }
 
-static Result increase_d_dyn_string_capacity_if_needed(intptr_t **ptr_data, usize *capacity, usize nb_elem, usize elem_size, usize nb_elem_to_copy)
+static void *increase_d_dyn_string_capacity_if_needed(void *ptr_data, usize *capacity, usize nb_elem, usize elem_size, usize nb_elem_to_copy)
 {
     return container_increase_capacity_if_needed(ptr_data, capacity, nb_elem, elem_size, nb_elem_to_copy, true);
 }
@@ -172,8 +172,10 @@ DynString *d_dyn_string_resize(DynString *dstring, usize len)
     if (len > dstring->len)
     {
         usize count = len - dstring->len;
-        if (increase_d_dyn_string_capacity_if_needed(&dstring->string, &dstring->capacity, dstring->len, sizeof(char), count) == ERROR)
+        void *data = increase_d_dyn_string_capacity_if_needed(dstring->string, &dstring->capacity, dstring->len, sizeof(char), count);
+        if (data == NULL)
             return NULL;
+        dstring->string = data;
         memset(dstring->string + dstring->len, 0, count + 1);
     }
     else
@@ -187,9 +189,10 @@ DynString *d_dyn_string_resize(DynString *dstring, usize len)
 
 DynString *d_dyn_string_push_char(DynString *dstring, char c)
 {
-    if (increase_d_dyn_string_capacity_if_needed(&dstring->string, &dstring->capacity, dstring->len, sizeof(char), 1) == ERROR)
+    void *data = increase_d_dyn_string_capacity_if_needed(dstring->string, &dstring->capacity, dstring->len, sizeof(char), 1);
+    if (data == NULL)
         return NULL;
-
+    dstring->string = data;
     dstring->string[dstring->len++] = c;
     dstring->string[dstring->len] = '\0';
     return dstring;
@@ -200,9 +203,10 @@ DynString *d_dyn_string_push_str_with_len(DynString *dstring, const char *str_to
     if (dstring == NULL || str_to_append == NULL)
         return NULL;
 
-    if (increase_d_dyn_string_capacity_if_needed(&dstring->string, &dstring->capacity, dstring->len, sizeof(char), len) == ERROR)
+    void *data = increase_d_dyn_string_capacity_if_needed(dstring->string, &dstring->capacity, dstring->len, sizeof(char), len);
+    if (data == NULL)
         return NULL;
-
+    dstring->string = data;
     memcpy(dstring->string + dstring->len, str_to_append, len);
     dstring->len += len;
     dstring->string[dstring->len] = '\0';
@@ -232,8 +236,10 @@ DynString *d_dyn_string_replace_from_str(DynString *dstring, const char *str)
 
     if (to_copy > dstring->len)
     {
-        if (increase_d_dyn_string_capacity_if_needed(&dstring->string, &dstring->capacity, dstring->len, sizeof(char), to_copy - dstring->len) == ERROR)
+        void *data = increase_d_dyn_string_capacity_if_needed(dstring->string, &dstring->capacity, dstring->len, sizeof(char), to_copy - dstring->len);
+        if (data == NULL)
             return NULL;
+        dstring->string = data;
     }
 
     if (to_copy != 0)
@@ -254,8 +260,10 @@ DynString *d_dyn_string_replace_from_dstring(DynString *dstring, const DynString
 
     if (to_copy->len > dstring->len)
     {
-        if (increase_d_dyn_string_capacity_if_needed(&dstring->string, &dstring->capacity, dstring->len, sizeof(char), to_copy->len - dstring->len) == ERROR)
+        void *data = increase_d_dyn_string_capacity_if_needed(dstring->string, &dstring->capacity, dstring->len, sizeof(char), to_copy->len - dstring->len);
+        if (data == NULL)
             return NULL;
+        dstring->string = data;
     }
 
     if (to_copy->len != 0)
