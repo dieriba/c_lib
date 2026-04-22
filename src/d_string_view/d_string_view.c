@@ -122,7 +122,7 @@ char d_string_view_get_char_at(DStringView view, usize index)
 #ifdef BOUNDARY_CHECK
     if (index >= view.len)
     {
-        /* halt program or handle error */
+        /* stop program execution */
     }
 #endif
     return view.data[index];
