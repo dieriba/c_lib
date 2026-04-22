@@ -5,22 +5,22 @@
 
 }*/
 
-DPointerArray *d_split_string_by_char_of_str(const char *string, char *delims)
+DynArray *d_split_string_by_char_of_str(const char *string, char *delims)
 {
     DynString *dstring = d_dyn_string_new_from_c_string(string);
     if (dstring == NULL)
         return NULL;
-    DPointerArray *arr = d_dyn_string_split_by_char_of_str(dstring, delims);
+    DynArray *arr = d_dyn_string_split_by_char_of_str(dstring, delims);
     d_dyn_string_destroy(&dstring);
     return arr;
 }
 
-DPointerArray *d_split_string_by_char(const char *string, char c)
+DynArray *d_split_string_by_char(const char *string, char c)
 {
     DynString *dstring = d_dyn_string_new_from_c_string(string);
     if (dstring == NULL)
         return NULL;
-    DPointerArray *arr = d_dyn_string_split_by_char(dstring, c);
+    DynArray *arr = d_dyn_string_split_by_char(dstring, c);
     d_dyn_string_destroy(&dstring);
     return arr;
 }

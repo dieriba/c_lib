@@ -1,6 +1,7 @@
 #include <string.h>
-
+#include <stdlib.h>
 #include "d_string_view.h"
+#include "d_dyn_array.h"
 
 typedef struct _DStringView
 {
@@ -74,6 +75,11 @@ static usize find_last_from_index(DStringView view, usize pos, char_match_fn mat
     }
 
     return MAX_SIZE_T_VALUE;
+}
+
+char *d_dyn_string_substr(DStringView view, usize pos, usize len)
+{
+    return d_substr(view.data, pos, len);
 }
 
 DStringView d_string_view_from_parts(const char *data, usize len)
@@ -419,4 +425,67 @@ DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn)
 DynString *d_dyn_string_new_from_string_view(DStringView view)
 {
     return d_dyn_string_new_with_sub_string(view.data, 0, view.len);
+}
+
+static void _free_str(void *elem)
+{
+    free(*((void **)elem));
+}
+
+DynArray *d_string_split_by_char_of_str(DStringView view, DynArrayOpts opts, char *str)
+{
+    usize len = view.len;
+    DynArray *vec = d_dyn_array_new_ptr_arr(len, _free_str, false, opts);
+    if (vec == NULL)
+        return NULL;
+    char *string = view.data;
+    usize str_len = strlen(str);
+    for (usize i = 0; i < len;)
+    {
+        while (i < len && memchr(str, (int)string[i], str_len) != NULL)
+            ++i;
+        if (i != len)
+        {
+            usize j = d_string_view_find_first_char_in_set_from_index(view, str, i);
+            char *str = d_dyn_string_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
+            if (str == NULL || d_dyn_push_back_ptr(vec, str) == NULL)
+            {
+                d_dyn_array_destroy(&vec);
+                return NULL;
+            }
+            i = j;
+        }
+        else
+            break;
+    }
+    return vec;
+}
+
+DynArray *d_string_split_by_char(DStringView view, DynArrayOpts opts, char c)
+{
+    usize len = view.len;
+    DynArray *vec = d_dyn_array_new_ptr_arr(len, _free_str, false, opts);
+    if (vec == NULL)
+        return NULL;
+    usize len = view.len;
+    char *str = view.data;
+    for (usize i = 0; i < len;)
+    {
+        while (i < len && str[i] == c)
+            ++i;
+        if (i != len)
+        {
+            usize j = d_string_view_find_first_matching_char_from_index(view, c, i);
+            char *str = d_dyn_string_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
+            if (str == NULL || d_dyn_push_back_ptr(vec, str) == NULL)
+            {
+                d_dyn_array_destroy(&vec);
+                return NULL;
+            }
+            i = j;
+        }
+        else
+            break;
+    }
+    return vec;
 }

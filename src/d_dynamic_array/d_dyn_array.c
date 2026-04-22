@@ -64,6 +64,11 @@ DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem, DestroyElemFunc 
 	return dyn_array;
 }
 
+DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem, DestroyElemFunc free_func, bool clear, DynArrayOpts opts)
+{
+	return d_dyn_array_new(sizeof(void *), reserved_elem, free_func, clear, opts);
+}
+
 DynArray *d_dyn_array_append(DynArray *dyn_array, const void *data, usize nb_elem_to_copy)
 {
 	if (nb_elem_to_copy == 0 || (nb_elem_to_copy != 0 && data == NULL))
@@ -73,6 +78,16 @@ DynArray *d_dyn_array_append(DynArray *dyn_array, const void *data, usize nb_ele
 	memcpy(d_dyn_array_elt_pos(dyn_array, dyn_array->array.len), data, d_dyn_array_elt_len(dyn_array, nb_elem_to_copy));
 	dyn_array->array.len += nb_elem_to_copy;
 	return dyn_array;
+}
+
+DynArray *d_dyn_push_back(DynArray *dyn_array, const void *data)
+{
+	return d_dyn_array_append(dyn_array, data, 1);
+}
+
+DynArray *d_dyn_push_back_ptr(DynArray *dyn_array, const void *data)
+{
+	return d_dyn_array_append(dyn_array, &data, 1);
 }
 
 DynArray *d_dyn_array_shallow_copy(DynArray *dyn_array)

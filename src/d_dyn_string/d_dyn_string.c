@@ -129,11 +129,6 @@ usize d_dyn_string_get_len(DynString *dstring)
     return dstring->str.len;
 }
 
-char *d_dyn_string_substr(DynString *dstring, usize pos, usize len)
-{
-    return d_substr(dstring->str.data, pos, len);
-}
-
 DynString *d_dyn_string_sub_string_in_place(DynString *dstring, usize pos, usize len)
 {
     if (dstring == NULL || pos > dstring->str.len)
