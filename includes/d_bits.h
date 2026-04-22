@@ -25,7 +25,7 @@ typedef struct DBits64
     u64 bits;
 } DBits64;
 
-#define D_BITS_X_API(NAME, TYPE, NB_BITS)                            \
+#define D_BITS_X_API(NAME, RAW_TYPE, TYPE, NB_BITS)                \
     static inline bool NAME##_check_bit_set(TYPE bytes, usize bit) \
     {                                                              \
         return bit < (usize)NB_BITS && D_GET_BIT(bytes.bits, bit); \
@@ -36,6 +36,14 @@ typedef struct DBits64
         if (!bytes || bit >= (usize)NB_BITS)                       \
             return false;                                          \
         bytes->bits = D_SET_BIT(bytes->bits, bit);                 \
+        return true;                                               \
+    }                                                              \
+                                                                   \
+    static inline bool NAME##_assign(TYPE *bytes, RAW_TYPE bits)   \
+    {                                                              \
+        if (!bytes)                                                \
+            return false;                                          \
+        bytes->bits = bits;                                        \
         return true;                                               \
     }                                                              \
                                                                    \
@@ -61,7 +69,7 @@ typedef struct DBits64
         return true;                                               \
     }
 
-D_BITS_X_API(d_bits_8, DBits8, 8)
-D_BITS_X_API(d_bits_16, DBits16, 16)
-D_BITS_X_API(d_bits_32, DBits32, 32)
-D_BITS_X_API(d_bits_64, DBits64, 64)
+D_BITS_X_API(d_bits_8, u8, DBits8, 8)
+D_BITS_X_API(d_bits_16, u16, DBits16, 16)
+D_BITS_X_API(d_bits_32, u32, DBits32, 32)
+D_BITS_X_API(d_bits_64, u64, DBits64, 64)
