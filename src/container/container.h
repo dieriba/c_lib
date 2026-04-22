@@ -3,5 +3,14 @@
 #ifndef __CONTAINER__H
 #define __CONTAINER__H
 #define DEFAULT_CAPACITY 0x10
-void* container_increase_capacity_if_needed(void *data, usize *capacity, usize nb_elem, usize elem_size, usize nb_elem_to_copy, bool null_terminated);
+
+typedef struct Container
+{
+    void *data;
+    usize len;
+    usize capacity;
+    usize elem_size;
+
+} Container;
+Result container_increase_capacity_if_needed(Container *container, usize nb_elem_to_copy, bool zero_terminated);
 #endif
