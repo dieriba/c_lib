@@ -10,6 +10,8 @@
 #define container_nb_occupied_elem_slot(container) (container)->len
 Result container_increase_capacity_if_needed(Container *container, usize nb_elem_to_copy, bool zero_terminated)
 {
+    if (container == NULL)
+        return ERROR;
     usize total_len = container_calcul_total_len(container->len, container->elem_size);
     usize total_len_copy = container_calcul_total_len(nb_elem_to_copy, container->elem_size);
     usize extra_zero_elem = zero_terminated ? 1 : 0;
@@ -62,31 +64,38 @@ Container *container_new_from(Container *src, bool zero_terminated)
     return new;
 }
 
-Result container_insert(Container *src, usize src_pos, const void *data, usize len, bool zero_terminated)
+Result container_insert(Container *dst, usize dst_pos, const void *data, usize len, bool zero_terminated)
 {
-    if (src == NULL)
+    if (dst == NULL || data == NULL)
         return ERROR;
-    usize src_len = container_nb_occupied_elem_slot(src);
-    if (src_pos > src_len)
+    usize dst_len = container_nb_occupied_elem_slot(dst);
+    if (dst_pos > dst_len)
         return ERROR;
-    if (container_increase_capacity_if_needed(src, len, zero_terminated) == ERROR)
+    if (container_increase_capacity_if_needed(dst, len, zero_terminated) == ERROR)
         return ERROR;
-    if (src_pos != src_len)
+    if (dst_pos != dst_len)
     {
-        usize src_elem_to_mv = src_len - src_pos;
-        memmove(src->data + src_pos + len, src->data + src_pos, src_elem_to_mv);
+        usize dst_elem_to_mv = dst_len - dst_pos;
+        memmove(dst->data + dst_pos + len, dst->data + dst_pos, dst_elem_to_mv);
     }
-    memcpy(src->data + src_pos, data, len);
-    src->len += len;
+    memcpy(dst->data + dst_pos, data, len);
+    dst->len += len;
     if (zero_terminated)
-        memset(src->data + src->len, 0, src->elem_size);
+        memset(dst->data + dst->len, 0, dst->elem_size);
     return OK;
 }
 
-Result container_copy(Container* dst, Container* src)
+Result container_append(Container *dst, Container *src, bool zero_terminated)
 {
     if (dst == NULL || src == NULL)
         return ERROR;
-    
-    return OK;
+    return container_insert(dst, dst->len, src->data, src->len, zero_terminated);
 }
+
+Result container_prepend(Container *dst, Container *src, bool zero_terminated)
+{
+    if (dst == NULL || src == NULL)
+        return ERROR;
+    return container_insert(dst, 0, src->data, src->len, zero_terminated);
+}
+
