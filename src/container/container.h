@@ -1,7 +1,7 @@
-#include "d_types.h"
-
 #ifndef __CONTAINER__H
 #define __CONTAINER__H
+#include "d_types.h"
+#include "d_bits.h"
 #define DEFAULT_CAPACITY 0x10
 
 typedef struct Container
