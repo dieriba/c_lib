@@ -8,6 +8,8 @@
 #define container_nb_available_elem_slot(container) (container)->capacity - (container)->len
 #define container_nb_occupied_elem_slot(container) (container)->len
 #define container_total_len(container) (container->len * container->elem_size)
+#define container_elt_len(container, i) ((container)->elem_size * (i))
+#define container_elt_pos(container, i) ((char *)(container)->data + container_elt_len((container), (i)))
 
 Container *container_new(usize elem_size, usize capacity, DBits8 opts)
 {
@@ -43,7 +45,7 @@ static void container_write_sentinel(Container *container)
 {
     if (!container->data || !container_has_zero_sentinel(container))
         return;
-    unsigned char *end = (unsigned char *)container->data + container->len * container->elem_size;
+    char *end = (char *)container->data + container->len * container->elem_size;
     memset(end, 0, container->elem_size);
 }
 
@@ -99,20 +101,18 @@ Container *container_new_from(const Container *src)
         return NULL;
     usize alloc_size;
     if (!container_compute_new_alloc_size(src, src->capacity, &alloc_size))
-    {
-        free(new);
-        return NULL;
-    }
+        goto ERROR;
     if ((new->data = malloc(alloc_size)) == NULL)
-    {
-        free(new);
-        return NULL;
-    }
+        goto ERROR;
     new->len = src->len;
     usize size_to_cpy = src->len * src->elem_size;
     memcpy(new->data, src->data, size_to_cpy);
     container_write_sentinel(new);
     return new;
+
+ERROR:
+    free(new);
+    return NULL;
 }
 
 Result container_insert(Container *dst, usize dst_pos, const void *data, usize len)
@@ -124,7 +124,7 @@ Result container_insert(Container *dst, usize dst_pos, const void *data, usize l
         return ERROR;
     if (container_increase_capacity_if_needed(dst, len) == ERROR)
         return ERROR;
-    unsigned char *base = dst->data;
+    char *base = dst->data;
     usize byte_pos = dst_pos * dst->elem_size;
     usize byte_len = len * dst->elem_size;
     if (dst_pos != dst_len)
@@ -185,4 +185,69 @@ DBits8 container_get_opts(const Container *container)
     if (container == NULL)
         return CNT_OPT_NONE;
     return container->opts;
+}
+
+Result container_push(Container *container, const void *elem)
+{
+    if (container == NULL || elem == NULL)
+        return ERROR;
+    if (container_increase_capacity_if_needed(container, 1) == ERROR)
+        return ERROR;
+    memcpy(container_elt_pos(container, container->len), elem, container->elem_size);
+    container->len++;
+    container_write_sentinel(container);
+    return OK;
+}
+
+Result container_swap_remove(Container *container, usize index, void *out_elem)
+{
+    if (!container || index >= container->len)
+        return ERROR;
+    if (out_elem)
+        memcpy(out_elem, container_elt_pos(container, index), container->elem_size);
+    container->len--;
+    if (index != container->len)
+        memcpy(container_elt_pos(container, index), container_elt_pos(container, container->len), container->elem_size);
+    container_write_sentinel(container);
+    return OK;
+}
+
+Result container_pop(Container *container, void *out_elem)
+{
+    if (!container)
+        return ERROR;
+    if (container->len == 0)
+        return OK;
+    container->len--;
+    if (out_elem)
+        memcpy(out_elem, container_elt_pos(container, container->len), container->elem_size);
+    container_write_sentinel(container);
+    return OK;
+}
+
+void container_clear(Container *container)
+{
+    if (container == NULL)
+        return;
+    container->len = 0;
+    container_write_sentinel(container);
+}
+
+void container_destroy(Container *container)
+{
+    if (container == NULL)
+        return;
+    free(container->data);
+    container->data = NULL;
+    container->len = 0;
+    container->capacity = 0;
+}
+
+void container_free(Container **container)
+{
+    if (container == NULL || *container == NULL)
+        return;
+    Container *cnt = *container;
+    container_destroy(cnt);
+    *container = NULL;
 }
