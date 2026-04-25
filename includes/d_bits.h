@@ -1,75 +1,63 @@
 #include "d_types.h"
 
-#define D_GET_BIT(bits, bit) (bits & ((usize)1 << bit))
-#define D_SET_BIT(bits, bit) (bits | ((usize)1 << bit))
 #define D_TOGGLE_BIT(bits, bit) (bits ^ ((usize)1 << bit))
 #define D_CLEAR_BIT(bits, bit) (bits & ~((usize)1 << bit))
 
-typedef struct DBits8
-{
-    u8 bits;
-} DBits8;
+typedef u_int8_t DBits8;
+typedef uint16_t DBits16;
+typedef uint32_t DBits32;
+typedef uint64_t DBits64;
 
-typedef struct DBits16
-{
-    u16 bits;
-} DBits16;
-
-typedef struct DBits32
-{
-    u32 bits;
-} DBits32;
-
-typedef struct DBits64
-{
-    u64 bits;
-} DBits64;
-
-#define D_BITS_X_API(NAME, RAW_TYPE, TYPE, NB_BITS)                \
-    static inline bool NAME##_check_bit_set(TYPE bytes, usize bit) \
-    {                                                              \
-        return bit < (usize)NB_BITS && D_GET_BIT(bytes.bits, bit); \
-    }                                                              \
-                                                                   \
-    static inline bool NAME##_set_bit(TYPE *bytes, usize bit)      \
-    {                                                              \
-        if (!bytes || bit >= (usize)NB_BITS)                       \
-            return false;                                          \
-        bytes->bits = D_SET_BIT(bytes->bits, bit);                 \
-        return true;                                               \
-    }                                                              \
-                                                                   \
-    static inline bool NAME##_assign(TYPE *bytes, RAW_TYPE bits)   \
-    {                                                              \
-        if (!bytes)                                                \
-            return false;                                          \
-        bytes->bits = bits;                                        \
-        return true;                                               \
-    }                                                              \
-                                                                   \
-    static inline bool NAME##_toggle_bit(TYPE *bytes, usize bit)   \
-    {                                                              \
-        if (!bytes || bit >= (usize)NB_BITS)                       \
-            return false;                                          \
-        bytes->bits = D_TOGGLE_BIT(bytes->bits, bit);              \
-        return true;                                               \
-    }                                                              \
-    static inline bool NAME##_clear_bit(TYPE *bytes, usize bit)    \
-    {                                                              \
-        if (!bytes || bit >= (usize)NB_BITS)                       \
-            return false;                                          \
-        bytes->bits = D_CLEAR_BIT(bytes->bits, bit);               \
-        return true;                                               \
-    }                                                              \
-    static inline bool NAME##_reset_all_bits(TYPE *bytes)          \
-    {                                                              \
-        if (!bytes)                                                \
-            return false;                                          \
-        bytes->bits = 0;                                           \
-        return true;                                               \
+#define D_BITS_X_API(NAME, TYPE, NB_BITS)                                             \
+    static inline bool NAME##_check_bits_set(TYPE bits_set, const TYPE bits_to_check) \
+    {                                                                                 \
+        return (bits_set & bits_to_check) == bits_to_check;                           \
+    }                                                                                 \
+                                                                                      \
+    static inline bool NAME##_set_bits(TYPE *bits_set, const TYPE bits_to_set)        \
+    {                                                                                 \
+        if (!bits_set)                                                                \
+            return false;                                                             \
+        *bits_set = *bits_set | bits_to_set;                                          \
+        return true;                                                                  \
+    }                                                                                 \
+    static inline bool NAME##_unset_bits(TYPE *bits_set, const TYPE bits_to_unset)    \
+    {                                                                                 \
+        if (!bits_set)                                                                \
+            return false;                                                             \
+        *bits_set = *bits_set & ~bits_to_unset;                                       \
+        return true;                                                                  \
+    }                                                                                 \
+    static inline bool NAME##_assign(TYPE *bits_set, TYPE bits)                       \
+    {                                                                                 \
+        if (!bits_set)                                                                \
+            return false;                                                             \
+        *bits_set = bits;                                                             \
+        return true;                                                                  \
+    }                                                                                 \
+    static inline bool NAME##_toggle_bit(TYPE *bits_set, usize bit)                   \
+    {                                                                                 \
+        if (!bits_set || bit >= (usize)NB_BITS)                                       \
+            return false;                                                             \
+        *bits_set = D_TOGGLE_BIT(*bits_set, bit);                                     \
+        return true;                                                                  \
+    }                                                                                 \
+    static inline bool NAME##_clear_bit(TYPE *bits_set, usize bit)                    \
+    {                                                                                 \
+        if (!bits_set || bit >= (usize)NB_BITS)                                       \
+            return false;                                                             \
+        *bits_set = D_CLEAR_BIT(*bits_set, bit);                                      \
+        return true;                                                                  \
+    }                                                                                 \
+    static inline bool NAME##_reset_all_bits(TYPE *bits_set)                          \
+    {                                                                                 \
+        if (!bits_set)                                                                \
+            return false;                                                             \
+        *bits_set = 0;                                                                \
+        return true;                                                                  \
     }
 
-D_BITS_X_API(d_bits_8, u8, DBits8, 8)
-D_BITS_X_API(d_bits_16, u16, DBits16, 16)
-D_BITS_X_API(d_bits_32, u32, DBits32, 32)
-D_BITS_X_API(d_bits_64, u64, DBits64, 64)
+D_BITS_X_API(d_bits_8, u8, 8)
+D_BITS_X_API(d_bits_16, u16, 16)
+D_BITS_X_API(d_bits_32, u32, 32)
+D_BITS_X_API(d_bits_64, u64, 64)

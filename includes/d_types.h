@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <stdbool.h>
 #include <stdint.h>
-#define MAX_SIZE_T_VALUE (~(size_t)0)
+#define MAX_SIZE_T_VALUE SIZE_MAX
 
 typedef int8_t int8;
 typedef int16_t int16;

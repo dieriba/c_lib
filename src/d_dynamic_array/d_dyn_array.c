@@ -31,13 +31,12 @@ struct _DynArray
 	 * type and destroy the element accordingly.
 	 */
 	DestroyElemFunc free_func;
-	DBits8 opts;
 };
 
 #define d_dyn_array_elt_len(arr, i) ((arr)->array.elem_size * (i))
 #define d_dyn_array_elt_pos(arr, i) ((char *)(arr)->array.data + d_dyn_array_elt_len((arr), (i)))
 
-DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem, DestroyElemFunc free_func, bool clear, DynArrayOpts opts)
+DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem, DestroyElemFunc free_func, bool clear, ContainerOpts opts)
 {
 	if (elem_size == 0)
 		return NULL;
@@ -48,7 +47,6 @@ DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem, DestroyElemFunc 
 	dyn_array->array.elem_size = elem_size;
 	bool zero_terminated = D_GET_BIT(opts, D_DYN_ARRAY_OPT_ZERO_TERMINATED) != 0;
 	dyn_array->array.data = malloc((elem_size * dyn_array->array.capacity) + (zero_terminated == true * elem_size));
-	d_bits_8_assign(&dyn_array->opts, opts);
 	if (dyn_array->array.data == NULL)
 	{
 		free(dyn_array);
@@ -71,9 +69,9 @@ DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem, DestroyElemFunc free_func
 
 DynArray *d_dyn_array_append(DynArray *dyn_array, const void *data, usize nb_elem_to_copy)
 {
-	if (nb_elem_to_copy == 0 || (nb_elem_to_copy != 0 && data == NULL))
+	if (data == NULL || nb_elem_to_copy == 0)
 		return NULL;
-	if (container_increase_capacity_if_needed(&dyn_array->array, nb_elem_to_copy, d_bits_8_check_bit_set(dyn_array->opts, D_DYN_ARRAY_OPT_ZERO_TERMINATED)) == ERROR)
+	if (container_increase_capacity_if_needed(&dyn_array->array, nb_elem_to_copy) == ERROR)
 		return NULL;
 	memcpy(d_dyn_array_elt_pos(dyn_array, dyn_array->array.len), data, d_dyn_array_elt_len(dyn_array, nb_elem_to_copy));
 	dyn_array->array.len += nb_elem_to_copy;

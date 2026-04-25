@@ -22,16 +22,6 @@ typedef struct _DynArray DynArray;
  */
 typedef void (*DestroyElemFunc)(void *elem);
 
-/*
- * DynArrayOpts:
- *
- * Bitmask of options that can be combined with '|'.
- */
-typedef enum DynArrayOpts
-{
-    D_DYN_ARRAY_OPT_ZERO_TERMINATED = 1 << 1
-} DynArrayOpts;
-
 /**
  * @brief Creates a new dynamic array.
  *
@@ -55,7 +45,7 @@ typedef enum DynArrayOpts
  * @return NULL if `elem_size == 0`.
  * @return NULL if allocation of the array object or element storage fails.
  */
-DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem, DestroyElemFunc free_func, bool clear, DynArrayOpts opts);
+DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem, DestroyElemFunc free_func, bool clear);
 
 /**
  * @brief Creates a new dynamic array for storing pointers.
@@ -75,7 +65,7 @@ DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem, DestroyElemFunc 
  * @return A newly allocated pointer array on success.
  * @return NULL if allocation fails.
  */
-DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem, DestroyElemFunc free_func, bool clear, DynArrayOpts opts);
+DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem, DestroyElemFunc free_func, bool clear);
 
 /**
  * @brief Creates a shallow copy of an existing array.
