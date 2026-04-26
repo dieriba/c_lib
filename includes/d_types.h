@@ -19,8 +19,8 @@ typedef size_t usize;
 
 typedef enum Result
 {
-    OK,
-    ERROR
+    ERROR,
+    OK
 } Result;
 
 #endif

@@ -10,79 +10,40 @@ struct _DynString
     Container str
 };
 
+static DynString *d_dyn_string_new()
+{
+    return malloc(sizeof(DynString));
+}
+
 DynString *d_dyn_string_new(void)
 {
-    DynString *dstring = malloc(sizeof(DynString));
+    DynString *dstring = d_dyn_string_new();
     if (dstring == NULL)
         return NULL;
-
-    char *str = malloc(DEFAULT_CAPACITY + 1);
-    str = dstring->str.data;
-    if (str == NULL)
+    if (container_init(&dstring->str, sizeof(char), DEFAULT_CAPACITY, CNT_OPT_ZERO_SENTINEL) == ERROR)
     {
         free(dstring);
         return NULL;
     }
-    dstring->str.data = str;
-    dstring->str.elem_size = sizeof(char);
-    dstring->str.len = 0;
-    dstring->str.capacity = DEFAULT_CAPACITY;
-    str[0] = '\0';
     return dstring;
 }
 
 DynString *d_dyn_string_new_from_c_string(const char *str)
 {
     if (str == NULL)
-        return d_dyn_string_new();
+        return NULL;
 
     usize len = strlen(str);
-    usize capacity = len + DEFAULT_CAPACITY;
 
-    DynString *dstring = malloc(sizeof(DynString));
+    DynString *dstring = d_dyn_string_new();
     if (dstring == NULL)
         return NULL;
 
-    dstring->str.data = malloc(capacity + 1);
-    if ((char *)(dstring->str.data) == NULL)
+    if (container_init_with_data(&dstring->str, sizeof(char), str, len, CNT_OPT_ZERO_SENTINEL) == ERROR)
     {
-        free(dstring);
+        d_dyn_string_destroy(&dstring);
         return NULL;
     }
-
-    memcpy(dstring->str.data, str, len + 1);
-    dstring->str.len = len;
-    dstring->str.elem_size = sizeof(char);
-    dstring->str.capacity = capacity;
-    return dstring;
-}
-
-DynString *d_dyn_string_new_from_dstring(DynString *dstring)
-{
-    if (dstring == NULL)
-        return NULL;
-    return d_dyn_string_new_with_sub_string(dstring->str.data, 0, dstring->str.len);
-}
-
-DynString *d_dyn_string_new_with_reserve(usize reserve)
-{
-    DynString *dstring = malloc(sizeof(DynString));
-    if (dstring == NULL)
-        return NULL;
-
-    reserve = (reserve == 0) ? DEFAULT_CAPACITY : reserve;
-    char *str = malloc(reserve + 1);
-    dstring->str.data = str;
-    if (str == NULL)
-    {
-        free(dstring);
-        return NULL;
-    }
-
-    dstring->str.elem_size = sizeof(char);
-    dstring->str.len = 0;
-    dstring->str.capacity = reserve;
-    str[0] = '\0';
     return dstring;
 }
 
@@ -96,30 +57,41 @@ DynString *d_dyn_string_new_with_sub_string(const char *str, usize pos, usize le
         return NULL;
 
     len = (pos + len > str_len) ? (str_len - pos) : len;
-    usize capacity = len + DEFAULT_CAPACITY;
 
-    DynString *dstring = malloc(sizeof(DynString));
+    DynString *dstring = d_dyn_string_new();
     if (dstring == NULL)
         return NULL;
 
-    dstring->str.data = malloc(capacity + 1);
-    if (dstring->str.data == NULL)
+    if (container_init_with_data(&dstring->str, sizeof(char), str + pos, len, CNT_OPT_ZERO_SENTINEL) == ERROR)
     {
-        free(dstring);
+        d_dyn_string_destroy(&dstring);
         return NULL;
     }
-
-    if (len != 0)
-        memcpy(dstring->str.data, str + pos, len);
-
-    dstring->str.elem_size = sizeof(char);
-    dstring->str.len = len;
-    dstring->str.capacity = capacity;
-    ((char *)(dstring->str.data))[len] = '\0';
     return dstring;
 }
 
-char *d_dyn_string_get_string(DynString *dstring)
+DynString *d_dyn_string_new_from_dstring(DynString *dstring)
+{
+    if (dstring == NULL)
+        return NULL;
+    return d_dyn_string_new_with_sub_string(dstring->str.data, 0, dstring->str.len);
+}
+
+DynString *d_dyn_string_new_with_reserve(usize reserve)
+{
+    DynString *dstring = d_dyn_string_new();
+    if (dstring == NULL)
+        return NULL;
+
+    if (container_init(&dstring->str, sizeof(char), reserve, CNT_OPT_ZERO_SENTINEL) == ERROR)
+    {
+        d_dyn_string_destroy(&dstring);
+        return NULL;
+    }
+    return dstring;
+}
+
+const char const *d_dyn_string_get_string(DynString *dstring)
 {
     return dstring->str.data;
 }
@@ -131,13 +103,15 @@ usize d_dyn_string_get_len(DynString *dstring)
 
 DynString *d_dyn_string_sub_string_in_place(DynString *dstring, usize pos, usize len)
 {
-    if (dstring == NULL || pos > dstring->str.len)
+    if (dstring == NULL)
         return NULL;
-
-    len = (pos + len > dstring->str.len) ? (dstring->str.len - pos) : len;
-    memmove(dstring->str.data, (char *)(dstring->str.data) + pos, len);
-    dstring->str.len = len;
-    ((char *)(dstring->str.data))[len] = '\0';
+    usize cnt_len = container_get_len(&dstring->str);
+    if (pos >= cnt_len)
+        return NULL;
+    len = pos + len > cnt_len ? cnt_len - pos : len;
+    char *s = container_get_data(dstring);
+    if (container_replace_data_trunc(&dstring->str, 0, s + pos, len) == ERROR)
+        return NULL;
     return dstring;
 }
 
@@ -157,61 +131,31 @@ char d_dyn_string_get_char_at(DynString *dstring, usize i)
     return ((char *)(dstring->str.data))[i];
 }
 
-static void *increase_d_dyn_string_capacity_if_needed(DynString *dstring, usize nb_elem_to_copy)
+DynString *d_dyn_string_resize(DynString *dstring, usize len, char c)
 {
-    return container_increase_capacity_if_needed(&dstring->str, nb_elem_to_copy, true);
-}
-
-DynString *d_dyn_string_resize(DynString *dstring, usize len)
-{
-    if (dstring == NULL)
+    if (dstring == NULL || container_resize(&dstring->str, len, &c) == ERROR)
         return NULL;
-
-    if (len > dstring->str.len)
-    {
-        usize count = len - dstring->str.len;
-        if (increase_d_dyn_string_capacity_if_needed(dstring, count) == ERROR)
-            return NULL;
-        memset(dstring->str.data + dstring->str.len, 0, count + 1);
-    }
-    else
-    {
-        ((char *)(dstring->str.data))[len] = '\0';
-    }
-
-    dstring->str.len = len;
     return dstring;
 }
 
 DynString *d_dyn_string_push_char(DynString *dstring, char c)
 {
-    if (increase_d_dyn_string_capacity_if_needed(dstring, 1) == ERROR)
+    if (dstring == NULL || container_push(&dstring->str, &c) == ERROR)
         return NULL;
-    char *str = dstring->str.data;
-    str[dstring->str.len++] = c;
-    str[dstring->str.len] = '\0';
     return dstring;
 }
 
 DynString *d_dyn_string_push_str_with_len(DynString *dstring, const char *str_to_append, usize len)
 {
-    if (dstring == NULL || str_to_append == NULL)
+    if (dstring == NULL || container_append_data(&dstring->str, str_to_append, len) == ERROR)
         return NULL;
-
-    if (increase_d_dyn_string_capacity_if_needed(dstring, len) == ERROR)
-        return NULL;
-    char *str = dstring->str.data;
-
-    memcpy(str + dstring->str.len, str_to_append, len);
-    dstring->str.len += len;
-    str[dstring->str.len] = '\0';
     return dstring;
 }
 
 DynString *d_dyn_string_push_c_str(DynString *dstring, const char *str_to_append)
 {
     if (str_to_append == NULL)
-        return dstring;
+        return NULL;
     return d_dyn_string_push_str_with_len(dstring, str_to_append, strlen(str_to_append));
 }
 
@@ -224,44 +168,18 @@ DynString *d_dyn_string_merge(DynString *dstring1, DynString *dstring2)
 
 DynString *d_dyn_string_replace_from_str(DynString *dstring, const char *str)
 {
-    if (dstring == NULL)
+    if (dstring == NULL || str == NULL || container_replace_data_trunc(&dstring->str, 0, str, strlen(str)) == ERROR)
         return NULL;
 
-    usize to_copy = (str == NULL) ? 0 : strlen(str);
-
-    if (to_copy > dstring->str.len)
-    {
-        if (increase_d_dyn_string_capacity_if_needed(dstring, to_copy - dstring->str.len) == ERROR)
-            return NULL;
-    }
-
-    if (to_copy != 0)
-        memcpy(dstring->str.data, str, to_copy);
-
-    dstring->str.len = to_copy;
-    ((char *)(dstring->str.data))[dstring->str.len] = '\0';
     return dstring;
 }
 
 DynString *d_dyn_string_replace_from_dstring(DynString *dstring, const DynString *to_copy)
 {
-    if (to_copy == NULL)
-        return d_dyn_string_replace_from_str(dstring, NULL);
-
-    if (dstring == NULL)
+    if (dstring == NULL || to_copy == NULL)
         return NULL;
-
-    if (to_copy->str.len > dstring->str.len)
-    {
-        if (increase_d_dyn_string_capacity_if_needed(dstring, to_copy->str.len - dstring->str.len) == ERROR)
-            return NULL;
-    }
-
-    if (to_copy->str.len != 0)
-        memcpy(dstring->str.data, to_copy->str.data, to_copy->str.len);
-
-    dstring->str.len = to_copy->str.len;
-    ((char *)(dstring->str.data))[dstring->str.len] = '\0';
+    if (container_replace_container_trunc(&dstring->str, &to_copy->str) == ERROR)
+        return NULL;
     return dstring;
 }
 
@@ -269,8 +187,8 @@ void d_dyn_string_destroy(DynString **dstring)
 {
     if (dstring == NULL || *dstring == NULL)
         return;
-
-    free((*dstring)->str.data);
-    free(*dstring);
+    DynString *dstr = *dstring;
+    container_destroy(&dstr->str);
+    free(dstr);
     *dstring = NULL;
 }

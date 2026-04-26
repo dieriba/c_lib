@@ -36,138 +36,128 @@ struct _DynArray
 #define d_dyn_array_elt_len(arr, i) ((arr)->array.elem_size * (i))
 #define d_dyn_array_elt_pos(arr, i) ((char *)(arr)->array.data + d_dyn_array_elt_len((arr), (i)))
 
-DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem, DestroyElemFunc free_func, bool clear, ContainerOpts opts)
+static DynArray *d_dyn_array_new_raw()
+{
+	return malloc(sizeof(DynArray));
+}
+
+DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem, DestroyElemFunc free_func, ContainerOpts opts)
 {
 	if (elem_size == 0)
 		return NULL;
-	DynArray *dyn_array = malloc(sizeof(DynArray));
+	DynArray *dyn_array = d_dyn_array_new_raw();
 	if (dyn_array == NULL)
 		return (NULL);
-	dyn_array->array.capacity = reserved_elem == 0 ? DEFAULT_CAPACITY : reserved_elem;
-	dyn_array->array.elem_size = elem_size;
-	bool zero_terminated = D_GET_BIT(opts, D_DYN_ARRAY_OPT_ZERO_TERMINATED) != 0;
-	dyn_array->array.data = malloc((elem_size * dyn_array->array.capacity) + (zero_terminated == true * elem_size));
-	if (dyn_array->array.data == NULL)
+	if (container_init(&dyn_array->array, elem_size, reserved_elem, opts) == ERROR)
 	{
 		free(dyn_array);
 		return NULL;
 	}
-	dyn_array->array.len = 0;
 	dyn_array->free_func = free_func;
-
-	if (clear)
-		memset(d_dyn_array_elt_pos(dyn_array, 0), 0, d_dyn_array_elt_len(dyn_array, dyn_array->array.capacity));
-	else if (zero_terminated)
-		memset(d_dyn_array_elt_pos(dyn_array, 0), 0, elem_size);
 	return dyn_array;
 }
 
-DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem, DestroyElemFunc free_func, bool clear, DynArrayOpts opts)
+DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem, DestroyElemFunc free_func, ContainerOpts opts)
 {
-	return d_dyn_array_new(sizeof(void *), reserved_elem, free_func, clear, opts);
+	return d_dyn_array_new(sizeof(void *), reserved_elem, free_func, opts);
 }
 
 DynArray *d_dyn_array_append(DynArray *dyn_array, const void *data, usize nb_elem_to_copy)
 {
-	if (data == NULL || nb_elem_to_copy == 0)
+	if (dyn_array == NULL || data == NULL)
 		return NULL;
-	if (container_increase_capacity_if_needed(&dyn_array->array, nb_elem_to_copy) == ERROR)
+	if (container_append_data(&dyn_array->array, data, nb_elem_to_copy) == ERROR)
 		return NULL;
-	memcpy(d_dyn_array_elt_pos(dyn_array, dyn_array->array.len), data, d_dyn_array_elt_len(dyn_array, nb_elem_to_copy));
-	dyn_array->array.len += nb_elem_to_copy;
 	return dyn_array;
 }
 
 DynArray *d_dyn_push_back(DynArray *dyn_array, const void *data)
 {
-	return d_dyn_array_append(dyn_array, data, 1);
+	if (dyn_array == NULL || data == NULL)
+		return NULL;
+	if (container_push(&dyn_array->array, data) == ERROR)
+		return NULL;
+	return dyn_array;
 }
 
 DynArray *d_dyn_push_back_ptr(DynArray *dyn_array, const void *data)
 {
-	return d_dyn_array_append(dyn_array, &data, 1);
+	return d_dyn_push_back(dyn_array, &data);
 }
 
-DynArray *d_dyn_array_shallow_copy(DynArray *dyn_array)
+DynArray *d_dyn_array_new_from(DynArray *dyn_array)
 {
-	DynArray *new_array = d_dyn_array_new(dyn_array->array.elem_size, dyn_array->array.capacity, dyn_array->free_func, false, dyn_array->opts.bits);
-	d_dyn_array_append_vals(new_array, dyn_array->array.data, dyn_array->array.len);
+	if (dyn_array == NULL)
+		return NULL;
+	Container *container = &dyn_array->array;
+	usize elem_size = container_get_elem_size(container);
+	usize capacity = container_get_capacity(container);
+	usize opts = container_get_opts(container);
+
+	DynArray *new_array = d_dyn_array_new(elem_size, capacity, dyn_array->free_func, opts);
+	if (new_array == NULL)
+		return NULL;
+	if (d_dyn_array_append(new_array, container_get_data(dyn_array), container_get_len(dyn_array)) == NULL)
+	{
+		d_dyn_array_destroy(&new_array);
+		return NULL;
+	}
 	return new_array;
 }
 
 usize d_dyn_array_get_capacity(DynArray *dyn_array)
 {
-	return dyn_array->array.capacity;
+	if (dyn_array == NULL)
+		return 0;
+	return container_get_capacity(&dyn_array->array);
 }
 
-void *d_dyn_array_get_elem(DynArray *dyn_array, usize index)
+void *d_dyn_array_get_elem_at(DynArray *dyn_array, usize index)
 {
-	if (index >= dyn_array->array.len)
-	{
+	if (dyn_array == NULL)
 		return NULL;
-	}
-#ifdef BOUNDARY_CHECK
-	/* ABORT PROGRAM */
-#endif
-
-	return d_dyn_array_elt_pos(dyn_array, index);
+	return container_get_elem_at(&dyn_array->array, index);
 }
 
-DynArray *d_dyn_array_modify_capacity(DynArray *dyn_array, usize new_capacity)
+DynArray *d_dyn_array_remove_elem_fast(DynArray *dyn_array, usize index, void *out_elem)
 {
-	if (new_capacity <= dyn_array->array.capacity)
+	if (dyn_array == NULL)
+		return NULL;
+	void *elem = container_get_elem_at(&dyn_array->array, index);
+	if (elem == NULL)
 		return dyn_array;
-	void *tmp = realloc(dyn_array->array.data, new_capacity * dyn_array->array.elem_size);
-	if (tmp == NULL)
-		return NULL;
-	dyn_array->array.data = tmp;
-	dyn_array->array.capacity = new_capacity;
+	DestroyElemFunc free_func = dyn_array->free_func;
+	if (free_func && !out_elem)
+		free_func(elem);
+	container_swap_remove(&dyn_array->array, index, out_elem);
 	return dyn_array;
 }
 
-DynArray *d_dyn_array_remove_elem_fast(DynArray *dyn_array, usize index)
+DynArray *d_dyn_array_remove_last_element(DynArray *dyn_array, void *out_elem)
 {
-	if (index >= dyn_array->array.len)
+	if (dyn_array == NULL)
 		return NULL;
-
-	DestroyElemFunc free_func = dyn_array->free_func;
-	void *elem = d_dyn_array_elt_pos(dyn_array, index);
-	if (free_func)
-		free_func(elem);
-	usize index_last_elem = dyn_array->array.len - 1;
-	if (index != index_last_elem)
-		memcpy(d_dyn_array_elt_pos(dyn_array, index), d_dyn_array_elt_pos(dyn_array, index_last_elem), d_dyn_array_elt_len(dyn_array, 1));
-	memset(d_dyn_array_elt_pos(dyn_array, index_last_elem), 0, d_dyn_array_elt_len(dyn_array, 1));
-	dyn_array->array.len--;
-	return dyn_array;
-}
-
-DynArray *d_dyn_array_remove_last_element(DynArray *dyn_array)
-{
-	if (dyn_array->array.len == 0)
-		return NULL;
-
-	DestroyElemFunc free_func = dyn_array->free_func;
-	usize index = dyn_array->array.len - 1;
-	void *elem = d_dyn_array_elt_pos(dyn_array, index);
-	if (free_func)
-		free_func(elem);
-	memset(d_dyn_array_elt_pos(dyn_array, index), 0, d_dyn_array_elt_len(dyn_array, 1));
-	dyn_array->array.len--;
+	usize len = container_get_len(&dyn_array->array);
+	if (len == 0)
+		return dyn_array;
+	d_dyn_array_remove_elem_fast(dyn_array, len - 1, out_elem);
 	return dyn_array;
 }
 
 static void destroy_elements(DynArray *dyn_array)
 {
+	if (dyn_array == NULL)
+		return;
 	DestroyElemFunc free_func = dyn_array->free_func;
 	if (!free_func)
 		return;
-	void *data = dyn_array->array.data;
+	Container *container = &dyn_array->array;
+	usize elem_size = container_get_elem_size(container);
 	for (size_t i = 0; i < dyn_array->array.len; i++)
 	{
-		void *elem = d_dyn_array_elt_pos(dyn_array, i);
+		void *elem = container_get_elem_at(container, i);
 		free_func(elem);
-		memset(elem, 0, dyn_array->array.elem_size);
+		memset(elem, 0, elem_size);
 	}
 }
 
@@ -177,13 +167,15 @@ void d_dyn_array_destroy(DynArray **dyn_array)
 		return;
 	DynArray *d_array = *dyn_array;
 	destroy_elements(d_array);
-	free(d_array->array.data);
+	container_free(&d_array->array);
 	free(d_array);
 	*dyn_array = NULL;
 }
 
 DynArray *d_dyn_array_clear_array(DynArray *dyn_array)
 {
+	if (dyn_array == NULL)
+		return NULL;
 	destroy_elements(dyn_array);
 	dyn_array->array.len = 0;
 	return dyn_array;

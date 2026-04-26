@@ -100,4 +100,8 @@ char    *d_itoa_usize(usize nb);
  *       For 32-bit platforms, a minimum of 12 bytes is sufficient.
  */
 char    *d_itoa_usize_no_alloc(usize nb, char* buffer);
+
+
+void    *memfill(void* dst, void* filler_elem, usize filler_size, usize len);
+
 #endif

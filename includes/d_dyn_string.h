@@ -19,7 +19,7 @@ void d_dyn_string_destroy(DynString **dstring);
 ** Basic accessors
 */
 usize d_dyn_string_get_capacity(DynString *dstring);
-char* d_dyn_string_get_string(DynString* dstring);
+const char const * d_dyn_string_get_string(DynString* dstring);
 usize d_dyn_string_get_len(DynString* dstring);
 char d_dyn_string_get_char_at(DynString *dstring, usize i);
 
