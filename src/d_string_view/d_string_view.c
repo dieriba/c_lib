@@ -4,12 +4,6 @@
 #include "d_dyn_array.h"
 #include "container.h"
 
-typedef struct _DStringView
-{
-    const char *data;
-    usize len;
-} DStringView;
-
 #define dstring_view_get_char_at(view, pos) ((view).data[(pos)])
 
 typedef bool (*char_match_fn)(char ch, const void *ctx);
@@ -85,19 +79,19 @@ char *d_dyn_string_substr(DStringView view, usize pos, usize len)
 
 DStringView d_string_view_from_parts(const char *data, usize len)
 {
-    DStringView view;
+    DStringView view = {
+        .data = data,
+        .len = (data == NULL) ? 0 : len};
 
-    view.data = data;
-    view.len = (data == NULL) ? 0 : len;
     return view;
 }
 
 DStringView d_string_view_from_c_string(const char *c_str)
 {
-    DStringView view;
+    DStringView view = {
+        .data = c_str,
+        .len = (c_str == NULL) ? 0 : strlen(c_str)};
 
-    view.data = c_str;
-    view.len = (c_str == NULL) ? 0 : strlen(c_str);
     return view;
 }
 
@@ -433,7 +427,7 @@ static void _free_str(void *elem)
     free(*((void **)elem));
 }
 
-DynArray *d_string_split_by_char_of_str(DStringView view, ContainerOpts opts, char *str)
+DynArray *d_string_view_split_by_char_of_str(DStringView view, ContainerOpts opts, char *str)
 {
     usize len = view.len;
     DynArray *vec = d_dyn_array_new_ptr_arr(len, _free_str, opts);
@@ -462,7 +456,7 @@ DynArray *d_string_split_by_char_of_str(DStringView view, ContainerOpts opts, ch
     return vec;
 }
 
-DynArray *d_string_split_by_char(DStringView view, ContainerOpts opts, char c)
+DynArray *d_string_view_split_by_char(DStringView view, ContainerOpts opts, char c)
 {
     usize len = view.len;
     DynArray *vec = d_dyn_array_new_ptr_arr(len, _free_str, opts);

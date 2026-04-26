@@ -7,13 +7,10 @@
 #include "d_dyn_array.h"
 #include "d_dyn_string.h"
 
-typedef bool(*DCompareFnc)(char);
+typedef bool (*DCompareFnc)(char);
 
-//DPointerArray* d_split_string_by_predicate_fn(const char *string, DCompareFnc predicate);
-//DPointerArray* d_split_string_by_str(const char* string, const char*);
-DPointerArray* d_split_string_by_char(const char* string, char c);
-DPointerArray* d_split_string_by_char_of_str(const char* string, char* delims);
-//DPointerArray* d_split_string_by_pattern(const char*string, const char* pattern);
+DynArray *d_split_string_by_char(const char *string, char c, ContainerOpts opts);
+DynArray *d_split_string_by_char(const char *string, char c, ContainerOpts opts);
 
 /**
  * @brief Extracts a substring from a given string.
@@ -29,7 +26,7 @@ DPointerArray* d_split_string_by_char_of_str(const char* string, char* delims);
  *
  * @return char* A pointer to the newly allocated string containing the substring. Returns `NULL` if `pos` is equal to or exceeds the length of `str`, `len` is `0`, `str` is NULL, or if memory allocation fails.
  */
-char    *d_substr(const char* str, usize pos, usize len);
+char *d_substr(const char *str, usize pos, usize len);
 
 /**
  * @brief Creates a duplicate of a standard null-terminated C string.
@@ -42,7 +39,7 @@ char    *d_substr(const char* str, usize pos, usize len);
  * @return char* A pointer to the newly allocated null-terminated C string that contains the same content as the input string.
  *               Returns `NULL` if memory allocation fails.
  */
-char    *d_strdup(const char* str);
+char *d_strdup(const char *str);
 
 /**
  * @brief Converts a 32-bit integer to a string.
@@ -54,12 +51,12 @@ char    *d_strdup(const char* str);
  *
  * @return char* A pointer to the newly allocated string containing the string representation of the integer. Returns `NULL` if memory allocation fails.
  */
-char    *d_itoa_i32(int32 nb);
+char *d_itoa_i32(int32 nb);
 
 /**
  * @brief Converts a 32-bit integer to a string using a user-provided buffer.
  *
- * Converts the given 32-bit signed integer to its string representation. The caller must provide a buffer large enough to hold the result, 
+ * Converts the given 32-bit signed integer to its string representation. The caller must provide a buffer large enough to hold the result,
  * including the null terminator. The function writes the result to this buffer.
  *
  * @param value The 32-bit signed integer to convert.
@@ -67,10 +64,10 @@ char    *d_itoa_i32(int32 nb);
  *               hold the result including the null terminator.
  *
  * @return char* A pointer to the provided buffer containing the string representation of the integer.
- * 
+ *
  * @note Ensure the buffer is sufficiently large to hold the result. For a 32-bit integer, the buffer should be at least 12 bytes.
  */
-char* d_itoa_i32_no_alloc(int32 nb, char* buffer);
+char *d_itoa_i32_no_alloc(int32 nb, char *buffer);
 
 /**
  * @brief Converts a `usize` value to a string.
@@ -82,7 +79,7 @@ char* d_itoa_i32_no_alloc(int32 nb, char* buffer);
  *
  * @return char* A pointer to the newly allocated string containing the string representation of the `usize` value. Returns `NULL` if memory allocation fails.
  */
-char    *d_itoa_usize(usize nb);
+char *d_itoa_usize(usize nb);
 
 /**
  * @brief Converts a `size_t` value to a string using a user-provided buffer.
@@ -95,13 +92,12 @@ char    *d_itoa_usize(usize nb);
  *               hold the result including the null terminator. A minimum size of 21 bytes is recommended for 64-bit platforms, and 12 bytes for 32-bit platforms.
  *
  * @return char* A pointer to the provided buffer containing the string representation of the `size_t` value.
- * 
+ *
  * @note For 64-bit platforms, ensure the buffer is at least 21 bytes to accommodate the maximum number of digits in a `size_t` value plus the null terminator.
  *       For 32-bit platforms, a minimum of 12 bytes is sufficient.
  */
-char    *d_itoa_usize_no_alloc(usize nb, char* buffer);
+char *d_itoa_usize_no_alloc(usize nb, char *buffer);
 
-
-void    *memfill(void* dst, void* filler_elem, usize filler_size, usize len);
+void *memfill(void *dst, void *filler_elem, usize filler_size, usize len);
 
 #endif

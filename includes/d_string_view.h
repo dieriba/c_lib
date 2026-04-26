@@ -4,7 +4,12 @@
 #ifndef D_STRING_VIEW_H
 #define D_STRING_VIEW_H
 
-typedef struct _DStringView DStringView;
+typedef struct DStringView
+{
+    const char *data;
+    const usize len;
+} DStringView;
+
 typedef bool (*match)(char c);
 
 #define d_string_view_new_from_str(str)            \
@@ -81,6 +86,9 @@ DStringView d_string_view_trim_left_by_char(DStringView view, char c);
 DStringView d_string_view_trim_right_by_char(DStringView view, char c);
 DStringView d_string_view_trim_left_by_predicate(DStringView view, match fn);
 DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn);
+
+DynArray *d_string_view_split_by_char(DStringView view, ContainerOpts opts, char c);
+DynArray *d_string_view_split_by_char_of_str(DStringView view, ContainerOpts opts, char *str);
 
 /*
 ** Conversion
