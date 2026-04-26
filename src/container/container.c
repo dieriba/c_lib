@@ -305,9 +305,8 @@ Result container_replace_data_trunc(Container *container, usize pos, const void 
 {
     if (container == NULL)
         return ERROR;
-    if (pos > container->len)
+    if (pos >= container->len)
         return ERROR;
-
     if (len != 0)
     {
         if (container_replace_data(container, pos, data, len) == ERROR)
@@ -321,7 +320,7 @@ Result container_replace_data_trunc(Container *container, usize pos, const void 
 
 Result container_replace_container_trunc(Container *dst, const Container *src)
 {
-    if (container_replace_data_trunc(dst, 0, src->data, src->len) == ERROR)
+    if (dst == NULL || src == NULL || container_replace_data_trunc(dst, 0, src->data, src->len) == ERROR)
         return ERROR;
     return OK;
 }
@@ -372,8 +371,6 @@ Result container_pop(Container *container, void *out_elem)
     return OK;
 }
 
-
-
 Result container_swap_remove(Container *container, usize index, void *out_elem)
 {
     if (container == NULL || index >= container->len)
@@ -386,8 +383,6 @@ Result container_swap_remove(Container *container, usize index, void *out_elem)
     container_write_sentinel(container);
     return OK;
 }
-
-
 
 void container_clear(Container *container)
 {
