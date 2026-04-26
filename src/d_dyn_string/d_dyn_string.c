@@ -10,14 +10,14 @@ struct _DynString
     Container str
 };
 
-static DynString *d_dyn_string_new()
+static DynString *d_dyn_string_new_raw()
 {
     return malloc(sizeof(DynString));
 }
 
 DynString *d_dyn_string_new(void)
 {
-    DynString *dstring = d_dyn_string_new();
+    DynString *dstring = d_dyn_string_new_raw();
     if (dstring == NULL)
         return NULL;
     if (container_init(&dstring->str, sizeof(char), DEFAULT_CAPACITY, CNT_OPT_ZERO_SENTINEL) == ERROR)
@@ -35,7 +35,7 @@ DynString *d_dyn_string_new_from_c_string(const char *str)
 
     usize len = strlen(str);
 
-    DynString *dstring = d_dyn_string_new();
+    DynString *dstring = d_dyn_string_new_raw();
     if (dstring == NULL)
         return NULL;
 
@@ -58,7 +58,7 @@ DynString *d_dyn_string_new_with_sub_string(const char *str, usize pos, usize le
 
     len = (pos + len > str_len) ? (str_len - pos) : len;
 
-    DynString *dstring = d_dyn_string_new();
+    DynString *dstring = d_dyn_string_new_raw();
     if (dstring == NULL)
         return NULL;
 
@@ -79,7 +79,7 @@ DynString *d_dyn_string_new_from_dstring(DynString *dstring)
 
 DynString *d_dyn_string_new_with_reserve(usize reserve)
 {
-    DynString *dstring = d_dyn_string_new();
+    DynString *dstring = d_dyn_string_new_raw();
     if (dstring == NULL)
         return NULL;
 
