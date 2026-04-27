@@ -1,7 +1,6 @@
-#include <dtest.h>
-#include <dtypes.h>
-#include <general_lib.h>
-#include <string.h>
+#include "d_test.h"
+#include "d_types.h"
+#include "d_general_lib.h"
 
 char*   itoa_usize(void* data)
 {
