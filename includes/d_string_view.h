@@ -87,8 +87,8 @@ DStringView d_string_view_trim_right_by_char(DStringView view, char c);
 DStringView d_string_view_trim_left_by_predicate(DStringView view, match fn);
 DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn);
 
-DynArray *d_string_view_split_by_char(DStringView view, ContainerOpts opts, char c);
-DynArray *d_string_view_split_by_char_of_str(DStringView view, ContainerOpts opts, char *str);
+DynArray *d_string_view_split_by_char(DStringView view, BufferOpts opts, char c);
+DynArray *d_string_view_split_by_char_of_str(DStringView view, BufferOpts opts, char *str);
 
 /*
 ** Conversion

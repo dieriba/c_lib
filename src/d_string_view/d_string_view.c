@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "d_string_view.h"
 #include "d_dyn_array.h"
-#include "container.h"
+#include "buffer.h"
 
 #define dstring_view_get_char_at(view, pos) ((view).data[(pos)])
 
@@ -427,7 +427,7 @@ static void _free_str(void *elem)
     free(*((void **)elem));
 }
 
-DynArray *d_string_view_split_by_char_of_str(DStringView view, ContainerOpts opts, char *str)
+DynArray *d_string_view_split_by_char_of_str(DStringView view, BufferOpts opts, char *str)
 {
     usize len = view.len;
     DynArray *vec = d_dyn_array_new_ptr_arr(len, _free_str, opts);
@@ -456,7 +456,7 @@ DynArray *d_string_view_split_by_char_of_str(DStringView view, ContainerOpts opt
     return vec;
 }
 
-DynArray *d_string_view_split_by_char(DStringView view, ContainerOpts opts, char c)
+DynArray *d_string_view_split_by_char(DStringView view, BufferOpts opts, char c)
 {
     usize len = view.len;
     DynArray *vec = d_dyn_array_new_ptr_arr(len, _free_str, opts);

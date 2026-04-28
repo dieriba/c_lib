@@ -2,7 +2,7 @@
 #define __D_ARRAY_H
 
 #include "d_types.h"
-#include "container.h"
+#include "buffer.h"
 
 typedef struct _DynArray DynArray;
 
@@ -20,11 +20,11 @@ typedef struct _DynArray DynArray;
 typedef void (*DestroyElemFunc)(void *elem);
 
 DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem,
-                          DestroyElemFunc free_func, ContainerOpts opts);
+                          DestroyElemFunc free_func, BufferOpts opts);
 
 DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem,
                                   DestroyElemFunc free_func,
-                                  ContainerOpts opts);
+                                  BufferOpts opts);
 
 DynArray *d_dyn_array_new_from(DynArray *dyn_array);
 
