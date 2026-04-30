@@ -10,6 +10,9 @@ typedef struct RawMap {
     void* map;
     usize key_size;
     usize value_size;
+    usize capacity;
+    usize len;
+    usize metadata_len;
     HashFn hash_fn;
     FreeFn free_fn;
     CmpFn cmp_fn;

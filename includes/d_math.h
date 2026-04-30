@@ -49,4 +49,10 @@ D_OVERFLOW_CHECK_X(u16, u16, UINT16_MAX)
 D_OVERFLOW_CHECK_X(u32, u32, UINT32_MAX)
 D_OVERFLOW_CHECK_X(u64, u64, UINT64_MAX)
 D_OVERFLOW_CHECK_X(usize, usize, MAX_SIZE_T_VALUE)
+
+#define ALIGN_ROUND_UP(value, alignment) \
+    ((value + (alignment - 1)) & ~(alignment - 1))
+
+#define ALIGN_ROUND_DOWN(value, alignment) \
+    (value & ~(alignment - 1))
 #endif

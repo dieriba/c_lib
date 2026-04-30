@@ -5,8 +5,6 @@
 #include "d_math.h"
 #include "d_general_lib.h"
 
-#define GROWTH_POLICY 2
-
 #define buffer_nb_available_elem_slot(raw_buffer) \
     ((raw_buffer)->capacity - (raw_buffer)->len)
 #define buffer_nb_occupied_elem_slot(raw_buffer) \
@@ -14,6 +12,9 @@
 
 #define buffer_elt_len(raw_buffer, i) raw_buffer->elem_size *i
 #define buffer_elt_pos(raw_buffer, i) (char *)raw_buffer->data + (buffer_elt_len(raw_buffer, i))
+
+#define GROWTH_POLICY 2UL
+#define DEFAULT_CAPACITY 16UL
 
 static bool buffer_has_zero_sentinel(const RawBuffer *raw_buffer)
 {

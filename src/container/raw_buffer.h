@@ -4,8 +4,6 @@
 #include "d_bits.h"
 #include "d_types.h"
 
-#define DEFAULT_CAPACITY 0x10
-
 typedef enum e_buffer_opts
 {
     CNT_OPT_NONE = 0,
