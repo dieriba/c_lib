@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "d_string_view.h"
 #include "d_dyn_array.h"
-#include "buffer.h"
+#include "raw_buffer.h"
 
 #define dstring_view_get_char_at(view, pos) ((view).data[(pos)])
 

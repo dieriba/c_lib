@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include "d_types.h"
 #include "d_dyn_string.h"
-#include "buffer.h"
+#include "raw_buffer.h"
 #include "d_general_lib.h"
 
 struct _DynString
 {
-    Buffer str
+    RawBuffer str
 };
 
 static DynString *d_dyn_string_new_raw()
@@ -120,15 +120,11 @@ usize d_dyn_string_get_capacity(DynString *dstring)
     return dstring->str.capacity;
 }
 
-char d_dyn_string_get_char_at(DynString *dstring, usize i)
+void *d_dyn_string_get_char_at(DynString *dstring, usize i)
 {
-#ifdef BOUNDARY_CHECK
-    if (i >= dstring->str.len)
-    {
-        /* halt program or handle error */
-    }
-#endif
-    return ((char *)(dstring->str.data))[i];
+    if (dstring == NULL)
+        reutrn NULL;
+    return buffer_get_elem_at(&dstring->str, i);
 }
 
 DynString *d_dyn_string_resize(DynString *dstring, usize len, char c)

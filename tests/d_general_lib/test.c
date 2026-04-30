@@ -2,14 +2,14 @@
 #include "d_types.h"
 #include "d_general_lib.h"
 
-char*   itoa_usize(void* data)
+char *itoa_usize(void *data)
 {
-    return d_itoa_usize(*((usize*)data));
+    return d_itoa_usize(*((usize *)data));
 }
 
-char*   itoa_i32(void* data)
+char *itoa_i32(void *data)
 {
-    return d_itoa_i32(*((int32*)data));
+    return d_itoa_i32(*((int32 *)data));
 }
 
 void test_assert_i32(char *nbr, int32 nb)
@@ -21,9 +21,9 @@ void test_assert_i32(char *nbr, int32 nb)
 
 void test_assert_i32_no_alloc(char *nbr, int32 nb)
 {
-    char buffer[12];
-    d_itoa_i32_no_alloc(nb, buffer);
-    d_assert_eq(buffer, nbr, strlen(nbr));
+    char raw_buffer[12];
+    d_itoa_i32_no_alloc(nb, raw_buffer);
+    d_assert_eq(raw_buffer, nbr, strlen(nbr));
 }
 
 void test_assert_usize(char *nbr, usize nb)
@@ -35,9 +35,9 @@ void test_assert_usize(char *nbr, usize nb)
 
 void test_assert_usize_no_alloc(char *nbr, usize nb)
 {
-    char buffer[22];
-    d_itoa_usize_no_alloc(nb, buffer);
-    d_assert_eq(buffer, nbr, strlen(nbr));
+    char raw_buffer[22];
+    d_itoa_usize_no_alloc(nb, raw_buffer);
+    d_assert_eq(raw_buffer, nbr, strlen(nbr));
 }
 
 void test_d_itoa_i32(void)
@@ -86,21 +86,19 @@ void test_d_itoa_usize_no_alloc(void)
 
 void test_d_substr(void)
 {
-    char* str = "bonjour c'est dieriba";
-    char* sub_str = d_substr(str, 25, 0);
+    char *str = "bonjour c'est dieriba";
+    char *sub_str = d_substr(str, 25, 0);
     assert_eq_null(sub_str);
-    
+
     sub_str = d_substr(NULL, 2, 0);
     assert_eq_null(sub_str);
-    
+
     usize sub_str_len;
     usize str_len;
 
-   
-
     sub_str = d_substr(str, 8, 5);
     sub_str_len = strlen(sub_str);
-    char* res = "c'est";
+    char *res = "c'est";
     str_len = strlen(res);
     d_assert_eq(sub_str, res, strlen(res));
     assert_eq_custom(&sub_str_len, &str_len, sizeof(usize), itoa_usize);

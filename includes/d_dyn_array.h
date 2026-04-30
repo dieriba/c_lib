@@ -2,7 +2,7 @@
 #define __D_ARRAY_H
 
 #include "d_types.h"
-#include "buffer.h"
+#include "raw_buffer.h"
 
 typedef struct _DynArray DynArray;
 

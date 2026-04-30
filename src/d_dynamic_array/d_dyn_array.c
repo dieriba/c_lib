@@ -2,11 +2,11 @@
 #include "d_bits.h"
 #include <stdlib.h>
 #include <string.h>
-#include "buffer.h"
+#include "raw_buffer.h"
 
 struct _DynArray
 {
-	Buffer array;
+	RawBuffer array;
 	/*
 	 * free_func (optional):
 	 *
@@ -89,10 +89,10 @@ DynArray *d_dyn_array_new_from(DynArray *dyn_array)
 {
 	if (dyn_array == NULL)
 		return NULL;
-	Buffer *buffer = &dyn_array->array;
-	usize elem_size = buffer_get_elem_size(buffer);
-	usize capacity = buffer_get_capacity(buffer);
-	usize opts = buffer_get_opts(buffer);
+	RawBuffer *raw_buffer = &dyn_array->array;
+	usize elem_size = buffer_get_elem_size(raw_buffer);
+	usize capacity = buffer_get_capacity(raw_buffer);
+	usize opts = buffer_get_opts(raw_buffer);
 
 	DynArray *new_array = d_dyn_array_new(elem_size, capacity, dyn_array->free_func, opts);
 	if (new_array == NULL)
@@ -151,11 +151,11 @@ static void destroy_elements(DynArray *dyn_array)
 	DestroyElemFunc free_func = dyn_array->free_func;
 	if (!free_func)
 		return;
-	Buffer *buffer = &dyn_array->array;
-	usize elem_size = buffer_get_elem_size(buffer);
+	RawBuffer *raw_buffer = &dyn_array->array;
+	usize elem_size = buffer_get_elem_size(raw_buffer);
 	for (size_t i = 0; i < dyn_array->array.len; i++)
 	{
-		void *elem = buffer_get_elem_at(buffer, i);
+		void *elem = buffer_get_elem_at(raw_buffer, i);
 		free_func(elem);
 		memset(elem, 0, elem_size);
 	}
