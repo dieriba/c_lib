@@ -32,22 +32,27 @@ typedef enum RawMapCtrl
     kDeleted = -2, // 0b11111110
 } RawMapCtrl;
 
-static usize raw_map_default_hash_fn(void *key)
+typedef struct HashInfo
 {
+    usize group_number;
+    u8 h2;
+} HashInfo;
 
+static usize default_hash_fn(void *key)
+{
 }
 
-static RawMap *raw_map_new_raw()
+static RawMap *new_raw_map()
 {
     return malloc(sizeof(RawMap));
 }
 
-static inline void raw_map_init_metadata(void *addr, usize metadata_size)
+static inline void init_raw_map_metadata(void *addr, usize metadata_size)
 {
     memset(addr, kEmpty, metadata_size);
 }
 
-static RawMap *raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize capacity, HashFn hash_fn, CmpFn cmp_fn, FreeFn free_fn)
+static RawMap *init_raw_map(RawMap *raw_map, usize key_size, usize value_size, usize capacity, HashFn hash_fn, CmpFn cmp_fn, FreeFn free_fn)
 {
     if (raw_map == NULL)
         return NULL;
@@ -64,23 +69,16 @@ static RawMap *raw_map_init(RawMap *raw_map, usize key_size, usize value_size, u
         return NULL;
     if (posix_memalign(&raw_map->map, SIMD_REQUIRED_ALIGNEMENT, alloc_size) != 0)
         return NULL;
-    raw_map_init_metadata(raw_map->map, capacity);
+    init_raw_map_metadata(raw_map->map, capacity);
     raw_map->nb_groups = capacity / RAW_MAP_GROUP_SIZE;
     raw_map->capacity = capacity;
     raw_map->value_size = value_size;
     raw_map->key_size = key_size;
     raw_map->len = 0;
     raw_map->cmp_fn = cmp_fn;
-    raw_map->hash_fn = hash_fn == NULL ? raw_map_default_hash_fn : hash_fn;
+    raw_map->hash_fn = hash_fn == NULL ? default_hash_fn : hash_fn;
     raw_map->free_fn = free_fn;
     return raw_map;
-}
-
-RawMap *raw_map_new(usize key_size, usize value_size, usize capacity, HashFn hash_fn, CmpFn cmp_fn, FreeFn free_fn)
-{
-    RawMap *raw_map = raw_map_new_raw();
-
-    return raw_map_init(raw_map, key_size, value_size, capacity, hash_fn, cmp_fn, free_fn);
 }
 
 static DBits32 get_mask_with_needle_pos_in_haystack(void *haystack, u8 needle)
@@ -134,12 +132,6 @@ static usize try_find_deleted_slot_pos_from_group(RawMap *raw_map, usize group_n
     return SIZE_MAX;
 }
 
-typedef struct HashInfo
-{
-    usize group_number;
-    u8 h2;
-} HashInfo;
-
 static usize find_from_hash(RawMap *raw_map, void *key, HashInfo hash_info)
 {
     usize group_number = hash_info.group_number;
@@ -169,19 +161,6 @@ static bool compute_hash(RawMap *raw_map, void *key, HashInfo *hash_info)
     return true;
 }
 
-void *raw_map_get(RawMap *raw_map, void *key)
-{
-    HashInfo hash_info;
-    if (compute_hash(raw_map, key, &hash_info) == false)
-        return NULL;
-    int position = find_from_hash(raw_map, key, hash_info);
-    if (position == SIZE_MAX)
-        return NULL;
-    char *ctrl = raw_map_get_control_byte_addr(raw_map, position);
-
-    return d_bits_8_check_bits_set(*ctrl, MASK_CTRL_BYTE) ? NULL : raw_map_get_slot_value(raw_map, position);
-}
-
 static void make_insert(RawMap *raw_map, usize position, void *key, void *value)
 {
     void *slot_key = raw_map_get_slot_key(raw_map, position);
@@ -198,6 +177,26 @@ static bool is_load_factor_reached(RawMap *raw_map)
 static RawMap *rehash(RawMap *raw_map, void *key, void *value)
 {
     return raw_map;
+}
+
+RawMap *raw_map_new(usize key_size, usize value_size, usize capacity, HashFn hash_fn, CmpFn cmp_fn, FreeFn free_fn)
+{
+    RawMap *raw_map = new_raw_map();
+
+    return init_raw_map(raw_map, key_size, value_size, capacity, hash_fn, cmp_fn, free_fn);
+}
+
+void *raw_map_get(RawMap *raw_map, void *key)
+{
+    HashInfo hash_info;
+    if (compute_hash(raw_map, key, &hash_info) == false)
+        return NULL;
+    int position = find_from_hash(raw_map, key, hash_info);
+    if (position == SIZE_MAX)
+        return NULL;
+    char *ctrl = raw_map_get_control_byte_addr(raw_map, position);
+
+    return d_bits_8_check_bits_set(*ctrl, MASK_CTRL_BYTE) ? NULL : raw_map_get_slot_value(raw_map, position);
 }
 
 RawMap *raw_map_insert(RawMap *raw_map, void *key, void *value)
