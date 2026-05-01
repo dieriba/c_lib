@@ -194,10 +194,8 @@ void *raw_map_get(RawMap *raw_map, void *key)
     if (compute_hash(raw_map, key, &hash_info) == false)
         return NULL;
     int position = find_from_hash(raw_map, key, hash_info);
-    if (position == SIZE_MAX)
-        return NULL;
+    assert(position != SIZE_MAX);
     char *ctrl = raw_map_get_control_byte_addr(raw_map, position);
-
     return d_bits_8_check_bits_set(*ctrl, MASK_CTRL_BYTE) ? NULL : raw_map_get_slot_value(raw_map, position);
 }
 
@@ -207,6 +205,7 @@ RawMap *raw_map_insert(RawMap *raw_map, void *key, void *value)
     if (value == NULL || compute_hash(raw_map, key, &hash_info) == false)
         return NULL;
     usize position = find_from_hash(raw_map, key, hash_info);
+    assert(position != SIZE_MAX);
 
     if (is_load_factor_reached(raw_map))
     {
@@ -235,12 +234,14 @@ bool raw_map_remove(RawMap *raw_map, void *key, void *out_elem)
     if (compute_hash(raw_map, key, &hash_info) == false)
         return NULL;
     int position = find_from_hash(raw_map, key, hash_info);
-    if (position == SIZE_MAX)
-        return false;
+    assert(position != SIZE_MAX);
+
     char *ctrl = raw_map_get_control_byte_addr(raw_map, position);
     if (*ctrl != kEmpty)
+    {
         *ctrl = kDeleted;
-    raw_map->len--;
+        raw_map->len--;
+    }
     if (out_elem)
         memcpy(out_elem, raw_map_get_slot_value(raw_map, position), raw_map->value_size);
     return true;
