@@ -1,10 +1,12 @@
 #include <immintrin.h>
 #include <string.h>
+#include <assert.h>
+
 #include "d_types.h"
 #include "d_math.h"
 #include "raw_map.h"
-#include <d_bits.h>
-#include <assert.h>
+#include "d_bits.h"
+
 #define RAW_MAP_DEFAULT_NB_GROUPS 2UL
 #define RAW_MAP_GROUP_SIZE 16UL
 #define RAW_MAP_MIN_CAPACITY (RAW_MAP_DEFAULT_NB_GROUPS * RAW_MAP_GROUP_SIZE)
