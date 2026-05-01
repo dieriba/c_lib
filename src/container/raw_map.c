@@ -16,9 +16,10 @@
 #define raw_map_get_slot_size(raw_map) (raw_map->key_size + raw_map->value_size)
 
 #define raw_map_get_slot_group_start_addr(raw_map, group_number) (char *)raw_map->map + (raw_map->nb_groups * RAW_MAP_GROUP_SIZE) + ((raw_map_get_slot_size(raw_map) * RAW_MAP_GROUP_SIZE) * group_number)
-#define raw_map_get_slot_key_from_group_addr(group_addr, key_idx) (char *)group_addr + (key_idx * raw_map_get_slot_size(raw_map))
-#define raw_map_get_slot_key(raw_map, key_idx) (char *)raw_map->map + (raw_map_get_slot_size(raw_map) * key_idx)
-#define raw_map_get_slot_value(raw_map, key_idx) raw_map_get_slot_key(raw_map, key_idx) + raw_map->key_size
+#define raw_map_get_slot_key_from_group_addr(group_addr, key_pos) (char *)group_addr + (key_pos * raw_map_get_slot_size(raw_map))
+
+#define raw_map_get_slot_key(raw_map, key_pos) (char *)raw_map->map + (raw_map_get_slot_size(raw_map) * key_pos)
+#define raw_map_get_slot_value(raw_map, key_pos) raw_map_get_slot_key(raw_map, key_pos) + raw_map->key_size
 
 #define raw_map_get_control_byte_group_start_addr(raw_map, group_number) (char *)raw_map->map + (group_number * RAW_MAP_GROUP_SIZE)
 #define raw_map_get_control_byte_addr(raw_map, control_byte_pos) (char *)raw_map->map + control_byte_pos
