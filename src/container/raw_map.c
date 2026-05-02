@@ -260,17 +260,17 @@ void *raw_map_get(RawMap *raw_map, void *key)
     return d_bits_8_check_bits_set(*ctrl, MASK_CTRL_BYTE) ? NULL : raw_map_get_slot_value(raw_map, position);
 }
 
-RawMap *raw_map_insert(RawMap *raw_map, void *key, void *value)
+RawMap *raw_map_insert(RawMap *raw_map, void *new_key, void *new_value)
 {
     HashInfo hash_info;
-    if (value == NULL || compute_hash(raw_map, key, &hash_info) == false)
+    if (new_value == NULL || compute_hash(raw_map, new_key, &hash_info) == false)
         return NULL;
-    usize insert_position = find_from_hash(raw_map, key, hash_info);
+    usize insert_position = find_from_hash(raw_map, new_key, hash_info);
     assert(insert_position != SIZE_MAX);
 
     if (raw_map->len >= raw_map->max_load_factor)
     {
-        if (rehash(raw_map, key, value) == NULL)
+        if (rehash(raw_map, new_key, new_value) == NULL)
             return NULL;
         return raw_map;
     }
@@ -290,8 +290,8 @@ RawMap *raw_map_insert(RawMap *raw_map, void *key, void *value)
         ctrl = raw_map_get_control_byte_addr(raw_map, insert_position);
         raw_map->len++;
     }
-    *ctrl = hash_info.h2; // update control byte
-    make_insert(raw_map, insert_position, key, value);
+    *ctrl = hash_info.h2;
+    make_insert(raw_map, insert_position, new_key, new_value);
     return raw_map;
 }
 
