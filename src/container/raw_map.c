@@ -281,7 +281,6 @@ RawMap *raw_map_insert(RawMap *raw_map, void *key, void *value)
         usize deleted_slot_position = try_find_deleted_slot_pos_from_group(raw_map, hash_info.group_number);
         if (deleted_slot_position != SIZE_MAX)
         {
-
             usize start_group_position = hash_info.group_number * RAW_MAP_GROUP_SIZE;
             usize rel_distance_insert_pos_from_start_grp_pos = insert_position - start_group_position;
             usize rel_distance_del_pos_from_start_grp_pos = deleted_slot_position - start_group_position;
