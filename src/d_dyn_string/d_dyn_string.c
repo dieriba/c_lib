@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "d_types.h"
+#include "container.h"
 #include "d_dyn_string.h"
 #include "raw_buffer.h"
 #include "d_general_lib.h"
