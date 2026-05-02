@@ -1,5 +1,5 @@
-#ifndef __D_ARRAY_H
-#define __D_ARRAY_H
+#ifndef D_ARRAY_H
+#define D_ARRAY_H
 
 #include "d_types.h"
 #include "raw_buffer.h"

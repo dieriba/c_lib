@@ -1,3 +1,5 @@
+#ifndef BITS_H
+#define BITS_H
 #include "d_types.h"
 #include <strings.h>
 
@@ -153,3 +155,4 @@ static inline int d_bits_get_index_most_significant_bit_set_ll(long long int val
     value = d_bits_clear_most_significant_bit_set_ll(value);
     return d_bits_get_index_least_significant_bit_set_ll(value);
 }
+#endif

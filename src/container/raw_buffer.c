@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-
+#include "container.h"
 #include "raw_buffer.h"
 #include "d_math.h"
 #include "d_general_lib.h"
@@ -13,8 +13,7 @@
 #define buffer_elt_len(raw_buffer, i) raw_buffer->elem_size *i
 #define buffer_elt_pos(raw_buffer, i) (char *)raw_buffer->data + (buffer_elt_len(raw_buffer, i))
 
-#define GROWTH_POLICY 2UL
-#define DEFAULT_CAPACITY 16UL
+
 
 static bool buffer_has_zero_sentinel(const RawBuffer *raw_buffer)
 {
@@ -28,9 +27,9 @@ static bool buffer_compute_new_alloc_size(const RawBuffer *raw_buffer,
     usize total_elems;
 
     extra = buffer_has_zero_sentinel(raw_buffer) ? 1 : 0;
-    if (d_overflow_check_add_usize(capacity, extra, &total_elems))
+    if (d_mathcheck_add_usize(capacity, extra, &total_elems))
         return false;
-    if (d_overflow_check_mul_usize(total_elems, raw_buffer->elem_size, alloc_size))
+    if (d_mathcheck_mul_usize(total_elems, raw_buffer->elem_size, alloc_size))
         return false;
     return true;
 }
@@ -138,9 +137,9 @@ Result buffer_increase_capacity_if_needed(RawBuffer *raw_buffer, usize nb_elem_t
         return ERROR;
     if (nb_elem_to_copy <= buffer_nb_available_elem_slot(raw_buffer))
         return OK;
-    if (d_overflow_check_add_usize(raw_buffer->capacity, nb_elem_to_copy, &new_capacity))
+    if (d_mathcheck_add_usize(raw_buffer->capacity, nb_elem_to_copy, &new_capacity))
         return ERROR;
-    if (d_overflow_check_mul_usize(new_capacity, GROWTH_POLICY, &new_capacity))
+    if (d_mathcheck_mul_usize(new_capacity, GROWTH_POLICY, &new_capacity))
         return ERROR;
     if (!buffer_compute_new_alloc_size(raw_buffer, new_capacity, &alloc_size))
         return ERROR;
@@ -268,7 +267,7 @@ Result buffer_remove(RawBuffer *raw_buffer, usize pos, usize len_to_remove)
     usize cnt_len = raw_buffer->len;
     usize total_len;
 
-    if (d_overflow_check_add_usize(pos, len_to_remove, &total_len))
+    if (d_mathcheck_add_usize(pos, len_to_remove, &total_len))
         return ERROR;
 
     len_to_remove = total_len > cnt_len ? cnt_len - pos : len_to_remove;
@@ -288,7 +287,7 @@ Result buffer_replace_data(RawBuffer *raw_buffer, usize pos, const void *data, u
         return OK;
 
     usize total_len;
-    if (d_overflow_check_add_usize(pos, len, &total_len))
+    if (d_mathcheck_add_usize(pos, len, &total_len))
         return ERROR;
     usize extra_elem_to_allocate = total_len > raw_buffer->capacity ? total_len - raw_buffer->capacity : 0;
     if (extra_elem_to_allocate != 0 && buffer_increase_capacity_if_needed(raw_buffer, extra_elem_to_allocate) == ERROR)

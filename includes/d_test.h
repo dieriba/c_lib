@@ -1,3 +1,6 @@
+#ifndef D_TEST_H
+#define D_TEST_H
+
 #include <stdbool.h>
 #include "d_types.h"
 
@@ -111,3 +114,4 @@ void d_assert_bool(CHECK check_for, bool left, bool right, const char *const fil
     } while (0)
 
 /**/
+#endif

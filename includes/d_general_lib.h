@@ -1,5 +1,5 @@
-#ifndef __GENERAL_LIB__H
-#define __GENERAL_LIB__H
+#ifndef GENERAL_LIB__H
+#define GENERAL_LIB__H
 
 #include <stdlib.h>
 #include <string.h>

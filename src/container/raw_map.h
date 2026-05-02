@@ -13,6 +13,7 @@ typedef struct RawMap {
     usize capacity;
     usize len;
     usize nb_groups;
+    usize max_load_factor;
     HashFn hash_fn;
     FreeFn free_fn;
     CmpFn cmp_fn;

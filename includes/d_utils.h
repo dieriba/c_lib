@@ -1,5 +1,5 @@
-#ifndef __D_UTILS__H
-#define __D_UTILS__H
+#ifndef D_UTILS__H
+#define D_UTILS__H
 
 #define RESET "\033[0m"
 #define BLACK "\033[30m"              /* Black */

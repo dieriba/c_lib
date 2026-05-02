@@ -1,8 +1,9 @@
+#ifndef D_STRING_VIEW_H
+#define D_STRING_VIEW_H
+
 #include "d_types.h"
 #include "d_dyn_string.h"
 
-#ifndef D_STRING_VIEW_H
-#define D_STRING_VIEW_H
 
 typedef struct DStringView
 {

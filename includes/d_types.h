@@ -1,5 +1,5 @@
-#ifndef __D_TYPES_H
-#define __D_TYPES_H
+#ifndef D_TYPES_H
+#define D_TYPES_H
 
 #include <sys/types.h>
 #include <stdbool.h>

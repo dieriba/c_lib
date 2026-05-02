@@ -1,0 +1,6 @@
+#ifndef CONTAINER_H
+#define CONTAINER_H
+
+#define GROWTH_POLICY 2UL
+#define DEFAULT_CAPACITY 16UL
+#endif
