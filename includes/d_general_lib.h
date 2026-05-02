@@ -3,11 +3,16 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "d_types.h"
 #include "d_dyn_array.h"
 #include "d_dyn_string.h"
 
 typedef bool (*DCompareFnc)(char);
+typedef usize (*FnPtrGenHash)(void *key);
+typedef bool (*FnPtrCmpKey)(void *, void *);
+typedef void (*FnPtrFreeElem)(void *elem);
+
 
 DynArray *d_split_string_by_char(const char *string, char c, BufferOpts opts);
 DynArray *d_split_string_by_char(const char *string, char c, BufferOpts opts);

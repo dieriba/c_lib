@@ -2,7 +2,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "container.h"
 #include "d_types.h"
 #include "d_math.h"
 #include "raw_map.h"
@@ -85,7 +84,7 @@ static RawMap *compute_alloc_size_and_capacity(RawMap *raw_map, usize slot_size,
     return raw_map;
 }
 
-static RawMap *init_raw_map(RawMap *raw_map, usize key_size, usize value_size, usize capacity, HashFn hash_fn, CmpFn cmp_fn, FreeFn free_fn)
+RawMap *raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
 {
     if (raw_map == NULL)
         return NULL;
@@ -242,11 +241,11 @@ static RawMap *rehash(RawMap *raw_map, void *key, void *value)
     return raw_map;
 }
 
-RawMap *raw_map_new(usize key_size, usize value_size, usize capacity, HashFn hash_fn, CmpFn cmp_fn, FreeFn free_fn)
+RawMap *raw_map_new(usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
 {
     RawMap *raw_map = new_raw_map();
 
-    return init_raw_map(raw_map, key_size, value_size, capacity, hash_fn, cmp_fn, free_fn);
+    return raw_map_init(raw_map, key_size, value_size, capacity, hash_fn, cmp_fn, free_fn);
 }
 
 void *raw_map_get(RawMap *raw_map, void *key)
@@ -313,4 +312,9 @@ bool raw_map_remove(RawMap *raw_map, void *key, void *out_elem)
         return true;
     }
     return false;
+}
+
+void raw_map_free(RawMap *raw_map)
+{
+    free(raw_map->map);
 }
