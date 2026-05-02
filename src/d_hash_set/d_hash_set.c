@@ -26,8 +26,7 @@ DHashSet *d_hash_set_new(usize key_size, usize capacity, FnPtrGenHash hash_fn, F
 
 DHashSet *d_hash_set_insert(DHashSet *map, void *key)
 {
-    void *tmp;
-    return raw_map_insert((RawMap *)map, key, tmp);
+    return raw_map_insert((RawMap *)map, key, key);
 }
 
 bool d_hash_set_key_exists(DHashSet *map, void *key)
