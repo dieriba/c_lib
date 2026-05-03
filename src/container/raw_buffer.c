@@ -13,11 +13,9 @@
 #define buffer_elt_len(raw_buffer, i) raw_buffer->elem_size *i
 #define buffer_elt_pos(raw_buffer, i) (char *)raw_buffer->data + (buffer_elt_len(raw_buffer, i))
 
-
-
 static bool buffer_has_zero_sentinel(const RawBuffer *raw_buffer)
 {
-    return d_bits_8_check_bit_set(raw_buffer->opts, CNT_OPT_ZERO_SENTINEL);
+    return d_bits_8_check_bit_set(raw_buffer->opts, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
 static bool buffer_compute_new_alloc_size(const RawBuffer *raw_buffer,
@@ -204,7 +202,7 @@ usize buffer_get_elem_size(const RawBuffer *raw_buffer)
 DBits8 buffer_get_opts(const RawBuffer *raw_buffer)
 {
     if (raw_buffer == NULL)
-        return CNT_OPT_NONE;
+        return RAW_BUF_OPT_NONE;
     return raw_buffer->opts;
 }
 

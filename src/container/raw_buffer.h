@@ -6,8 +6,8 @@
 
 typedef enum e_buffer_opts
 {
-    CNT_OPT_NONE = 0,
-    CNT_OPT_ZERO_SENTINEL = 1 << 0,
+    RAW_BUF_OPT_NONE = 0,
+    RAW_BUF_OPT_ZERO_SENTINEL = 1 << 0,
 } BufferOpts;
 
 typedef struct _Buffer
