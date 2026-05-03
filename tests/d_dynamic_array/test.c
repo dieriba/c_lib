@@ -1,9 +1,9 @@
-#include <dutils.h>
+#include "d_utils.h"
+#include "d_test.h"
+#include "d_dyn_array.h"
+#include "d_general_lib.h"
 #include <stdio.h>
-#include <dtest.h>
-#include <darray.h>
 #include <stdlib.h>
-#include <general_lib.h>
 #include <string.h>
 #include <unistd.h>
 

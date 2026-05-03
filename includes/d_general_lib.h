@@ -1,16 +1,21 @@
-#ifndef __GENERAL_LIB__H
-#define __GENERAL_LIB__H
+#ifndef GENERAL_LIB__H
+#define GENERAL_LIB__H
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 #include "d_types.h"
 #include "d_dyn_array.h"
 #include "d_dyn_string.h"
 
 typedef bool (*DCompareFnc)(char);
+typedef usize (*FnPtrGenHash)(void *key);
+typedef bool (*FnPtrCmpKey)(void *, void *);
+typedef void (*FnPtrFreeElem)(void *elem);
 
-DynArray *d_split_string_by_char(const char *string, char c, ContainerOpts opts);
-DynArray *d_split_string_by_char(const char *string, char c, ContainerOpts opts);
+
+DynArray *d_split_string_by_char(const char *string, char c, BufferOpts opts);
+DynArray *d_split_string_by_char(const char *string, char c, BufferOpts opts);
 
 /**
  * @brief Extracts a substring from a given string.
@@ -54,20 +59,20 @@ char *d_strdup(const char *str);
 char *d_itoa_i32(int32 nb);
 
 /**
- * @brief Converts a 32-bit integer to a string using a user-provided buffer.
+ * @brief Converts a 32-bit integer to a string using a user-provided raw_buffer.
  *
- * Converts the given 32-bit signed integer to its string representation. The caller must provide a buffer large enough to hold the result,
- * including the null terminator. The function writes the result to this buffer.
+ * Converts the given 32-bit signed integer to its string representation. The caller must provide a raw_buffer large enough to hold the result,
+ * including the null terminator. The function writes the result to this raw_buffer.
  *
  * @param value The 32-bit signed integer to convert.
- * @param buffer A pointer to a buffer where the string representation of the integer will be written. The buffer must be large enough to
+ * @param raw_buffer A pointer to a raw_buffer where the string representation of the integer will be written. The raw_buffer must be large enough to
  *               hold the result including the null terminator.
  *
- * @return char* A pointer to the provided buffer containing the string representation of the integer.
+ * @return char* A pointer to the provided raw_buffer containing the string representation of the integer.
  *
- * @note Ensure the buffer is sufficiently large to hold the result. For a 32-bit integer, the buffer should be at least 12 bytes.
+ * @note Ensure the raw_buffer is sufficiently large to hold the result. For a 32-bit integer, the raw_buffer should be at least 12 bytes.
  */
-char *d_itoa_i32_no_alloc(int32 nb, char *buffer);
+char *d_itoa_i32_no_alloc(int32 nb, char *raw_buffer);
 
 /**
  * @brief Converts a `usize` value to a string.
@@ -82,21 +87,21 @@ char *d_itoa_i32_no_alloc(int32 nb, char *buffer);
 char *d_itoa_usize(usize nb);
 
 /**
- * @brief Converts a `size_t` value to a string using a user-provided buffer.
+ * @brief Converts a `size_t` value to a string using a user-provided raw_buffer.
  *
- * Converts the given `size_t` value to its string representation. The caller must provide a buffer large enough to hold the result,
- * including the null terminator. The function writes the result to this buffer.
+ * Converts the given `size_t` value to its string representation. The caller must provide a raw_buffer large enough to hold the result,
+ * including the null terminator. The function writes the result to this raw_buffer.
  *
  * @param value The `size_t` value to convert.
- * @param buffer A pointer to a buffer where the string representation of the `size_t` value will be written. The buffer must be large enough to
+ * @param raw_buffer A pointer to a raw_buffer where the string representation of the `size_t` value will be written. The raw_buffer must be large enough to
  *               hold the result including the null terminator. A minimum size of 21 bytes is recommended for 64-bit platforms, and 12 bytes for 32-bit platforms.
  *
- * @return char* A pointer to the provided buffer containing the string representation of the `size_t` value.
+ * @return char* A pointer to the provided raw_buffer containing the string representation of the `size_t` value.
  *
- * @note For 64-bit platforms, ensure the buffer is at least 21 bytes to accommodate the maximum number of digits in a `size_t` value plus the null terminator.
+ * @note For 64-bit platforms, ensure the raw_buffer is at least 21 bytes to accommodate the maximum number of digits in a `size_t` value plus the null terminator.
  *       For 32-bit platforms, a minimum of 12 bytes is sufficient.
  */
-char *d_itoa_usize_no_alloc(usize nb, char *buffer);
+char *d_itoa_usize_no_alloc(usize nb, char *raw_buffer);
 
 void *memfill(void *dst, void *filler_elem, usize filler_size, usize len);
 

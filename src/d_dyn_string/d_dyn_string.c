@@ -1,13 +1,14 @@
 #include <string.h>
 #include <stdlib.h>
 #include "d_types.h"
-#include "d_dyn_string.h"
 #include "container.h"
+#include "d_dyn_string.h"
+#include "raw_buffer.h"
 #include "d_general_lib.h"
 
 struct _DynString
 {
-    Container str
+    RawBuffer str
 };
 
 static DynString *d_dyn_string_new_raw()
@@ -20,7 +21,7 @@ DynString *d_dyn_string_new(void)
     DynString *dstring = d_dyn_string_new_raw();
     if (dstring == NULL)
         return NULL;
-    if (container_init(&dstring->str, sizeof(char), DEFAULT_CAPACITY, CNT_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init(&dstring->str, sizeof(char), DEFAULT_CAPACITY, CNT_OPT_ZERO_SENTINEL) == ERROR)
     {
         free(dstring);
         return NULL;
@@ -39,7 +40,7 @@ DynString *d_dyn_string_new_from_c_string(const char *str)
     if (dstring == NULL)
         return NULL;
 
-    if (container_init_with_data(&dstring->str, sizeof(char), str, len, CNT_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init_with_data(&dstring->str, sizeof(char), str, len, CNT_OPT_ZERO_SENTINEL) == ERROR)
     {
         d_dyn_string_destroy(&dstring);
         return NULL;
@@ -62,7 +63,7 @@ DynString *d_dyn_string_new_with_sub_string(const char *str, usize pos, usize le
     if (dstring == NULL)
         return NULL;
 
-    if (container_init_with_data(&dstring->str, sizeof(char), str + pos, len, CNT_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init_with_data(&dstring->str, sizeof(char), str + pos, len, CNT_OPT_ZERO_SENTINEL) == ERROR)
     {
         d_dyn_string_destroy(&dstring);
         return NULL;
@@ -83,7 +84,7 @@ DynString *d_dyn_string_new_with_reserve(usize reserve)
     if (dstring == NULL)
         return NULL;
 
-    if (container_init(&dstring->str, sizeof(char), reserve, CNT_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init(&dstring->str, sizeof(char), reserve, CNT_OPT_ZERO_SENTINEL) == ERROR)
     {
         d_dyn_string_destroy(&dstring);
         return NULL;
@@ -105,12 +106,12 @@ DynString *d_dyn_string_sub_string_in_place(DynString *dstring, usize pos, usize
 {
     if (dstring == NULL)
         return NULL;
-    usize cnt_len = container_get_len(&dstring->str);
+    usize cnt_len = buffer_get_len(&dstring->str);
     if (pos >= cnt_len)
         return NULL;
     len = pos + len > cnt_len ? cnt_len - pos : len;
-    char *s = container_get_data(dstring);
-    if (container_replace_data_trunc(&dstring->str, 0, s + pos, len) == ERROR)
+    char *s = buffer_get_data(dstring);
+    if (buffer_replace_data_trunc(&dstring->str, 0, s + pos, len) == ERROR)
         return NULL;
     return dstring;
 }
@@ -120,34 +121,30 @@ usize d_dyn_string_get_capacity(DynString *dstring)
     return dstring->str.capacity;
 }
 
-char d_dyn_string_get_char_at(DynString *dstring, usize i)
+void *d_dyn_string_get_char_at(DynString *dstring, usize i)
 {
-#ifdef BOUNDARY_CHECK
-    if (i >= dstring->str.len)
-    {
-        /* halt program or handle error */
-    }
-#endif
-    return ((char *)(dstring->str.data))[i];
+    if (dstring == NULL)
+        reutrn NULL;
+    return buffer_get_elem_at(&dstring->str, i);
 }
 
 DynString *d_dyn_string_resize(DynString *dstring, usize len, char c)
 {
-    if (dstring == NULL || container_resize(&dstring->str, len, &c) == ERROR)
+    if (dstring == NULL || buffer_resize(&dstring->str, len, &c) == ERROR)
         return NULL;
     return dstring;
 }
 
 DynString *d_dyn_string_push_char(DynString *dstring, char c)
 {
-    if (dstring == NULL || container_push(&dstring->str, &c) == ERROR)
+    if (dstring == NULL || buffer_push(&dstring->str, &c) == ERROR)
         return NULL;
     return dstring;
 }
 
 DynString *d_dyn_string_push_str_with_len(DynString *dstring, const char *str_to_append, usize len)
 {
-    if (dstring == NULL || container_append_data(&dstring->str, str_to_append, len) == ERROR)
+    if (dstring == NULL || buffer_append_data(&dstring->str, str_to_append, len) == ERROR)
         return NULL;
     return dstring;
 }
@@ -168,7 +165,7 @@ DynString *d_dyn_string_merge(DynString *dstring1, DynString *dstring2)
 
 DynString *d_dyn_string_replace_from_str(DynString *dstring, const char *str)
 {
-    if (dstring == NULL || str == NULL || container_replace_data_trunc(&dstring->str, 0, str, strlen(str)) == ERROR)
+    if (dstring == NULL || str == NULL || buffer_replace_data_trunc(&dstring->str, 0, str, strlen(str)) == ERROR)
         return NULL;
 
     return dstring;
@@ -178,7 +175,7 @@ DynString *d_dyn_string_replace_from_dstring(DynString *dstring, const DynString
 {
     if (dstring == NULL || to_copy == NULL)
         return NULL;
-    if (container_replace_container_trunc(&dstring->str, &to_copy->str) == ERROR)
+    if (buffer_replace_buffer_trunc(&dstring->str, &to_copy->str) == ERROR)
         return NULL;
     return dstring;
 }
@@ -188,7 +185,7 @@ void d_dyn_string_destroy(DynString **dstring)
     if (dstring == NULL || *dstring == NULL)
         return;
     DynString *dstr = *dstring;
-    container_destroy(&dstr->str);
+    buffer_destroy(&dstr->str);
     free(dstr);
     *dstring = NULL;
 }

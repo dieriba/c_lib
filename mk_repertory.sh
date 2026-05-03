@@ -1,5 +1,13 @@
 #!/bin/sh
 
 directory_name=$1
+test_directory=test
+src_directory=src
+includes_directory=includes
 
-(mkdir $directory_name && cd $directory_name && mkdir include test src && touch Makefile test/test.c src/d_$directory_name.c include/d_$directory_name.h)
+mkdir -p $src_directory/$directory_name && \
+touch $src_directory/$directory_name/${directory_name}.c && \
+touch $includes_directory/${directory_name}.h && \
+mkdir -p $test_directory 
+
+

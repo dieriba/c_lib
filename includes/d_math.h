@@ -4,49 +4,56 @@
 #include "d_types.h"
 
 #if defined(__has_builtin)
-# if __has_builtin(__builtin_add_overflow) && __has_builtin(__builtin_mul_overflow)
-#  define D_HAS_BUILTIN_OVERFLOW 1
-# else
-#  define D_HAS_BUILTIN_OVERFLOW 0
-# endif
+#if __has_builtin(__builtin_add_overflow) && __has_builtin(__builtin_mul_overflow)
+#define D_HAS_BUILTIN_OVERFLOW 1
 #else
-# define D_HAS_BUILTIN_OVERFLOW 0
+#define D_HAS_BUILTIN_OVERFLOW 0
+#endif
+#else
+#define D_HAS_BUILTIN_OVERFLOW 0
 #endif
 
+#define D_MATH_OVERFLOW_CHECK_X(NAME, TYPE, MAX)                                      \
+    static inline bool d_math_overflow_check_add_##NAME(TYPE a, TYPE b, TYPE *result) \
+    {                                                                                 \
+        if (D_HAS_BUILTIN_OVERFLOW)                                                   \
+            return __builtin_add_overflow(a, b, result);                              \
+        else                                                                          \
+        {                                                                             \
+            if (a > (TYPE)(MAX - b))                                                  \
+                return true;                                                          \
+            if (result)                                                               \
+                *result = a + b;                                                      \
+            return false;                                                             \
+        }                                                                             \
+    }                                                                                 \
+                                                                                      \
+    static inline bool d_math_overflow_check_mul_##NAME(TYPE a, TYPE b, TYPE *result) \
+    {                                                                                 \
+        if (D_HAS_BUILTIN_OVERFLOW)                                                   \
+            return __builtin_mul_overflow(a, b, result);                              \
+        else                                                                          \
+        {                                                                             \
+            if (a != 0 && b > (MAX / a))                                              \
+                return true;                                                          \
+            if (result)                                                               \
+                *result = a * b;                                                      \
+            return false;                                                             \
+        }                                                                             \
+    }
 
-#define D_OVERFLOW_CHECK_X(NAME, TYPE, MAX) \
-    static inline bool d_overflow_check_add_##NAME(TYPE a, TYPE b, TYPE* result) \
-    { \
-        if (D_HAS_BUILTIN_OVERFLOW) \
-            return __builtin_add_overflow(a, b, result); \
-        else \
-        { \
-            if (a > (TYPE)(MAX - b)) \
-                return true; \
-            if (result) \
-                *result = a + b; \
-            return false; \
-        }\
-    } \
-    \
-    static inline bool d_overflow_check_mul_##NAME(TYPE a, TYPE b, TYPE* result) \
-    { \
-        if (D_HAS_BUILTIN_OVERFLOW) \
-            return __builtin_mul_overflow(a, b, result); \
-        else \
-        { \
-            if (a != 0 && b > (MAX / a)) \
-                return true; \
-            if (result) \
-                *result = a * b; \
-            return false;\
-        }\
-    } \
- 
+D_MATH_OVERFLOW_CHECK_X(u8, u8, UINT8_MAX)
+D_MATH_OVERFLOW_CHECK_X(u16, u16, UINT16_MAX)
+D_MATH_OVERFLOW_CHECK_X(u32, u32, UINT32_MAX)
+D_MATH_OVERFLOW_CHECK_X(u64, u64, UINT64_MAX)
+D_MATH_OVERFLOW_CHECK_X(usize, usize, MAX_SIZE_T_VALUE)
 
-D_OVERFLOW_CHECK_X(u8, u8, UINT8_MAX)
-D_OVERFLOW_CHECK_X(u16, u16, UINT16_MAX)
-D_OVERFLOW_CHECK_X(u32, u32, UINT32_MAX)
-D_OVERFLOW_CHECK_X(u64, u64, UINT64_MAX)
-D_OVERFLOW_CHECK_X(usize, usize, MAX_SIZE_T_VALUE)
+#define d_math_align_round_up(value, alignment) \
+    ((value + (alignment - 1)) & ~(alignment - 1))
+
+#define d_math_align_round_down(value, alignment) \
+    (value & ~(alignment - 1))
+
+#define d_math_compute_pow2(exponent) (1 << exponent)
+
 #endif

@@ -1,3 +1,6 @@
+#ifndef D_TEST_H
+#define D_TEST_H
+
 #include <stdbool.h>
 #include "d_types.h"
 
@@ -29,10 +32,10 @@ typedef enum CHECK
 #define d_setup_run_tests(tests)
 
 void d_assert(CHECK check_for, void *left, void *right, usize size, PrintFn print_function);
-void d_assert_int(CHECK check_for, long long left, long long right);
-void d_assert_usize(CHECK check_for, usize left, usize right);
-void d_assert_string(CHECK check_for, const char *left, const char *right);
-void d_assert_bool(CHECK check_for, bool left, bool right);
+void d_assert_int(CHECK check_for, intmax_t left, intmax_t right, const char *const file, const int line);
+void d_assert_usize(CHECK check_for, uintmax_t left, uintmax_t right, const char *const file, const int line);
+void d_assert_string(CHECK check_for, const char *left, const char *right, const char *const file, const int line);
+void d_assert_bool(CHECK check_for, bool left, bool right, const char *const file, const int line);
 
 #define ASSERT_EQ_CUSTOM(left, right, size, print_function) \
     do                                                      \
@@ -42,56 +45,56 @@ void d_assert_bool(CHECK check_for, bool left, bool right);
 
 /**/
 
-#define ASSERT_EQ_STRING(left, right)    \
-    do                                   \
-    {                                    \
-        d_assert_string(EQ, left, right) \
+#define ASSERT_EQ_STRING(left, right)                        \
+    do                                                       \
+    {                                                        \
+        d_assert_string(EQ, left, right, __FILE__, __LINE__) \
     } while (0)
 
-#define ASSERT_EQ_BOOL(left, right)    \
-    do                                 \
-    {                                  \
-        d_assert_bool(EQ, left, right) \
+#define ASSERT_EQ_BOOL(left, right)                        \
+    do                                                     \
+    {                                                      \
+        d_assert_bool(EQ, left, right, __FILE__, __LINE__) \
     } while (0)
 
-#define ASSERT_EQ_USIZE(left, right)    \
-    do                                  \
-    {                                   \
-        d_assert_usize(EQ, left, right) \
+#define ASSERT_EQ_USIZE(left, right)                        \
+    do                                                      \
+    {                                                       \
+        d_assert_usize(EQ, left, right, __FILE__, __LINE__) \
     } while (0)
 
-#define ASSERT_EQ_INT(left, right)    \
-    do                                \
-    {                                 \
-        d_assert_int(EQ, left, right) \
+#define ASSERT_EQ_INT(left, right)                        \
+    do                                                    \
+    {                                                     \
+        d_assert_int(EQ, left, right, __FILE__, __LINE__) \
     } while (0)
 
 /**/
 
 /**/
 
-#define ASSERT_NEQ_STRING(left, right)    \
-    do                                    \
-    {                                     \
-        d_assert_string(NEQ, left, right) \
+#define ASSERT_NEQ_STRING(left, right)                        \
+    do                                                        \
+    {                                                         \
+        d_assert_string(NEQ, left, right, __FILE__, __LINE__) \
     } while (0)
 
-#define ASSERT_NEQ_BOOL(left, right)    \
-    do                                  \
-    {                                   \
-        d_assert_bool(NEQ, left, right) \
+#define ASSERT_NEQ_BOOL(left, right)                        \
+    do                                                      \
+    {                                                       \
+        d_assert_bool(NEQ, left, right, __FILE__, __LINE__) \
     } while (0)
 
-#define ASSERT_NEQ_USIZE(left, right)    \
-    do                                   \
-    {                                    \
-        d_assert_usize(NEQ, left, right) \
+#define ASSERT_NEQ_USIZE(left, right)                        \
+    do                                                       \
+    {                                                        \
+        d_assert_usize(NEQ, left, right, __FILE__, __LINE__) \
     } while (0)
 
-#define ASSERT_NEQ_INT(left, right)    \
-    do                                 \
-    {                                  \
-        d_assert_int(NEQ, left, right) \
+#define ASSERT_NEQ_INT(left, right)                        \
+    do                                                     \
+    {                                                      \
+        d_assert_int(NEQ, left, right, __FILE__, __LINE__) \
     } while (0)
 
 /**/
@@ -111,3 +114,4 @@ void d_assert_bool(CHECK check_for, bool left, bool right);
     } while (0)
 
 /**/
+#endif
