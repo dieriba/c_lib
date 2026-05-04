@@ -20,7 +20,7 @@ typedef bool (*match)(char c);
 
 DStringView d_string_view_from_parts(const char *data, usize len);
 DStringView d_string_view_from_c_string(const char *c_str);
-DStringView d_string_view_from_dyn_string(const DynString *dstring);
+DStringView d_string_view_from_dyn_string(const DDynString *dstring);
 
 bool d_string_view_is_empty(DStringView view);
 usize d_string_view_len(DStringView view);
@@ -91,6 +91,6 @@ DynArray *d_string_view_split_by_char(DStringView view, BufferOpts opts, char c)
 DynArray *d_string_view_split_by_char_of_str(DStringView view, BufferOpts opts, char *str);
 
 
-DynString *d_dyn_string_new_from_string_view(DStringView view);
+DDynString *d_dyn_string_new_from_string_view(DStringView view);
 
 #endif

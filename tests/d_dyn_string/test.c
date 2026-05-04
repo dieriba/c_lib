@@ -33,7 +33,7 @@ usize is_upper(char c)
 
 char *print_d_dyn_string(void *_dstring)
 {
-    DynString *dstring = (DynString *)_dstring;
+    DDynString *dstring = (DDynString *)_dstring;
     char *str = malloc((sizeof(char) * dstring->len) + 1);
     memcpy(str, dstring->string, dstring->len + 1);
     return str;
@@ -41,7 +41,7 @@ char *print_d_dyn_string(void *_dstring)
 
 void test_d_dyn_string_destroy(void)
 {
-    DynString *dstring = d_dyn_string_new();
+    DDynString *dstring = d_dyn_string_new();
     d_dyn_string_destroy(&dstring);
     assert_eq_null_custom(dstring, print_d_dyn_string);
 }
@@ -53,7 +53,7 @@ void test_d_dyn_string_new_from_c_string(void)
 
     for (size_t i = 0; i < 3; i++)
     {
-        DynString *dstring = d_dyn_string_new_from_c_string(test_value[i]);
+        DDynString *dstring = d_dyn_string_new_from_c_string(test_value[i]);
         usize len = strlen(test_value[i]);
         d_assert_eq(dstring->string, test_value[i], len);
         assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
@@ -68,8 +68,8 @@ void test_d_dyn_string_new_from_dstring(void)
 
     for (size_t i = 0; i < 3; i++)
     {
-        DynString *dstring1 = d_dyn_string_new_from_c_string(test_value[i]);
-        DynString *dstring2 = d_dyn_string_new_from_dstring(dstring1);
+        DDynString *dstring1 = d_dyn_string_new_from_c_string(test_value[i]);
+        DDynString *dstring2 = d_dyn_string_new_from_dstring(dstring1);
         usize len = strlen(test_value[i]);
         d_assert_eq(dstring1->string, dstring2->string, len);
         assert_eq_custom(&dstring1->len, &dstring2->len, sizeof(usize), itoa_usize);
@@ -80,7 +80,7 @@ void test_d_dyn_string_new_from_dstring(void)
 
 void test_d_dyn_string_substr(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Bonjour c'est dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Bonjour c'est dieriba");
     char *sub_str = d_dyn_string_substr(dstring, 25, 0);
     assert_eq_null(sub_str);
 
@@ -106,7 +106,7 @@ void test_d_dyn_string_substr(void)
 
 void test_d_dyn_string_strdup(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Bonjour c'est dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Bonjour c'est dieriba");
     char *dup = d_dyn_string_strdup(dstring);
     usize len = strlen(dup);
     d_assert_eq(dup, dstring->string, len);
@@ -127,7 +127,7 @@ void test_d_dyn_string_new_with_substring(void)
     char *str = "Hello world";
     usize pos = 0;
     usize len = 3;
-    DynString *dstring = d_dyn_string_new_with_substring(str, pos, len);
+    DDynString *dstring = d_dyn_string_new_with_substring(str, pos, len);
     d_assert_eq(dstring->string, str, len);
     assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
     d_dyn_string_destroy(&dstring);
@@ -180,7 +180,7 @@ void test_d_dyn_string_resize(void)
     char test_value[] = "Hello World!, My name is dieriba.ll";
     usize resize = 5;
 
-    DynString *dstring = d_dyn_string_new_from_c_string(test_value);
+    DDynString *dstring = d_dyn_string_new_from_c_string(test_value);
 
     resize = 1000;
     d_dyn_string_resize(dstring, resize);
@@ -190,7 +190,7 @@ void test_d_dyn_string_resize(void)
 
 void test_d_dyn_string_get_capacity(void)
 {
-    DynString *dstring = d_dyn_string_new();
+    DDynString *dstring = d_dyn_string_new();
     usize capacity = 8;
     usize string_capacity = d_dyn_string_get_capacity(dstring);
     assert_eq_custom(&string_capacity, &capacity, sizeof(usize), itoa_usize); // Default capacity is 8
@@ -199,7 +199,7 @@ void test_d_dyn_string_get_capacity(void)
 
 void test_d_dyn_string_modify_capacity(void)
 {
-    DynString *dstring = d_dyn_string_new();
+    DDynString *dstring = d_dyn_string_new();
     usize capacity = 10;
     d_dyn_string_modify_capacity(dstring, capacity);
     usize _cap = d_dyn_string_get_capacity(dstring);
@@ -211,7 +211,7 @@ void test_d_dyn_string_push_char(void)
 {
     char *test_str_eq = "hello worldhello worldhello worldhello worldhello world";
 
-    DynString *dstring = d_dyn_string_new();
+    DDynString *dstring = d_dyn_string_new();
 
     for (usize i = 0; i < strlen(test_str_eq); i++)
     {
@@ -227,7 +227,7 @@ void test_d_dyn_string_push_c_str(void)
 {
     char *test_str_arr[] = {"hello", " dieriba", " how", " are you today ", "?"};
     char *test_str_eq = "hello dieriba how are you today ?";
-    DynString *dstring = d_dyn_string_new();
+    DDynString *dstring = d_dyn_string_new();
     usize len = 0;
     for (size_t i = 0; i < 5; i++)
     {
@@ -243,8 +243,8 @@ void test_d_dyn_string_push_str_of_dstring(void)
 {
     char *test_str_arr[] = {"hello", " dieriba", " how", " are you today ", "?"};
     char *test_str_eq = "hello dieriba how are you today ?";
-    DynString *dstring1 = d_dyn_string_new_from_c_string(test_str_eq);
-    DynString *dstring2 = d_dyn_string_new_from_c_string("wsh ");
+    DDynString *dstring1 = d_dyn_string_new_from_c_string(test_str_eq);
+    DDynString *dstring2 = d_dyn_string_new_from_c_string("wsh ");
     test_str_eq = "wsh hello dieriba how are you today ?";
     d_dyn_string_push_str_of_dstring(dstring2, dstring1);
     d_assert_eq(dstring2->string, test_str_eq, strlen(test_str_eq));
@@ -256,7 +256,7 @@ void test_d_dyn_string_push_str_with_len(void)
 {
     char *test_str_arr[] = {"hello", " dieriba", " how", " are you today ", "?"};
     char *test_str_eq = "hello dieriba how are you today ?";
-    DynString *dstring = d_dyn_string_new();
+    DDynString *dstring = d_dyn_string_new();
     usize len = 0;
     for (size_t i = 0; i < 5; i++)
     {
@@ -271,7 +271,7 @@ void test_d_dyn_string_push_str_with_len(void)
 
 void test_d_dyn_string_replace_from_str(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Dieriba");
     char *str = "success";
     usize len = strlen(str);
     d_dyn_string_replace_from_str(dstring, str);
@@ -282,8 +282,8 @@ void test_d_dyn_string_replace_from_str(void)
 
 void test_d_dyn_string_replace_from_dstring(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Dieriba");
-    DynString *dstring1 = d_dyn_string_new_from_c_string("sucess");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Dieriba");
+    DDynString *dstring1 = d_dyn_string_new_from_c_string("sucess");
     d_dyn_string_replace_from_dstring(dstring, dstring1);
     d_assert_eq(dstring->string, dstring1->string, dstring1->len);
     assert_eq_custom(&dstring->len, &dstring1->len, sizeof(usize), itoa_usize);
@@ -293,8 +293,8 @@ void test_d_dyn_string_replace_from_dstring(void)
 
 void test_d_dyn_string_compare(void)
 {
-    DynString *dstring1 = d_dyn_string_new_from_c_string("hello");
-    DynString *dstring2 = d_dyn_string_new_from_c_string("hello");
+    DDynString *dstring1 = d_dyn_string_new_from_c_string("hello");
+    DDynString *dstring2 = d_dyn_string_new_from_c_string("hello");
 
     int32 compare = d_dyn_string_compare(dstring1, dstring2);
     int32 to_cmp = 0;
@@ -317,7 +317,7 @@ void test_d_dyn_string_compare(void)
 
 void test_d_dyn_string_compare_against_c_str(void)
 {
-    DynString *dstring1 = d_dyn_string_new_from_c_string("hello");
+    DDynString *dstring1 = d_dyn_string_new_from_c_string("hello");
 
     int32 compare = d_dyn_string_compare_againg_c_string(dstring1, "hello");
     int32 to_cmp = 0;
@@ -337,7 +337,7 @@ void test_d_dyn_string_compare_against_c_str(void)
 
 void test_d_dyn_string_starts_with_char(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("   \t\n\r   bonjour    ");
+    DDynString *dstring = d_dyn_string_new_from_c_string("   \t\n\r   bonjour    ");
     usize pos = d_dyn_string_starts_with_char(dstring, 'b', " \n\r\t");
     usize found = 9;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -353,7 +353,7 @@ void test_d_dyn_string_starts_with_char(void)
 
 void test_d_dyn_string_ends_with_char(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("bonjour     \t\n\r   ");
+    DDynString *dstring = d_dyn_string_new_from_c_string("bonjour     \t\n\r   ");
     usize pos = d_dyn_string_ends_with_char(dstring, 'r', " \n\r\t");
     usize found = 6;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -369,7 +369,7 @@ void test_d_dyn_string_ends_with_char(void)
 
 void test_d_dyn_string_starts_with_str(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("   \t\n\r   // bonjour    ");
+    DDynString *dstring = d_dyn_string_new_from_c_string("   \t\n\r   // bonjour    ");
     usize pos = d_dyn_string_starts_with_str(dstring, "//", " \n\r\t");
     usize found = 9;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -389,7 +389,7 @@ void test_d_dyn_string_starts_with_str(void)
 
 void test_d_dyn_string_ends_with_str(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("   \t\n\r    bonjour  .  ");
+    DDynString *dstring = d_dyn_string_new_from_c_string("   \t\n\r    bonjour  .  ");
     usize pos = d_dyn_string_ends_with_str(dstring, ".", " \n\r\t");
     usize found = 19;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -405,7 +405,7 @@ void test_d_dyn_string_ends_with_str(void)
 
 void test_d_dyn_string_find_first_matching_char_from_start(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("hello");
+    DDynString *dstring = d_dyn_string_new_from_c_string("hello");
     usize haystack = MAX_VALUE_SIZE_T;
     usize pos = d_dyn_string_find_first_matching_char_from_start(dstring, 'a');
     d_assert(pos == haystack, &pos, &haystack, itoa_usize);
@@ -417,7 +417,7 @@ void test_d_dyn_string_find_first_matching_char_from_start(void)
 
 void test_d_dyn_string_find_first_matching_char_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("hello");
+    DDynString *dstring = d_dyn_string_new_from_c_string("hello");
     usize haystack = MAX_VALUE_SIZE_T;
     usize pos = d_dyn_string_find_first_matching_char_from_index(dstring, 'a', 0);
     d_assert(pos == haystack, &pos, &haystack, itoa_usize);
@@ -429,7 +429,7 @@ void test_d_dyn_string_find_first_matching_char_from_index(void)
 
 void test_d_dyn_string_find_first_matching_str_from_start(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
 
     usize haystack = 11;
     usize pos = d_dyn_string_find_first_matching_str_from_start(dstring, "riba");
@@ -447,7 +447,7 @@ void test_d_dyn_string_find_first_matching_str_from_start(void)
 
 void test_d_dyn_string_find_first_matching_str_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
 
     usize haystack = MAX_SIZE_T_VALUE;
     usize pos = d_dyn_string_find_first_matching_str_from_index(dstring, "riba", 14);
@@ -469,7 +469,7 @@ void test_d_dyn_string_find_first_matching_str_from_index(void)
 
 void test_d_dyn_string_find_first_matching_predicate_from_start(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
 
     usize haystack = 0;
     usize pos = d_dyn_string_find_first_matching_predicate_from_start(dstring, is_upper);
@@ -490,7 +490,7 @@ void test_d_dyn_string_find_first_matching_predicate_from_start(void)
 
 void test_d_dyn_string_find_first_matching_predicate_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
 
     usize haystack = 0;
     usize pos = d_dyn_string_find_first_matching_predicate_from_index(dstring, is_upper, 0);
@@ -510,7 +510,7 @@ void test_d_dyn_string_find_first_matching_predicate_from_index(void)
 
 void test_d_dyn_string_find_last_matching_char_from_end(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("hello");
+    DDynString *dstring = d_dyn_string_new_from_c_string("hello");
     usize haystack = MAX_VALUE_SIZE_T;
     usize pos = d_dyn_string_find_last_matching_char_from_end(dstring, 'a');
     d_assert(pos == haystack, &pos, &haystack, itoa_usize);
@@ -522,7 +522,7 @@ void test_d_dyn_string_find_last_matching_char_from_end(void)
 
 void test_d_dyn_string_find_last_matching_char_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("hello");
+    DDynString *dstring = d_dyn_string_new_from_c_string("hello");
     usize haystack = MAX_VALUE_SIZE_T;
     usize pos = d_dyn_string_find_last_matching_char_from_index(dstring, 'a', 5);
     d_assert(pos == haystack, &pos, &haystack, itoa_usize);
@@ -534,7 +534,7 @@ void test_d_dyn_string_find_last_matching_char_from_index(void)
 
 void test_d_dyn_string_find_last_matching_str_from_end(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
 
     usize haystack = 11;
     usize pos = d_dyn_string_find_last_matching_str_from_end(dstring, "riba");
@@ -552,7 +552,7 @@ void test_d_dyn_string_find_last_matching_str_from_end(void)
 
 void test_d_dyn_string_find_last_matching_str_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
 
     usize haystack = 11;
     usize pos = d_dyn_string_find_last_matching_str_from_index(dstring, "riba", 14);
@@ -574,7 +574,7 @@ void test_d_dyn_string_find_last_matching_str_from_index(void)
 
 void test_d_dyn_string_find_last_matching_predicate_from_end(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Bonjour dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Bonjour dieriba");
 
     usize haystack = 0;
     usize pos = d_dyn_string_find_last_matching_predicate_from_end(dstring, is_upper);
@@ -590,7 +590,7 @@ void test_d_dyn_string_find_last_matching_predicate_from_end(void)
 
 void test_d_dyn_string_find_last_matching_predicate_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Bonjour Dieriba");
 
     usize haystack = 0;
     usize pos = d_dyn_string_find_last_matching_predicate_from_index(dstring, is_upper, 0);
@@ -609,7 +609,7 @@ void test_d_dyn_string_find_last_matching_predicate_from_index(void)
 
 void test_d_dyn_string_sub_string_in_place(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("Hello World!");
+    DDynString *dstring = d_dyn_string_new_from_c_string("Hello World!");
     d_dyn_string_sub_string_in_place(dstring, 0, 5);
     char *str = "Hello";
     usize len = strlen(str);
@@ -625,7 +625,7 @@ void test_d_dyn_string_sub_string_in_place(void)
 
 void test_d_dyn_string_find_first_not_matching_char_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
+    DDynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
     usize pos = d_dyn_string_find_first_not_matching_char_from_index(dstring, ' ', 5);
     usize found = 5;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -638,7 +638,7 @@ void test_d_dyn_string_find_first_not_matching_char_from_index(void)
 
 void test_d_dyn_string_find_first_not_matching_char_from_start(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
+    DDynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
     usize pos = d_dyn_string_find_first_not_matching_char_from_start(dstring, ' ');
     usize found = 4;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -651,7 +651,7 @@ void test_d_dyn_string_find_first_not_matching_char_from_start(void)
 
 void test_d_dyn_string_find_first_char_not_in_str_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
+    DDynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
     usize pos = d_dyn_string_find_first_char_not_in_str_from_index(dstring, " bonj", 0);
     usize found = 9;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -664,7 +664,7 @@ void test_d_dyn_string_find_first_char_not_in_str_from_index(void)
 
 void test_d_dyn_string_find_first_char_not_in_str_from_start(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
+    DDynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
     usize pos = d_dyn_string_find_first_char_not_in_str_from_start(dstring, " bon");
     usize found = 7;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -677,7 +677,7 @@ void test_d_dyn_string_find_first_char_not_in_str_from_start(void)
 
 void test_d_dyn_string_find_first_char_in_str_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
+    DDynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
     usize pos = d_dyn_string_find_first_char_in_str_from_index(dstring, " bonj", 0);
     usize found = 0;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -693,7 +693,7 @@ void test_d_dyn_string_find_first_char_in_str_from_index(void)
 
 void test_d_dyn_string_find_first_char_in_str_from_start(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
+    DDynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
     usize pos = d_dyn_string_find_first_char_in_str_from_start(dstring, "bon");
     usize found = 4;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -706,7 +706,7 @@ void test_d_dyn_string_find_first_char_in_str_from_start(void)
 
 void test_d_dyn_string_find_last_not_matching_char_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("bonjour   ");
+    DDynString *dstring = d_dyn_string_new_from_c_string("bonjour   ");
     usize pos = d_dyn_string_find_last_not_matching_char_from_index(dstring, ' ', 5);
     usize found = 5;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -719,7 +719,7 @@ void test_d_dyn_string_find_last_not_matching_char_from_index(void)
 
 void test_d_dyn_string_find_last_not_matching_char_from_end(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
+    DDynString *dstring = d_dyn_string_new_from_c_string("    bonjour");
     usize pos = d_dyn_string_find_last_not_matching_char_from_end(dstring, ' ');
     usize found = 10;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -732,7 +732,7 @@ void test_d_dyn_string_find_last_not_matching_char_from_end(void)
 
 void test_d_dyn_string_find_last_char_not_in_str_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("bonjour jn");
+    DDynString *dstring = d_dyn_string_new_from_c_string("bonjour jn");
     usize pos = d_dyn_string_find_last_char_not_in_str_from_index(dstring, " bonj", dstring->len);
     usize found = 6;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -745,7 +745,7 @@ void test_d_dyn_string_find_last_char_not_in_str_from_index(void)
 
 void test_d_dyn_string_find_last_char_not_in_str_from_end(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("bonjour jn");
+    DDynString *dstring = d_dyn_string_new_from_c_string("bonjour jn");
     usize pos = d_dyn_string_find_last_char_not_in_str_from_end(dstring, " bonj");
     usize found = 6;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -758,7 +758,7 @@ void test_d_dyn_string_find_last_char_not_in_str_from_end(void)
 
 void test_d_dyn_string_find_last_char_in_str_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("bonjour jn");
+    DDynString *dstring = d_dyn_string_new_from_c_string("bonjour jn");
     usize pos = d_dyn_string_find_last_char_in_str_from_index(dstring, " buonj", 5);
     usize found = 5;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -771,7 +771,7 @@ void test_d_dyn_string_find_last_char_in_str_from_index(void)
 
 void test_d_dyn_string_find_last_char_in_str_from_end(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("bonjour jn");
+    DDynString *dstring = d_dyn_string_new_from_c_string("bonjour jn");
     usize pos = d_dyn_string_find_last_char_in_str_from_end(dstring, " bonj");
     usize found = 9;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -784,7 +784,7 @@ void test_d_dyn_string_find_last_char_in_str_from_end(void)
 
 void test_d_dyn_string_find_first_not_matching_predicate_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("1234d56789dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("1234d56789dieriba");
     usize pos = d_dyn_string_find_first_not_matching_predicate_from_index(dstring, is_num, 9);
     usize found = 10;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -817,7 +817,7 @@ void test_d_dyn_string_find_first_not_matching_predicate_from_index(void)
 
 void test_d_dyn_string_find_first_not_matching_predicate_from_start(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("123456789dieriba");
+    DDynString *dstring = d_dyn_string_new_from_c_string("123456789dieriba");
     usize pos = d_dyn_string_find_first_not_matching_predicate_from_start(dstring, is_num);
     usize found = 9;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -841,7 +841,7 @@ void test_d_dyn_string_find_first_not_matching_predicate_from_start(void)
 
 void test_d_dyn_string_find_last_not_matching_predicate_from_index(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("die5riba568");
+    DDynString *dstring = d_dyn_string_new_from_c_string("die5riba568");
     usize pos = d_dyn_string_find_last_not_matching_predicate_from_index(dstring, is_num, 9);
     usize found = 7;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -869,7 +869,7 @@ void test_d_dyn_string_find_last_not_matching_predicate_from_index(void)
 
 void test_d_dyn_string_find_last_not_matching_predicate_from_end(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("die5riba568");
+    DDynString *dstring = d_dyn_string_new_from_c_string("die5riba568");
     usize pos = d_dyn_string_find_last_not_matching_predicate_from_end(dstring, is_num);
     usize found = 7;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
@@ -897,7 +897,7 @@ void test_d_dyn_string_find_last_not_matching_predicate_from_end(void)
 
 void test_d_dyn_string_trim_left_by_char_in_place(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("              bonjour");
+    DDynString *dstring = d_dyn_string_new_from_c_string("              bonjour");
     d_dyn_string_trim_left_by_char_in_place(dstring, ' ');
     char *str = "bonjour";
     usize len = strlen(str);
@@ -914,7 +914,7 @@ void test_d_dyn_string_trim_left_by_char_in_place(void)
 
 void test_d_dyn_string_trim_left_by_predicate_in_place(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("DAZDZADDAbonjour");
+    DDynString *dstring = d_dyn_string_new_from_c_string("DAZDZADDAbonjour");
     d_dyn_string_trim_left_by_predicate_in_place(dstring, is_upper);
     char *str = "bonjour";
     usize len = strlen(str);
@@ -931,8 +931,8 @@ void test_d_dyn_string_trim_left_by_predicate_in_place(void)
 
 void test_d_dyn_string_trim_left_by_char_new(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("              bonjour");
-    DynString *dstring1 = d_dyn_string_trim_left_by_char_new(dstring, ' ');
+    DDynString *dstring = d_dyn_string_new_from_c_string("              bonjour");
+    DDynString *dstring1 = d_dyn_string_trim_left_by_char_new(dstring, ' ');
     char *str = "bonjour";
     usize len = strlen(str);
 
@@ -954,8 +954,8 @@ void test_d_dyn_string_trim_left_by_char_new(void)
 
 void test_d_dyn_string_trim_left_by_predicate_new(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("DAZDZADDAbonjour");
-    DynString *dstring1 = d_dyn_string_trim_left_by_predicate_new(dstring, is_upper);
+    DDynString *dstring = d_dyn_string_new_from_c_string("DAZDZADDAbonjour");
+    DDynString *dstring1 = d_dyn_string_trim_left_by_predicate_new(dstring, is_upper);
 
     char *str = "bonjour";
     usize len = strlen(str);
@@ -978,7 +978,7 @@ void test_d_dyn_string_trim_left_by_predicate_new(void)
 
 void test_d_dyn_string_trim_right_by_char_in_place(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("bonjour              ");
+    DDynString *dstring = d_dyn_string_new_from_c_string("bonjour              ");
     d_dyn_string_trim_right_by_char_in_place(dstring, ' ');
     char *str = "bonjour";
     usize len = strlen(str);
@@ -995,7 +995,7 @@ void test_d_dyn_string_trim_right_by_char_in_place(void)
 
 void test_d_dyn_string_trim_right_by_predicate_in_place(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("dabonjourDAZDZADDA");
+    DDynString *dstring = d_dyn_string_new_from_c_string("dabonjourDAZDZADDA");
     d_dyn_string_trim_right_by_predicate_in_place(dstring, is_upper);
     char *str = "dabonjour";
     usize len = strlen(str);
@@ -1012,8 +1012,8 @@ void test_d_dyn_string_trim_right_by_predicate_in_place(void)
 
 void test_d_dyn_string_trim_right_by_char_new(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("bonjour              ");
-    DynString *dstring1 = d_dyn_string_trim_right_by_char_new(dstring, ' ');
+    DDynString *dstring = d_dyn_string_new_from_c_string("bonjour              ");
+    DDynString *dstring1 = d_dyn_string_trim_right_by_char_new(dstring, ' ');
     char *str = "bonjour";
     usize len = strlen(str);
 
@@ -1035,8 +1035,8 @@ void test_d_dyn_string_trim_right_by_char_new(void)
 
 void test_d_dyn_string_trim_right_by_predicate_new(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("dabonjourDAZDZADDA");
-    DynString *dstring1 = d_dyn_string_trim_right_by_predicate_new(dstring, is_upper);
+    DDynString *dstring = d_dyn_string_new_from_c_string("dabonjourDAZDZADDA");
+    DDynString *dstring1 = d_dyn_string_trim_right_by_predicate_new(dstring, is_upper);
 
     char *str = "dabonjour";
     usize len = strlen(str);
@@ -1057,7 +1057,7 @@ void test_d_dyn_string_trim_right_by_predicate_new(void)
     d_dyn_string_destroy(&dstring1);
 }
 
-void test_splitting_by_char(DynString *dstring, char **tab, usize nb_test, char c)
+void test_splitting_by_char(DDynString *dstring, char **tab, usize nb_test, char c)
 {
     printf("Start Test [%lu]\n", nb_test);
     DPointerArray *arr = d_dyn_string_split_by_char(dstring, c);
@@ -1082,7 +1082,7 @@ void test_splitting_by_char(DynString *dstring, char **tab, usize nb_test, char 
     d_pointer_array_destroy(&arr);
 }
 
-void test_splitting_by_char_of_str(DynString *dstring, char **tab, usize nb_test, const char *delims)
+void test_splitting_by_char_of_str(DDynString *dstring, char **tab, usize nb_test, const char *delims)
 {
     printf("Start Test [%lu]\n", nb_test);
     DPointerArray *arr = d_dyn_string_split_by_char_of_str(dstring, delims);
@@ -1109,7 +1109,7 @@ void test_splitting_by_char_of_str(DynString *dstring, char **tab, usize nb_test
 
 void test_d_dyn_string_split_by_char(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("bonjour");
+    DDynString *dstring = d_dyn_string_new_from_c_string("bonjour");
     usize nb_test = 0;
 
     d_dyn_string_replace_from_str(dstring, "ccc");
@@ -1158,7 +1158,7 @@ void test_d_dyn_string_split_by_char(void)
 
 void test_d_dyn_string_split_by_char_of_str(void)
 {
-    DynString *dstring = d_dyn_string_new_from_c_string("bonjour");
+    DDynString *dstring = d_dyn_string_new_from_c_string("bonjour");
     usize nb_test = 1;
 
     char *tab1[] = {"bo", "our", NULL};

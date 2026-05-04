@@ -95,7 +95,7 @@ DStringView d_string_view_from_c_string(const char *c_str)
     return view;
 }
 
-DStringView d_string_view_from_dyn_string(const DynString *dstring)
+DStringView d_string_view_from_dyn_string(const DDynString *dstring)
 {
     if (dstring == NULL)
         return d_string_view_from_parts(NULL, 0);
@@ -412,7 +412,7 @@ DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn)
     return d_string_view_subview(view, 0, i == MAX_SIZE_T_VALUE ? 0 : i + 1);
 }
 
-DynString *d_dyn_string_new_from_string_view(DStringView view)
+DDynString *d_dyn_string_new_from_string_view(DStringView view)
 {
     return d_dyn_string_new_with_sub_string(view.data, 0, view.len);
 }
