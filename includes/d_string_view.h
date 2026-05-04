@@ -4,7 +4,6 @@
 #include "d_types.h"
 #include "d_dyn_string.h"
 
-
 typedef struct DStringView
 {
     const char *data;
@@ -31,8 +30,8 @@ char d_string_view_get_char_at(DStringView view, usize index);
 
 DStringView d_string_view_subview(DStringView view, usize pos, usize len);
 
-int32 d_string_view_compare(DStringView view1, DStringView view2);
-int32 d_string_view_compare_against_c_string(DStringView view, const char *c_str);
+int d_string_view_compare(DStringView view1, DStringView view2);
+int d_string_view_compare_against_c_string(DStringView view, const char *c_str);
 bool d_string_view_equals(DStringView view1, DStringView view2);
 bool d_string_view_equals_c_string(DStringView view, const char *c_str);
 
@@ -91,9 +90,7 @@ DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn);
 DynArray *d_string_view_split_by_char(DStringView view, BufferOpts opts, char c);
 DynArray *d_string_view_split_by_char_of_str(DStringView view, BufferOpts opts, char *str);
 
-/*
-** Conversion
-*/
+
 DynString *d_dyn_string_new_from_string_view(DStringView view);
 
 #endif

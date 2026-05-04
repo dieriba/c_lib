@@ -22,28 +22,23 @@ typedef void (*DestroyElemFunc)(void *elem);
 DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem,
                           DestroyElemFunc free_func, BufferOpts opts);
 
-DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem,
-                                  DestroyElemFunc free_func,
-                                  BufferOpts opts);
+DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts);
 
 DynArray *d_dyn_array_new_from(DynArray *dyn_array);
 
 void d_dyn_array_destroy(DynArray **dyn_array);
 
-usize d_dyn_array_get_capacity(DynArray *dyn_array);
+DResult d_dyn_array_get_capacity(DynArray *dyn_array, usize *out_capacity);
 void *d_dyn_array_get_elem_at(DynArray *dyn_array, usize index);
 
-DynArray *d_dyn_array_append(DynArray *dyn_array, const void *data,
-                             usize nb_elem_to_copy);
+DResult d_dyn_array_append(DynArray *dyn_array, const void *data, usize nb_elem_to_copy);
 
-DynArray *d_dyn_push_back(DynArray *dyn_array, const void *data);
-DynArray *d_dyn_push_back_ptr(DynArray *dyn_array, const void *data);
+DResult d_dyn_push_back(DynArray *dyn_array, const void *data);
+DResult d_dyn_push_back_ptr(DynArray *dyn_array, const void *data);
 
-DynArray *d_dyn_array_remove_elem_fast(DynArray *dyn_array, usize index,
-                                       void *out_elem);
+DResult d_dyn_array_remove_elem_fast(DynArray *dyn_array, usize index, void *out_elem);
 
-DynArray *d_dyn_array_remove_last_element(DynArray *dyn_array,
-                                          void *out_elem);
+DResult d_dyn_array_remove_last_element(DynArray *dyn_array, void *out_elem);
 
 DynArray *d_dyn_array_clear_array(DynArray *dyn_array);
 

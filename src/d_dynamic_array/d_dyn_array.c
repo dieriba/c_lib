@@ -48,7 +48,7 @@ DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem, DestroyElemFunc 
 	DynArray *dyn_array = d_dyn_array_new_raw();
 	if (dyn_array == NULL)
 		return (NULL);
-	if (buffer_init(&dyn_array->array, elem_size, reserved_elem, opts) == ERROR)
+	if (buffer_init(&dyn_array->array, elem_size, reserved_elem, opts) != D_OK)
 	{
 		free(dyn_array);
 		return NULL;
@@ -62,25 +62,17 @@ DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem, DestroyElemFunc free_func
 	return d_dyn_array_new(sizeof(void *), reserved_elem, free_func, opts);
 }
 
-DynArray *d_dyn_array_append(DynArray *dyn_array, const void *data, usize nb_elem_to_copy)
+DResult d_dyn_array_append(DynArray *dyn_array, const void *data, usize nb_elem_to_copy)
 {
-	if (dyn_array == NULL || data == NULL)
-		return NULL;
-	if (buffer_append_data(&dyn_array->array, data, nb_elem_to_copy) == ERROR)
-		return NULL;
-	return dyn_array;
+	return buffer_append_data((RawBuffer *)dyn_array, data, nb_elem_to_copy);
 }
 
-DynArray *d_dyn_push_back(DynArray *dyn_array, const void *data)
+DResult d_dyn_push_back(DynArray *dyn_array, const void *data)
 {
-	if (dyn_array == NULL || data == NULL)
-		return NULL;
-	if (buffer_push(&dyn_array->array, data) == ERROR)
-		return NULL;
-	return dyn_array;
+	return buffer_push((RawBuffer *)dyn_array, data);
 }
 
-DynArray *d_dyn_push_back_ptr(DynArray *dyn_array, const void *data)
+DResult d_dyn_push_back_ptr(DynArray *dyn_array, const void *data)
 {
 	return d_dyn_push_back(dyn_array, &data);
 }
@@ -90,14 +82,10 @@ DynArray *d_dyn_array_new_from(DynArray *dyn_array)
 	if (dyn_array == NULL)
 		return NULL;
 	RawBuffer *raw_buffer = &dyn_array->array;
-	usize elem_size = buffer_get_elem_size(raw_buffer);
-	usize capacity = buffer_get_capacity(raw_buffer);
-	usize opts = buffer_get_opts(raw_buffer);
-
-	DynArray *new_array = d_dyn_array_new(elem_size, capacity, dyn_array->free_func, opts);
+	DynArray *new_array = d_dyn_array_new(raw_buffer->elem_size, raw_buffer->capacity, dyn_array->free_func, raw_buffer->opts);
 	if (new_array == NULL)
 		return NULL;
-	if (d_dyn_array_append(new_array, buffer_get_data(dyn_array), buffer_get_len(dyn_array)) == NULL)
+	if (d_dyn_array_append(new_array, raw_buffer->data, raw_buffer->size) != D_OK)
 	{
 		d_dyn_array_destroy(&new_array);
 		return NULL;
@@ -105,21 +93,17 @@ DynArray *d_dyn_array_new_from(DynArray *dyn_array)
 	return new_array;
 }
 
-usize d_dyn_array_get_capacity(DynArray *dyn_array)
+DResult d_dyn_array_get_capacity(DynArray *dyn_array, usize *out_capacity)
 {
-	if (dyn_array == NULL)
-		return 0;
-	return buffer_get_capacity(&dyn_array->array);
+	return buffer_get_capacity((RawBuffer *)dyn_array, out_capacity);
 }
 
 void *d_dyn_array_get_elem_at(DynArray *dyn_array, usize index)
 {
-	if (dyn_array == NULL)
-		return NULL;
-	return buffer_get_elem_at(&dyn_array->array, index);
+	return buffer_get_elem_at((RawBuffer *)dyn_array, index);
 }
 
-DynArray *d_dyn_array_remove_elem_fast(DynArray *dyn_array, usize index, void *out_elem)
+DResult d_dyn_array_remove_elem_fast(DynArray *dyn_array, usize index, void *out_elem)
 {
 	if (dyn_array == NULL)
 		return NULL;
@@ -129,18 +113,17 @@ DynArray *d_dyn_array_remove_elem_fast(DynArray *dyn_array, usize index, void *o
 	DestroyElemFunc free_func = dyn_array->free_func;
 	if (free_func && !out_elem)
 		free_func(elem);
-	buffer_swap_remove(&dyn_array->array, index, out_elem);
-	return dyn_array;
+	return buffer_swap_remove(&dyn_array->array, index, out_elem);
 }
 
-DynArray *d_dyn_array_remove_last_element(DynArray *dyn_array, void *out_elem)
+DResult d_dyn_array_remove_last_element(DynArray *dyn_array, void *out_elem)
 {
 	if (dyn_array == NULL)
 		return NULL;
-	usize len = buffer_get_len(&dyn_array->array);
-	if (len == 0)
+	usize size = dyn_array->array.size;
+	if (size == 0)
 		return dyn_array;
-	d_dyn_array_remove_elem_fast(dyn_array, len - 1, out_elem);
+	d_dyn_array_remove_elem_fast(dyn_array, size - 1, out_elem);
 	return dyn_array;
 }
 
@@ -152,8 +135,8 @@ static void destroy_elements(DynArray *dyn_array)
 	if (!free_func)
 		return;
 	RawBuffer *raw_buffer = &dyn_array->array;
-	usize elem_size = buffer_get_elem_size(raw_buffer);
-	for (size_t i = 0; i < dyn_array->array.len; i++)
+	usize elem_size = raw_buffer->elem_size;
+	for (size_t i = 0; i < dyn_array->array.size; i++)
 	{
 		void *elem = buffer_get_elem_at(raw_buffer, i);
 		free_func(elem);
@@ -177,6 +160,6 @@ DynArray *d_dyn_array_clear_array(DynArray *dyn_array)
 	if (dyn_array == NULL)
 		return NULL;
 	destroy_elements(dyn_array);
-	dyn_array->array.len = 0;
+	dyn_array->array.size = 0;
 	return dyn_array;
 }

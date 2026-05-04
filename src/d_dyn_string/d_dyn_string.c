@@ -21,7 +21,7 @@ DynString *d_dyn_string_new(void)
     DynString *dstring = d_dyn_string_new_raw();
     if (dstring == NULL)
         return NULL;
-    if (buffer_init(&dstring->str, sizeof(char), DEFAULT_CAPACITY, RAW_BUF_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init(&dstring->str, sizeof(char), DEFAULT_CAPACITY, RAW_BUF_OPT_ZERO_SENTINEL) != D_OK)
     {
         free(dstring);
         return NULL;
@@ -40,7 +40,7 @@ DynString *d_dyn_string_new_from_c_string(const char *str)
     if (dstring == NULL)
         return NULL;
 
-    if (buffer_init_with_data(&dstring->str, sizeof(char), str, len, RAW_BUF_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init_with_data(&dstring->str, sizeof(char), str, len, RAW_BUF_OPT_ZERO_SENTINEL) != D_OK)
     {
         d_dyn_string_destroy(&dstring);
         return NULL;
@@ -63,7 +63,7 @@ DynString *d_dyn_string_new_with_sub_string(const char *str, usize pos, usize le
     if (dstring == NULL)
         return NULL;
 
-    if (buffer_init_with_data(&dstring->str, sizeof(char), str + pos, len, RAW_BUF_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init_with_data(&dstring->str, sizeof(char), str + pos, len, RAW_BUF_OPT_ZERO_SENTINEL) != D_OK)
     {
         d_dyn_string_destroy(&dstring);
         return NULL;
@@ -75,7 +75,7 @@ DynString *d_dyn_string_new_from_dstring(DynString *dstring)
 {
     if (dstring == NULL)
         return NULL;
-    return d_dyn_string_new_with_sub_string(dstring->str.data, 0, dstring->str.len);
+    return d_dyn_string_new_with_sub_string(dstring->str.data, 0, dstring->str.size);
 }
 
 DynString *d_dyn_string_new_with_reserve(usize reserve)
@@ -84,7 +84,7 @@ DynString *d_dyn_string_new_with_reserve(usize reserve)
     if (dstring == NULL)
         return NULL;
 
-    if (buffer_init(&dstring->str, sizeof(char), reserve, RAW_BUF_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init(&dstring->str, sizeof(char), reserve, RAW_BUF_OPT_ZERO_SENTINEL) != D_OK)
     {
         d_dyn_string_destroy(&dstring);
         return NULL;
@@ -94,90 +94,67 @@ DynString *d_dyn_string_new_with_reserve(usize reserve)
 
 const char const *d_dyn_string_get_string(DynString *dstring)
 {
-    return dstring->str.data;
+    return buffer_get_data((RawBuffer *)dstring);
 }
 
-usize d_dyn_string_get_len(DynString *dstring)
+DResult d_dyn_string_sub_string_in_place(DynString *dstring, usize pos, usize len)
 {
-    return dstring->str.len;
-}
-
-DynString *d_dyn_string_sub_string_in_place(DynString *dstring, usize pos, usize len)
-{
-    if (dstring == NULL)
-        return NULL;
-    usize cnt_len = buffer_get_len(&dstring->str);
-    if (pos >= cnt_len)
-        return NULL;
-    len = pos + len > cnt_len ? cnt_len - pos : len;
+    DResult op_result;
+    usize cnt_size;
+    if ((op_result = buffer_get_size((RawBuffer *)dstring, &cnt_size)) != D_OK)
+        return op_result;
+    if (pos >= cnt_size)
+        return D_ERR_INVALID_ARG;
+    len = pos + len > cnt_size ? cnt_size - pos : len;
     char *s = buffer_get_data(dstring);
-    if (buffer_replace_data_trunc(&dstring->str, 0, s + pos, len) == ERROR)
-        return NULL;
-    return dstring;
+    return buffer_replace_data_trunc(&dstring->str, 0, s + pos, len);
 }
 
-usize d_dyn_string_get_capacity(DynString *dstring)
+char *d_dyn_string_get_char_at(DynString *dstring, usize i)
 {
-    return dstring->str.capacity;
+    return buffer_get_elem_at((RawBuffer *)dstring, i);
 }
 
-void *d_dyn_string_get_char_at(DynString *dstring, usize i)
+DResult d_dyn_string_resize(DynString *dstring, usize len, char c)
 {
-    if (dstring == NULL)
-        reutrn NULL;
-    return buffer_get_elem_at(&dstring->str, i);
+    return buffer_resize((RawBuffer *)dstring, len, &c);
 }
 
-DynString *d_dyn_string_resize(DynString *dstring, usize len, char c)
+DResult d_dyn_string_push_char(DynString *dstring, char c)
 {
-    if (dstring == NULL || buffer_resize(&dstring->str, len, &c) == ERROR)
-        return NULL;
-    return dstring;
+    return buffer_push((RawBuffer *)dstring, &c);
 }
 
-DynString *d_dyn_string_push_char(DynString *dstring, char c)
+DResult d_dyn_string_push_str_with_len(DynString *dstring, const char *str_to_append, usize len)
 {
-    if (dstring == NULL || buffer_push(&dstring->str, &c) == ERROR)
-        return NULL;
-    return dstring;
+    return buffer_append_data((RawBuffer *)dstring, str_to_append, len);
 }
 
-DynString *d_dyn_string_push_str_with_len(DynString *dstring, const char *str_to_append, usize len)
+DResult d_dyn_string_push_c_str(DynString *dstring, const char *str_to_append)
 {
-    if (dstring == NULL || buffer_append_data(&dstring->str, str_to_append, len) == ERROR)
-        return NULL;
-    return dstring;
-}
-
-DynString *d_dyn_string_push_c_str(DynString *dstring, const char *str_to_append)
-{
-    if (str_to_append == NULL)
-        return NULL;
     return d_dyn_string_push_str_with_len(dstring, str_to_append, strlen(str_to_append));
 }
 
-DynString *d_dyn_string_merge(DynString *dstring1, DynString *dstring2)
+DResult d_dyn_string_merge(DynString *dstring1, DynString *dstring2)
 {
     if (dstring1 == NULL || dstring2 == NULL)
-        return NULL;
-    return d_dyn_string_push_str_with_len(dstring1, dstring2->str.data, dstring2->str.len);
+        return D_ERR_INVALID_ARG;
+    return d_dyn_string_push_str_with_len(dstring1, dstring2->str.data, dstring2->str.size);
 }
 
-DynString *d_dyn_string_replace_from_str(DynString *dstring, const char *str)
+DResult d_dyn_string_replace_from_str(DynString *dstring, const char *str)
 {
-    if (dstring == NULL || str == NULL || buffer_replace_data_trunc(&dstring->str, 0, str, strlen(str)) == ERROR)
-        return NULL;
+    if (dstring == NULL || str == NULL)
+        return D_ERR_INVALID_ARG;
 
-    return dstring;
+    return buffer_replace_data_trunc(&dstring->str, 0, str, strlen(str));
 }
 
-DynString *d_dyn_string_replace_from_dstring(DynString *dstring, const DynString *to_copy)
+DResult d_dyn_string_replace_from_dstring(DynString *dstring, const DynString *to_copy)
 {
     if (dstring == NULL || to_copy == NULL)
-        return NULL;
-    if (buffer_replace_buffer_trunc(&dstring->str, &to_copy->str) == ERROR)
-        return NULL;
-    return dstring;
+        return D_ERR_INVALID_ARG;
+    return buffer_replace_buffer_trunc(&dstring->str, &to_copy->str);
 }
 
 void d_dyn_string_destroy(DynString **dstring)

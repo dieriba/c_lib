@@ -13,17 +13,17 @@ typedef struct RawRingBuffer
     usize tail;
 } RawRingBuffer;
 
-Result raw_ring_buffer_init(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize capacity, usize elem_size);
-Result raw_ring_buffer_default_init(RawRingBuffer *raw_ring_buffer, usize capacity, usize elem_size);
-Result raw_ring_buffer_init_with_data(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize elem_size, void *data, usize len);
+DResult raw_ring_buffer_init(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize capacity, usize elem_size);
+DResult raw_ring_buffer_default_init(RawRingBuffer *raw_ring_buffer, usize capacity, usize elem_size);
+DResult raw_ring_buffer_init_with_data(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize elem_size, void *data, usize len);
 RawRingBuffer *raw_ring_buffer_new_from(const RawRingBuffer *src);
 void raw_ring_buffer_free(RawRingBuffer *raw_ring_buffer);
 
-Result raw_ring_buffer_push_front(RawRingBuffer *raw_ring_buffer, const void *elem);
-Result raw_ring_buffer_pop_front(RawRingBuffer *raw_ring_buffer, void *out_elem);
+DResult raw_ring_buffer_push_front(RawRingBuffer *raw_ring_buffer, const void *elem);
+DResult raw_ring_buffer_pop_front(RawRingBuffer *raw_ring_buffer, void *out_elem);
 
-Result raw_ring_buffer_push_back(RawRingBuffer *raw_ring_buffer, const void *elem);
-Result raw_ring_buffer_pop_back(RawRingBuffer *raw_ring_buffer, void *out_elem);
+DResult raw_ring_buffer_push_back(RawRingBuffer *raw_ring_buffer, const void *elem);
+DResult raw_ring_buffer_pop_back(RawRingBuffer *raw_ring_buffer, void *out_elem);
 
 void raw_ring_buffer_clear(RawRingBuffer *raw_ring_buffer);
 

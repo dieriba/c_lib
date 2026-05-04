@@ -72,7 +72,7 @@ static usize find_last_from_index(DStringView view, usize pos, char_match_fn mat
     return MAX_SIZE_T_VALUE;
 }
 
-char *d_dyn_string_substr(DStringView view, usize pos, usize len)
+char *d_string_view_substr(DStringView view, usize pos, usize len)
 {
     return d_substr(view.data, pos, len);
 }
@@ -129,10 +129,6 @@ char d_string_view_get_char_at(DStringView view, usize index)
     return view.data[index];
 }
 
-/*
-** Slicing
-*/
-
 DStringView d_string_view_subview(DStringView view, usize pos, usize len)
 {
     if (view.data == NULL || pos > view.len)
@@ -142,13 +138,12 @@ DStringView d_string_view_subview(DStringView view, usize pos, usize len)
     return d_string_view_from_parts(view.data + pos, len);
 }
 
-int32 d_string_view_compare(DStringView view1, DStringView view2)
+int d_string_view_compare(DStringView view1, DStringView view2)
 {
-
-    return 0;
+    return strcmp(view1.data, view2.data);
 }
 
-int32 d_string_view_compare_against_c_string(DStringView view, const char *c_str)
+int d_string_view_compare_against_c_string(DStringView view, const char *c_str)
 {
     return d_string_view_compare(view, d_string_view_from_c_string(c_str));
 }
@@ -442,7 +437,7 @@ DynArray *d_string_view_split_by_char_of_str(DStringView view, BufferOpts opts, 
         if (i != len)
         {
             usize j = d_string_view_find_first_char_in_set_from_index(view, str, i);
-            char *str = d_dyn_string_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
+            char *str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
             if (str == NULL || d_dyn_push_back_ptr(vec, str) == NULL)
             {
                 d_dyn_array_destroy(&vec);
@@ -471,7 +466,7 @@ DynArray *d_string_view_split_by_char(DStringView view, BufferOpts opts, char c)
         if (i != len)
         {
             usize j = d_string_view_find_first_matching_char_from_index(view, c, i);
-            char *str = d_dyn_string_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
+            char *str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
             if (str == NULL || d_dyn_push_back_ptr(vec, str) == NULL)
             {
                 d_dyn_array_destroy(&vec);
