@@ -40,10 +40,10 @@ DResult raw_ring_buffer_init(RawRingBuffer *raw_ring_buffer, usize head, usize t
         capacity = DEFAULT_CAPACITY;
     else
     {
-        usize nearest_pow2 = d_math_compute_pow2(d_bits_get_index_least_significant_bit_set_ll(capacity));
-        if (nearest_pow2 < capacity)
-            nearest_pow2 <<= 1;
-        capacity = nearest_pow2;
+        usize new_capacity = d_math_compute_pow2(d_bits_get_index_least_significant_bit_set_ll(capacity));
+        if (new_capacity < capacity)
+            new_capacity <<= 1;
+        capacity = new_capacity;
     }
     raw_ring_buffer->capacity = capacity;
     raw_ring_buffer->elem_size = elem_size;
