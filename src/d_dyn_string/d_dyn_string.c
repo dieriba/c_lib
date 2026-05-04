@@ -21,7 +21,7 @@ DynString *d_dyn_string_new(void)
     DynString *dstring = d_dyn_string_new_raw();
     if (dstring == NULL)
         return NULL;
-    if (buffer_init(&dstring->str, sizeof(char), DEFAULT_CAPACITY, CNT_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init(&dstring->str, sizeof(char), DEFAULT_CAPACITY, RAW_BUF_OPT_ZERO_SENTINEL) == ERROR)
     {
         free(dstring);
         return NULL;
@@ -40,7 +40,7 @@ DynString *d_dyn_string_new_from_c_string(const char *str)
     if (dstring == NULL)
         return NULL;
 
-    if (buffer_init_with_data(&dstring->str, sizeof(char), str, len, CNT_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init_with_data(&dstring->str, sizeof(char), str, len, RAW_BUF_OPT_ZERO_SENTINEL) == ERROR)
     {
         d_dyn_string_destroy(&dstring);
         return NULL;
@@ -63,7 +63,7 @@ DynString *d_dyn_string_new_with_sub_string(const char *str, usize pos, usize le
     if (dstring == NULL)
         return NULL;
 
-    if (buffer_init_with_data(&dstring->str, sizeof(char), str + pos, len, CNT_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init_with_data(&dstring->str, sizeof(char), str + pos, len, RAW_BUF_OPT_ZERO_SENTINEL) == ERROR)
     {
         d_dyn_string_destroy(&dstring);
         return NULL;
@@ -84,7 +84,7 @@ DynString *d_dyn_string_new_with_reserve(usize reserve)
     if (dstring == NULL)
         return NULL;
 
-    if (buffer_init(&dstring->str, sizeof(char), reserve, CNT_OPT_ZERO_SENTINEL) == ERROR)
+    if (buffer_init(&dstring->str, sizeof(char), reserve, RAW_BUF_OPT_ZERO_SENTINEL) == ERROR)
     {
         d_dyn_string_destroy(&dstring);
         return NULL;

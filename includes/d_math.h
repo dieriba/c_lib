@@ -55,5 +55,6 @@ D_MATH_OVERFLOW_CHECK_X(usize, usize, MAX_SIZE_T_VALUE)
     (value & ~(alignment - 1))
 
 #define d_math_compute_pow2(exponent) (1 << exponent)
-
+#define d_math_is_pow2(value) (value && !(value & (value - 1)))
+#define d_math_mod_pow2(numerator, modulus) (numerator & (modulus - 1))
 #endif

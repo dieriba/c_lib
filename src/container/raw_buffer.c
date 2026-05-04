@@ -13,11 +13,9 @@
 #define buffer_elt_len(raw_buffer, i) raw_buffer->elem_size *i
 #define buffer_elt_pos(raw_buffer, i) (char *)raw_buffer->data + (buffer_elt_len(raw_buffer, i))
 
-
-
 static bool buffer_has_zero_sentinel(const RawBuffer *raw_buffer)
 {
-    return d_bits_8_check_bit_set(raw_buffer->opts, CNT_OPT_ZERO_SENTINEL);
+    return d_bits_8_check_bit_set(raw_buffer->opts, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
 static bool buffer_compute_new_alloc_size(const RawBuffer *raw_buffer,
@@ -44,6 +42,31 @@ static void buffer_write_sentinel(RawBuffer *raw_buffer)
 static RawBuffer *buffer_new_raw()
 {
     return malloc(sizeof(RawBuffer));
+}
+
+static Result increase_buffer_capacity_if_needed(RawBuffer *raw_buffer, usize nb_elem_to_copy)
+{
+    usize new_capacity;
+    usize alloc_size;
+    void *tmp;
+
+    if (raw_buffer == NULL)
+        return ERROR;
+    if (nb_elem_to_copy <= buffer_nb_available_elem_slot(raw_buffer))
+        return OK;
+    if (d_mathcheck_add_usize(raw_buffer->capacity, nb_elem_to_copy, &new_capacity))
+        return ERROR;
+    if (d_mathcheck_mul_usize(new_capacity, GROWTH_POLICY, &new_capacity))
+        return ERROR;
+    if (!buffer_compute_new_alloc_size(raw_buffer, new_capacity, &alloc_size))
+        return ERROR;
+    tmp = realloc(raw_buffer->data, alloc_size);
+    if (tmp == NULL)
+        return ERROR;
+    raw_buffer->data = tmp;
+    raw_buffer->capacity = new_capacity;
+    buffer_write_sentinel(raw_buffer);
+    return OK;
 }
 
 Result buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, DBits8 opts)
@@ -127,31 +150,6 @@ void buffer_destroy(RawBuffer **raw_buffer)
     *raw_buffer = NULL;
 }
 
-Result buffer_increase_capacity_if_needed(RawBuffer *raw_buffer, usize nb_elem_to_copy)
-{
-    usize new_capacity;
-    usize alloc_size;
-    void *tmp;
-
-    if (raw_buffer == NULL)
-        return ERROR;
-    if (nb_elem_to_copy <= buffer_nb_available_elem_slot(raw_buffer))
-        return OK;
-    if (d_mathcheck_add_usize(raw_buffer->capacity, nb_elem_to_copy, &new_capacity))
-        return ERROR;
-    if (d_mathcheck_mul_usize(new_capacity, GROWTH_POLICY, &new_capacity))
-        return ERROR;
-    if (!buffer_compute_new_alloc_size(raw_buffer, new_capacity, &alloc_size))
-        return ERROR;
-    tmp = realloc(raw_buffer->data, alloc_size);
-    if (tmp == NULL)
-        return ERROR;
-    raw_buffer->data = tmp;
-    raw_buffer->capacity = new_capacity;
-    buffer_write_sentinel(raw_buffer);
-    return OK;
-}
-
 void *buffer_get_data(RawBuffer *raw_buffer)
 {
     if (raw_buffer == NULL)
@@ -204,7 +202,7 @@ usize buffer_get_elem_size(const RawBuffer *raw_buffer)
 DBits8 buffer_get_opts(const RawBuffer *raw_buffer)
 {
     if (raw_buffer == NULL)
-        return CNT_OPT_NONE;
+        return RAW_BUF_OPT_NONE;
     return raw_buffer->opts;
 }
 
@@ -224,7 +222,7 @@ Result buffer_insert_data(RawBuffer *dst, usize dst_pos, const void *data, usize
     dst_len = buffer_nb_occupied_elem_slot(dst);
     if (dst_pos > dst_len)
         return ERROR;
-    if (buffer_increase_capacity_if_needed(dst, len) == ERROR)
+    if (increase_buffer_capacity_if_needed(dst, len) == ERROR)
         return ERROR;
     byte_pos = dst_pos * dst->elem_size;
     byte_len = len * dst->elem_size;
@@ -250,7 +248,7 @@ Result buffer_resize(RawBuffer *raw_buffer, usize new_len, void *filler)
     usize to_cpy = new_len > cnt_len ? new_len - cnt_len : 0;
     if (to_cpy != 0)
     {
-        if (buffer_increase_capacity_if_needed(raw_buffer, to_cpy) == ERROR)
+        if (increase_buffer_capacity_if_needed(raw_buffer, to_cpy) == ERROR)
             return ERROR;
         memfill(buffer_elt_pos(raw_buffer, cnt_len), filler, raw_buffer->elem_size, to_cpy);
     }
@@ -290,7 +288,7 @@ Result buffer_replace_data(RawBuffer *raw_buffer, usize pos, const void *data, u
     if (d_mathcheck_add_usize(pos, len, &total_len))
         return ERROR;
     usize extra_elem_to_allocate = total_len > raw_buffer->capacity ? total_len - raw_buffer->capacity : 0;
-    if (extra_elem_to_allocate != 0 && buffer_increase_capacity_if_needed(raw_buffer, extra_elem_to_allocate) == ERROR)
+    if (extra_elem_to_allocate != 0 && increase_buffer_capacity_if_needed(raw_buffer, extra_elem_to_allocate) == ERROR)
         return ERROR;
     memmove(buffer_elt_pos(raw_buffer, pos), data, buffer_elt_len(raw_buffer, len));
     if (extra_elem_to_allocate != 0)
@@ -350,7 +348,7 @@ Result buffer_push(RawBuffer *raw_buffer, const void *elem)
 {
     if (raw_buffer == NULL || elem == NULL)
         return ERROR;
-    if (buffer_increase_capacity_if_needed(raw_buffer, 1) == ERROR)
+    if (increase_buffer_capacity_if_needed(raw_buffer, 1) == ERROR)
         return ERROR;
     memmove(buffer_elt_pos(raw_buffer, raw_buffer->len), elem, buffer_elt_len(raw_buffer, 1));
     raw_buffer->len++;
