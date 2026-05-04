@@ -26,8 +26,6 @@ RawBuffer *buffer_new_from(const RawBuffer *src);
 void buffer_free(RawBuffer *raw_buffer);
 void buffer_destroy(RawBuffer **raw_buffer);
 
-Result buffer_increase_capacity_if_needed(RawBuffer *raw_buffer, usize nb_elem_to_copy);
-
 void *buffer_get_data(RawBuffer *raw_buffer);
 void *buffer_get_elem_at(RawBuffer *raw_buffer, usize index);
 void *buffer_get_last_elem(RawBuffer *raw_buffer);

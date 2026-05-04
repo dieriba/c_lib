@@ -316,5 +316,8 @@ bool raw_map_remove(RawMap *raw_map, void *key, void *out_elem)
 
 void raw_map_free(RawMap *raw_map)
 {
+    if (raw_map == NULL)
+        return;
     free(raw_map->map);
+    memset(raw_map, 0, sizeof(RawMap));
 }
