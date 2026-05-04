@@ -13,9 +13,8 @@ typedef usize (*FnPtrGenHash)(void *key);
 typedef bool (*FnPtrCmpKey)(void *, void *);
 typedef void (*FnPtrFreeElem)(void *elem);
 
-
-DDynArray *d_split_string_by_char(const char *string, char c, BufferOpts opts);
-DDynArray *d_split_string_by_char(const char *string, char c, BufferOpts opts);
+DResult d_split_string_by_char(DDynArray **new_dyn_array, const char *string, char c, BufferOpts opts);
+DResult d_split_string_by_char(DDynArray **new_dyn_array, const char *string, char c, BufferOpts opts);
 
 /**
  * @brief Extracts a substring from a given string.
