@@ -8,8 +8,7 @@ typedef struct DHashSet DHashSet;
 DResult d_hash_set_new(DHashSet **d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn);
 DHashSet *d_hash_set_insert(DHashSet *map, void *key);
 bool d_hash_set_key_exists(DHashSet *map, void *key);
-bool d_hash_set_remove(DHashSet *map, void *key);
-
+DResult d_hash_set_remove(DHashSet *map, void *key);
 DResult d_hash_set_get_size(DHashSet *d_hash_set, usize *size);
 DResult d_hash_set_get_capacity(DHashSet *d_hash_set, usize *capacity);
 

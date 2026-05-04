@@ -291,8 +291,8 @@ RawMap *raw_map_insert(RawMap *raw_map, void *new_key, void *new_value)
 DResult raw_map_remove(RawMap *raw_map, void *key, void *out_elem)
 {
     HashInfo hash_info;
-    if (compute_hash(raw_map, key, &hash_info) == false)
-        return NULL;
+    if (compute_hash(raw_map, key, &hash_info) != D_OK)
+        return D_ERR_INVALID_ARG;
     int position = find_from_hash(raw_map, key, hash_info);
     assert(position != SIZE_MAX);
 
@@ -303,9 +303,9 @@ DResult raw_map_remove(RawMap *raw_map, void *key, void *out_elem)
         raw_map->size--;
         if (out_elem)
             memcpy(out_elem, raw_map_get_slot_value(raw_map, position), raw_map->value_size);
-        return true;
+        return D_OK;
     }
-    return false;
+    return D_ERR_NOT_EXIST;
 }
 
 void raw_map_free(RawMap *raw_map)

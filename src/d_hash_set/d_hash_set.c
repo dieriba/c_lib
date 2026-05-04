@@ -42,7 +42,7 @@ bool d_hash_set_key_exists(DHashSet *map, void *key)
     return raw_map_get((RawMap *)map, key) != NULL;
 }
 
-bool d_hash_set_remove(DHashSet *map, void *key)
+DResult d_hash_set_remove(DHashSet *map, void *key)
 {
     return raw_map_remove((RawMap *)map, key, NULL);
 }

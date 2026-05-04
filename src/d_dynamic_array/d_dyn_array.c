@@ -55,7 +55,7 @@ DResult d_dyn_array_new(DynArray **new_dyn_array, usize elem_size, usize reserve
 		return op_result;
 	}
 	arr->free_func = free_func;
-	return new_dyn_array;
+	return D_OK;
 }
 
 DResult d_dyn_array_new_ptr_arr(DynArray **new_dyn_array, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts)
@@ -129,8 +129,7 @@ DResult d_dyn_array_remove_last_element(DynArray *dyn_array, void *out_elem)
 	usize size = dyn_array->array.size;
 	if (size == 0)
 		return dyn_array;
-	d_dyn_array_remove_elem_fast(dyn_array, size - 1, out_elem);
-	return dyn_array;
+	return d_dyn_array_remove_elem_fast(dyn_array, size - 1, out_elem);
 }
 
 static void destroy_elements(DynArray *dyn_array)

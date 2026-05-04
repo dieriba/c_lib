@@ -22,7 +22,7 @@ DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize ca
 DResult raw_map_insert(RawMap *raw_map, void *new_key, void *new_value);
 
 void *raw_map_get(RawMap *raw_map, void *key);
-bool raw_map_remove(RawMap *raw_map, void *key, void *out_elem);
+DResult raw_map_remove(RawMap *raw_map, void *key, void *out_elem);
 void raw_map_free(RawMap *raw_map);
 
 #define RAW_MAP_GETTER(FIELD, FIELD_TYPE)                                               \
