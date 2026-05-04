@@ -176,16 +176,16 @@ static usize find_from_hash(RawMap *raw_map, void *key, HashInfo hash_info)
     return SIZE_MAX;
 }
 
-static bool compute_hash(RawMap *raw_map, void *key, HashInfo *hash_info)
+static DResult compute_hash(RawMap *raw_map, void *key, HashInfo *hash_info)
 {
     if (raw_map == NULL || key == NULL)
-        return false;
+        return D_ERR_INVALID_ARG;
     usize hash = raw_map->hash_fn(key);
     *hash_info = (HashInfo){
         .group_number = raw_map_compute_h1(hash) % raw_map->nb_groups,
         .h2 = raw_map_compute_h2(hash),
     };
-    return true;
+    return D_OK;
 }
 
 static void make_insert(RawMap *raw_map, usize position, void *key, void *value)
@@ -242,20 +242,10 @@ static RawMap *rehash(RawMap *raw_map, void *key, void *value)
     return raw_map;
 }
 
-RawMap *raw_map_new(usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
-{
-    RawMap *raw_map = new_raw_map();
-
-    if (raw_map_init(raw_map, key_size, value_size, capacity, hash_fn, cmp_fn, free_fn) != D_OK)
-        return NULL;
-
-    return raw_map;
-}
-
 void *raw_map_get(RawMap *raw_map, void *key)
 {
     HashInfo hash_info;
-    if (compute_hash(raw_map, key, &hash_info) == false)
+    if (compute_hash(raw_map, key, &hash_info) != D_OK)
         return NULL;
     int position = find_from_hash(raw_map, key, hash_info);
     assert(position != SIZE_MAX);
@@ -298,7 +288,7 @@ RawMap *raw_map_insert(RawMap *raw_map, void *new_key, void *new_value)
     return raw_map;
 }
 
-bool raw_map_remove(RawMap *raw_map, void *key, void *out_elem)
+DResult raw_map_remove(RawMap *raw_map, void *key, void *out_elem)
 {
     HashInfo hash_info;
     if (compute_hash(raw_map, key, &hash_info) == false)

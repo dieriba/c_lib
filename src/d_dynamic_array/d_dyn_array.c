@@ -40,25 +40,43 @@ static DynArray *d_dyn_array_new_raw()
 	return malloc(sizeof(DynArray));
 }
 
-DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts)
+DResult d_dyn_array_new(DynArray **new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts)
 {
-	if (elem_size == 0)
-		return NULL;
-	DynArray *dyn_array = d_dyn_array_new_raw();
-	if (dyn_array == NULL)
-		return (NULL);
-	if (buffer_init(&dyn_array->array, elem_size, reserved_elem, opts) != D_OK)
+	if (new_dyn_array == NULL || elem_size == 0)
+		return D_ERR_INVALID_ARG;
+
+	DynArray *arr = d_dyn_array_new_raw();
+	if ((*new_dyn_array = arr) == NULL)
+		return D_ERR_ALLOC;
+	DResult op_result = buffer_init((DynArray *)arr, elem_size, reserved_elem, opts);
+	if (op_result != D_OK)
 	{
-		free(dyn_array);
-		return NULL;
+		free(new_dyn_array);
+		return op_result;
 	}
-	dyn_array->free_func = free_func;
-	return dyn_array;
+	arr->free_func = free_func;
+	return new_dyn_array;
 }
 
-DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts)
+DResult d_dyn_array_new_ptr_arr(DynArray **new_dyn_array, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts)
 {
-	return d_dyn_array_new(sizeof(void *), reserved_elem, free_func, opts);
+	return d_dyn_array_new(new_dyn_array, sizeof(void *), reserved_elem, free_func, opts);
+}
+
+DResult d_dyn_array_new_from(DynArray **new_dyn_array, DynArray *dyn_array)
+{
+	if (new_dyn_array == NULL || dyn_array == NULL)
+		return D_ERR_INVALID_ARG;
+	RawBuffer *raw_buffer = &dyn_array->array;
+	DResult op_result = d_dyn_array_new(new_dyn_array, raw_buffer->elem_size, raw_buffer->capacity, dyn_array->free_func, raw_buffer->opts);
+	if (op_result != D_OK)
+		return op_result;
+	if ((op_result = d_dyn_array_append(new_dyn_array, raw_buffer->data, raw_buffer->size)) != D_OK)
+	{
+		d_dyn_array_destroy(new_dyn_array);
+		return op_result;
+	}
+	return D_OK;
 }
 
 DResult d_dyn_array_append(DynArray *dyn_array, const void *data, usize nb_elem_to_copy)
@@ -76,25 +94,19 @@ DResult d_dyn_array_push_back_ptr(DynArray *dyn_array, const void *data)
 	return d_dyn_array_push_back(dyn_array, &data);
 }
 
-DynArray *d_dyn_array_new_from(DynArray *dyn_array)
-{
-	if (dyn_array == NULL)
-		return NULL;
-	RawBuffer *raw_buffer = &dyn_array->array;
-	DynArray *new_array = d_dyn_array_new(raw_buffer->elem_size, raw_buffer->capacity, dyn_array->free_func, raw_buffer->opts);
-	if (new_array == NULL)
-		return NULL;
-	if (d_dyn_array_append(new_array, raw_buffer->data, raw_buffer->size) != D_OK)
-	{
-		d_dyn_array_destroy(&new_array);
-		return NULL;
-	}
-	return new_array;
-}
-
 void *d_dyn_array_get_elem_at(DynArray *dyn_array, usize index)
 {
 	return buffer_get_elem_at((RawBuffer *)dyn_array, index);
+}
+
+DResult d_dyn_array_get_size(DynArray* dyn_array, usize* size)
+{
+	return buffer_get_size((RawBuffer*)dyn_array, size);
+}
+
+DResult d_dyn_array_get_capacity(DynArray* dyn_array, usize *capacity)
+{
+	return buffer_get_capacity((RawBuffer*)dyn_array, capacity);
 }
 
 DResult d_dyn_array_remove_elem_fast(DynArray *dyn_array, usize index, void *out_elem)

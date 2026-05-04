@@ -19,12 +19,9 @@ typedef struct _DynArray DynArray;
  */
 typedef void (*DestroyElemFunc)(void *elem);
 
-DynArray *d_dyn_array_new(usize elem_size, usize reserved_elem,
-                          DestroyElemFunc free_func, BufferOpts opts);
-
-DynArray *d_dyn_array_new_ptr_arr(usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts);
-
-DynArray *d_dyn_array_new_from(DynArray *dyn_array);
+DResult d_dyn_array_new(DynArray **new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts);
+DResult d_dyn_array_new_ptr_arr(DynArray **new_dyn_array, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts);
+DResult d_dyn_array_new_from(DynArray **new_dyn_array, DynArray *dyn_array);
 
 void d_dyn_array_destroy(DynArray **dyn_array);
 
@@ -36,16 +33,8 @@ DResult d_dyn_array_push_back(DynArray *dyn_array, const void *data);
 DResult d_dyn_array_push_back_ptr(DynArray *dyn_array, const void *data);
 DResult d_dyn_array_remove_elem_fast(DynArray *dyn_array, usize index, void *out_elem);
 DResult d_dyn_array_remove_last_element(DynArray *dyn_array, void *out_elem);
-
+DResult d_dyn_array_get_size(DynArray* dyn_array, usize* size);
+DResult d_dyn_array_get_capacity(DynArray* dyn_array, usize *capacity);
 DynArray *d_dyn_array_clear_array(DynArray *dyn_array);
-
-#define D_DYN_ARRAY_GETTER(FIELD, FIELD_TYPE)                                                     \
-    static inline DResult d_dyn_array_get_##FIELD(const DynArray *d_dyn_array, FIELD_TYPE *FIELD) \
-    {                                                                                             \
-        return buffer_get_##FIELD((RawBuffer *)d_dyn_array, FIELD);                               \
-    }
-
-D_DYN_ARRAY_GETTER(size, usize)
-D_DYN_ARRAY_GETTER(capacity, usize)
 
 #endif

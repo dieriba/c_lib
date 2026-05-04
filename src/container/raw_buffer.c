@@ -170,16 +170,14 @@ void *buffer_get_elem_at(RawBuffer *raw_buffer, usize index)
 
 void *buffer_get_last_elem(RawBuffer *raw_buffer)
 {
-    if (raw_buffer == NULL || raw_buffer->size == 0)
+    if (raw_buffer == NULL)
         return NULL;
-    return buffer_elt_pos(raw_buffer, raw_buffer->size - 1);
+    return buffer_get_elem_at(raw_buffer, raw_buffer->size - 1);
 }
 
 void *buffer_get_first_elem(RawBuffer *raw_buffer)
 {
-    if (raw_buffer == NULL || raw_buffer->size == 0)
-        return NULL;
-    return buffer_elt_pos(raw_buffer, 0);
+    return buffer_get_elem_at(raw_buffer, 0);
 }
 
 DResult buffer_insert_data(RawBuffer *dst, usize dst_pos, const void *data, usize len)

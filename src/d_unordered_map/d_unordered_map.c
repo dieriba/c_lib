@@ -12,17 +12,27 @@ static DUnorderedMap *d_unordered_map_new_raw()
     return malloc(sizeof(DUnorderedMap));
 }
 
-DUnorderedMap *d_unordered_map_new(usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
+DResult d_unordered_map_new(DUnorderedMap **d_unordered_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
 {
-    DUnorderedMap *d_unordered_map = d_unordered_map_new_raw();
+    DUnorderedMap *d_unordered_map;
     if (d_unordered_map == NULL)
-        return NULL;
-    if (raw_map_init(&d_unordered_map->raw_map, key_size, value_size, capacity, hash_fn, cmp_fn, free_fn) != D_OK)
-        return NULL;
-    return d_unordered_map;
+        return D_ERR_INVALID_ARG;
+    else if ((*d_unordered_map = d_unordered_map_new_raw()))
+        return D_ERR_ALLOC;
+    return raw_map_init((RawMap *)(*d_unordered_map), key_size, value_size, capacity, hash_fn, cmp_fn, free_fn);
 }
 
-DUnorderedMap *d_unordered_map_insert(DUnorderedMap *map, void *key, void *value)
+DResult d_unordered_map_get_size(DUnorderedMap *d_unordered_map, usize *size)
+{
+    return raw_map_get_size((RawMap *)d_unordered_map, size);
+}
+
+DResult d_unordered_map_get_capacity(DUnorderedMap *d_unordered_map, usize *capacity)
+{
+    return raw_map_get_capacity((RawMap *)d_unordered_map, capacity);
+}
+
+DResult d_unordered_map_insert(DUnorderedMap *map, void *key, void *value)
 {
     return raw_map_insert((RawMap *)map, key, value);
 }
@@ -32,7 +42,7 @@ void *d_unordered_map_get(DUnorderedMap *map, void *key)
     return raw_map_get((RawMap *)map, key);
 }
 
-bool d_unordered_map_remove(DUnorderedMap *map, void *key, void *out_elem)
+DResult d_unordered_map_remove(DUnorderedMap *map, void *key, void *out_elem)
 {
     return raw_map_remove((RawMap *)map, key, out_elem);
 }

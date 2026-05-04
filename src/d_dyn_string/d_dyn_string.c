@@ -16,85 +16,87 @@ static DynString *d_dyn_string_new_raw()
     return malloc(sizeof(DynString));
 }
 
-DynString *d_dyn_string_new(void)
+DResult d_dyn_string_new_with_capacity(DynString **new_dyn_string, usize reserve)
 {
-    DynString *dstring = d_dyn_string_new_raw();
-    if (dstring == NULL)
-        return NULL;
-    if (buffer_init(&dstring->str, sizeof(char), DEFAULT_CAPACITY, RAW_BUF_OPT_ZERO_SENTINEL) != D_OK)
+    if (new_dyn_string == NULL)
+        return D_ERR_INVALID_ARG;
+    else if ((*new_dyn_string = d_dyn_string_new_raw()) == NULL)
+        return D_ERR_ALLOC;
+    DResult op_result;
+    if ((op_result = buffer_init((DynString *)*new_dyn_string, sizeof(char), reserve, RAW_BUF_OPT_ZERO_SENTINEL)) != D_OK)
     {
-        free(dstring);
-        return NULL;
+        d_dyn_string_destroy(new_dyn_string);
+        return op_result;
     }
-    return dstring;
+    return D_OK;
 }
 
-DynString *d_dyn_string_new_from_c_string(const char *str)
+DResult d_dyn_string_new(DynString **dyn_string)
 {
-    if (str == NULL)
-        return NULL;
+    return d_dyn_string_new_with_capacity(dyn_string, DEFAULT_CAPACITY);
+}
+
+DResult d_dyn_string_new_from_c_string(DynString **dyn_string, const char *str)
+{
+    if (dyn_string == NULL || str == NULL)
+        return D_ERR_INVALID_ARG;
 
     usize len = strlen(str);
-
-    DynString *dstring = d_dyn_string_new_raw();
-    if (dstring == NULL)
-        return NULL;
-
-    if (buffer_init_with_data(&dstring->str, sizeof(char), str, len, RAW_BUF_OPT_ZERO_SENTINEL) != D_OK)
+    if ((*dyn_string = d_dyn_string_new_raw()) == NULL)
+        return D_ERR_ALLOC;
+    DResult op_result;
+    if ((op_result = buffer_init_with_data((DynString *)*dyn_string, sizeof(char), str, len, RAW_BUF_OPT_ZERO_SENTINEL)) != D_OK)
     {
-        d_dyn_string_destroy(&dstring);
-        return NULL;
+        d_dyn_string_destroy(dyn_string);
+        return op_result;
     }
-    return dstring;
+    return D_OK;
 }
 
-DynString *d_dyn_string_new_with_sub_string(const char *str, usize pos, usize len)
+DResult d_dyn_string_new_with_sub_string(DynString **dyn_string, const char *str, usize pos, usize len)
 {
-    if (str == NULL)
-        return NULL;
+    if (dyn_string == NULL || str == NULL)
+        return D_ERR_INVALID_ARG;
 
     usize str_len = strlen(str);
     if (pos > str_len)
-        return NULL;
+        return D_ERR_INVALID_ARG;
 
     len = (pos + len > str_len) ? (str_len - pos) : len;
 
-    DynString *dstring = d_dyn_string_new_raw();
-    if (dstring == NULL)
-        return NULL;
+    if ((*dyn_string = d_dyn_string_new_raw()) == NULL)
+        return D_ERR_ALLOC;
 
-    if (buffer_init_with_data(&dstring->str, sizeof(char), str + pos, len, RAW_BUF_OPT_ZERO_SENTINEL) != D_OK)
+    DResult op_result;
+
+    if ((op_result = buffer_init_with_data((DynString *)dyn_string, sizeof(char), str + pos, len, RAW_BUF_OPT_ZERO_SENTINEL)) != D_OK)
     {
-        d_dyn_string_destroy(&dstring);
-        return NULL;
+        d_dyn_string_destroy(dyn_string);
+        return op_result;
     }
-    return dstring;
+    return D_OK;
 }
 
-DynString *d_dyn_string_new_from_dstring(DynString *dstring)
+DResult d_dyn_string_new_from_dstring(DynString **new_dyn_string, DynString *dstring)
 {
     if (dstring == NULL)
-        return NULL;
-    return d_dyn_string_new_with_sub_string(dstring->str.data, 0, dstring->str.size);
-}
-
-DynString *d_dyn_string_new_with_reserve(usize reserve)
-{
-    DynString *dstring = d_dyn_string_new_raw();
-    if (dstring == NULL)
-        return NULL;
-
-    if (buffer_init(&dstring->str, sizeof(char), reserve, RAW_BUF_OPT_ZERO_SENTINEL) != D_OK)
-    {
-        d_dyn_string_destroy(&dstring);
-        return NULL;
-    }
-    return dstring;
+        return D_ERR_INVALID_ARG;
+    return d_dyn_string_new_with_sub_string(new_dyn_string, dstring->str.data, 0, dstring->str.size);
 }
 
 const char const *d_dyn_string_get_string(DynString *dstring)
 {
     return buffer_get_data((RawBuffer *)dstring);
+}
+
+DResult d_dyn_string_get_size(DynString *dstring, usize *size)
+{
+    return buffer_get_size((RawBuffer *)dstring, size);
+}
+
+DResult d_dyn_string_get_capacity(DynString *dstring, usize *capacity)
+{
+    return buffer_get_capacity((RawBuffer *)dstring, capacity);
 }
 
 DResult d_dyn_string_sub_string_in_place(DynString *dstring, usize pos, usize len)

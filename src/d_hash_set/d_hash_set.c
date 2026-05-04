@@ -13,14 +13,23 @@ static DHashSet *d_hash_set_new_raw()
     return malloc(sizeof(DHashSet));
 }
 
-DHashSet *d_hash_set_new(usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
+DResult d_hash_set_new(DHashSet **d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
 {
-    DHashSet *d_hash_set = d_hash_set_new_raw();
     if (d_hash_set == NULL)
-        return NULL;
-    if (raw_map_init(&d_hash_set->raw_map, key_size, VALUE_SIZE, capacity, hash_fn, cmp_fn, free_fn) != D_OK)
-        return NULL;
-    return d_hash_set;
+        return D_ERR_INVALID_ARG;
+    else if (*d_hash_set = d_hash_set_new_raw() == NULL)
+        return D_ERR_ALLOC;
+    return raw_map_init((RawMap *)*d_hash_set, key_size, VALUE_SIZE, capacity, hash_fn, cmp_fn, free_fn);
+}
+
+DResult d_hash_set_get_size(DHashSet *d_hash_set, usize *size)
+{
+    return raw_map_get_size((RawMap *)d_hash_set, size);
+}
+
+DResult d_hash_set_get_capacity(DHashSet *d_hash_set, usize *capacity)
+{
+    return raw_map_get_capacity((RawMap *)d_hash_set, capacity);
 }
 
 DHashSet *d_hash_set_insert(DHashSet *map, void *key)

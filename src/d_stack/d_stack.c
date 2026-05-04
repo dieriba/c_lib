@@ -12,14 +12,13 @@ static DStack *new_d_stack()
     return malloc(sizeof(DStack));
 }
 
-DStack *d_stack_new(usize capacity, usize elem_size)
+DResult d_stack_new(DStack** d_stack, usize capacity, usize elem_size)
 {
-    DStack *d_stack = new_d_stack();
     if (d_stack == NULL)
-        return NULL;
-    if (raw_ring_buffer_default_init((RawRingBuffer *)d_stack, capacity, elem_size) != D_OK)
-        return NULL;
-    return d_stack;
+        return D_ERR_INVALID_ARG;
+    else if ((*d_stack = new_d_stack()) == NULL)
+        return D_ERR_ALLOC;
+    return raw_ring_buffer_default_init((RawRingBuffer *)*d_stack, capacity, elem_size);
 }
 
 DResult d_stack_push(DStack *d_stack, const void *elem)
@@ -30,6 +29,16 @@ DResult d_stack_push(DStack *d_stack, const void *elem)
 DResult d_stack_pop(DStack *d_stack, void *out_elem)
 {
     return raw_ring_buffer_pop_back((DStack *)d_stack, out_elem);
+}
+
+DResult d_stack_get_size(DStack *d_stack, usize *size)
+{
+    return raw_ring_buffer_get_size((DStack *)d_stack, size);
+}
+
+DResult d_stack_get_capacity(DStack *d_stack, usize *capacity)
+{
+    return raw_ring_buffer_get_capacity((DStack *)d_stack, capacity);
 }
 
 DResult d_stack_is_empty(DStack *d_stack, bool *is_empty)
