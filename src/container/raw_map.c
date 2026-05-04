@@ -55,55 +55,56 @@ static RawMap *new_raw_map()
     return malloc(sizeof(RawMap));
 }
 
-static RawMap *init_raw_map_map(RawMap *raw_map, usize capacity, usize alloc_size)
+static DResult init_raw_map_map(RawMap *raw_map, usize capacity, usize alloc_size)
 {
     if (posix_memalign(&raw_map->map, SIMD_REQUIRED_ALIGNEMENT, alloc_size) != 0)
-        return NULL;
+        return D_ERR_ALLOC;
     memset(raw_map->map, kEmpty, capacity);
     raw_map->nb_groups = capacity / RAW_MAP_GROUP_SIZE;
     raw_map->capacity = capacity;
-    raw_map->len = 0;
+    raw_map->size = 0;
     raw_map->max_load_factor = MAX_LOAD_FACTOR * capacity;
-    return raw_map;
+    return D_OK;
 }
 
-static RawMap *compute_alloc_size_and_capacity(RawMap *raw_map, usize slot_size, usize *capacity, usize *alloc_size)
+static DResult compute_alloc_size_and_capacity(RawMap *raw_map, usize slot_size, usize *capacity, usize *alloc_size)
 {
     usize new_capacity = *capacity;
     new_capacity = new_capacity == 0 ? DEFAULT_CAPACITY : new_capacity;
     if (d_mathcheck_add_usize(new_capacity, RAW_MAP_GROUP_SIZE, &new_capacity))
-        return NULL;
+        return D_ERR_INVALID_ARG;
     new_capacity = d_math_align_round_down(new_capacity, RAW_MAP_GROUP_SIZE);
     assert(new_capacity % RAW_MAP_GROUP_SIZE == 0);
     *capacity = new_capacity;
 
     usize total_group_size;
     if (d_mathcheck_mul_usize(new_capacity, slot_size, &total_group_size) || d_mathcheck_add_usize(new_capacity, total_group_size, alloc_size))
-        return NULL;
+        return D_ERR_INVALID_ARG;
 
-    return raw_map;
+    return D_OK;
 }
 
-RawMap *raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
+DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
 {
     if (raw_map == NULL)
-        return NULL;
+        return D_ERR_INVALID_ARG;
 
     usize slot_size;
-    if (d_mathcheck_add_usize(key_size, value_size, &slot_size))
-        return NULL;
+    if (d_math_overflow_check_add_usize(key_size, value_size, &slot_size))
+        return D_ERR_INVALID_ARG;
     usize alloc_size;
-    if (compute_alloc_size_and_capacity(raw_map, slot_size, &capacity, &alloc_size) == NULL)
-        return NULL;
-    if (init_raw_map_map(raw_map, capacity, alloc_size) == NULL)
-        return NULL;
+    if (compute_alloc_size_and_capacity(raw_map, slot_size, &capacity, &alloc_size) != D_OK)
+        return D_ERR_INVALID_ARG;
+    DResult op_result;
+    if ((op_result = init_raw_map_map(raw_map, capacity, alloc_size)) != D_OK)
+        return op_result;
 
     raw_map->value_size = value_size;
     raw_map->key_size = key_size;
     raw_map->cmp_fn = cmp_fn;
     raw_map->hash_fn = hash_fn == NULL ? default_hash_fn : hash_fn;
     raw_map->free_fn = free_fn;
-    return raw_map;
+    return D_OK;
 }
 
 static DBits32 get_mask_with_needle_pos_in_haystack(void *haystack, u8 needle)
@@ -232,7 +233,7 @@ static RawMap *rehash(RawMap *raw_map, void *key, void *value)
         return NULL;
 
     void *old_map = raw_map->map;
-    usize total_occupied_slot = raw_map->len;
+    usize total_occupied_slot = raw_map->size;
     usize old_group_number = raw_map->nb_groups;
     if (init_raw_map_map(raw_map, new_capacity, alloc_size) == NULL)
         return NULL;
@@ -245,7 +246,10 @@ RawMap *raw_map_new(usize key_size, usize value_size, usize capacity, FnPtrGenHa
 {
     RawMap *raw_map = new_raw_map();
 
-    return raw_map_init(raw_map, key_size, value_size, capacity, hash_fn, cmp_fn, free_fn);
+    if (raw_map_init(raw_map, key_size, value_size, capacity, hash_fn, cmp_fn, free_fn) != D_OK)
+        return NULL;
+
+    return raw_map;
 }
 
 void *raw_map_get(RawMap *raw_map, void *key)
@@ -267,7 +271,7 @@ RawMap *raw_map_insert(RawMap *raw_map, void *new_key, void *new_value)
     usize insert_position = find_from_hash(raw_map, new_key, hash_info);
     assert(insert_position != SIZE_MAX);
 
-    if (raw_map->len >= raw_map->max_load_factor)
+    if (raw_map->size >= raw_map->max_load_factor)
     {
         if (rehash(raw_map, new_key, new_value) == NULL)
             return NULL;
@@ -287,7 +291,7 @@ RawMap *raw_map_insert(RawMap *raw_map, void *new_key, void *new_value)
                 insert_position = deleted_slot_position;
         }
         ctrl = raw_map_get_control_byte_addr(raw_map, insert_position);
-        raw_map->len++;
+        raw_map->size++;
     }
     *ctrl = hash_info.h2;
     make_insert(raw_map, insert_position, new_key, new_value);
@@ -306,7 +310,7 @@ bool raw_map_remove(RawMap *raw_map, void *key, void *out_elem)
     if (*ctrl != kEmpty)
     {
         *ctrl = kDeleted;
-        raw_map->len--;
+        raw_map->size--;
         if (out_elem)
             memcpy(out_elem, raw_map_get_slot_value(raw_map, position), raw_map->value_size);
         return true;

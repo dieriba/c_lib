@@ -17,7 +17,7 @@ DUnorderedMap *d_unordered_map_new(usize key_size, usize value_size, usize capac
     DUnorderedMap *d_unordered_map = d_unordered_map_new_raw();
     if (d_unordered_map == NULL)
         return NULL;
-    if (raw_map_init(&d_unordered_map->raw_map, key_size, value_size, capacity, hash_fn, cmp_fn, free_fn) == NULL)
+    if (raw_map_init(&d_unordered_map->raw_map, key_size, value_size, capacity, hash_fn, cmp_fn, free_fn) != D_OK)
         return NULL;
     return d_unordered_map;
 }

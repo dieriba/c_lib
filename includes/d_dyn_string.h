@@ -27,4 +27,13 @@ DResult d_dyn_string_replace_from_dstring(DynString *dstring, const DynString *t
 
 DResult d_dyn_string_sub_string_in_place(DynString *dstring, usize pos, usize len);
 
+#define D_DYN_STRING_GETTER(FIELD, FIELD_TYPE)                                                       \
+    static inline DResult d_dyn_string_get_##FIELD(const DynString *d_dyn_string, FIELD_TYPE *FIELD) \
+    {                                                                                                \
+        return buffer_get_##FIELD((RawBuffer *)d_dyn_string, FIELD);                                 \
+    }
+
+D_DYN_STRING_GETTER(size, usize)
+D_DYN_STRING_GETTER(capacity, usize)
+
 #endif

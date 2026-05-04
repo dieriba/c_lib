@@ -1,9 +1,8 @@
 #include "d_dyn_array.h"
 #include "d_bits.h"
-#include <stdlib.h>
-#include <string.h>
 #include "raw_buffer.h"
 
+#include <string.h>
 struct _DynArray
 {
 	RawBuffer array;
@@ -67,14 +66,14 @@ DResult d_dyn_array_append(DynArray *dyn_array, const void *data, usize nb_elem_
 	return buffer_append_data((RawBuffer *)dyn_array, data, nb_elem_to_copy);
 }
 
-DResult d_dyn_push_back(DynArray *dyn_array, const void *data)
+DResult d_dyn_array_push_back(DynArray *dyn_array, const void *data)
 {
 	return buffer_push((RawBuffer *)dyn_array, data);
 }
 
-DResult d_dyn_push_back_ptr(DynArray *dyn_array, const void *data)
+DResult d_dyn_array_push_back_ptr(DynArray *dyn_array, const void *data)
 {
-	return d_dyn_push_back(dyn_array, &data);
+	return d_dyn_array_push_back(dyn_array, &data);
 }
 
 DynArray *d_dyn_array_new_from(DynArray *dyn_array)
@@ -91,11 +90,6 @@ DynArray *d_dyn_array_new_from(DynArray *dyn_array)
 		return NULL;
 	}
 	return new_array;
-}
-
-DResult d_dyn_array_get_capacity(DynArray *dyn_array, usize *out_capacity)
-{
-	return buffer_get_capacity((RawBuffer *)dyn_array, out_capacity);
 }
 
 void *d_dyn_array_get_elem_at(DynArray *dyn_array, usize index)

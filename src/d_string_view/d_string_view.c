@@ -438,7 +438,7 @@ DynArray *d_string_view_split_by_char_of_str(DStringView view, BufferOpts opts, 
         {
             usize j = d_string_view_find_first_char_in_set_from_index(view, str, i);
             char *str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
-            if (str == NULL || d_dyn_push_back_ptr(vec, str) == NULL)
+            if (str == NULL || d_dyn_array_push_back_ptr(vec, str) == NULL)
             {
                 d_dyn_array_destroy(&vec);
                 return NULL;
@@ -467,7 +467,7 @@ DynArray *d_string_view_split_by_char(DStringView view, BufferOpts opts, char c)
         {
             usize j = d_string_view_find_first_matching_char_from_index(view, c, i);
             char *str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
-            if (str == NULL || d_dyn_push_back_ptr(vec, str) == NULL)
+            if (str == NULL || d_dyn_array_push_back_ptr(vec, str) == NULL)
             {
                 d_dyn_array_destroy(&vec);
                 return NULL;

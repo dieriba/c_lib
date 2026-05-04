@@ -47,7 +47,7 @@ DResult buffer_swap_remove(RawBuffer *raw_buffer, usize index, void *out_elem);
 void buffer_clear(RawBuffer *raw_buffer);
 
 #define RAW_BUFFER_GETTER(FIELD, FIELD_TYPE)                                   \
-    DResult buffer_get_##FIELD(const RawBuffer *raw_buffer, FIELD_TYPE *FIELD) \
+    static inline DResult buffer_get_##FIELD(const RawBuffer *raw_buffer, FIELD_TYPE *FIELD) \
     {                                                                          \
         if (raw_buffer == NULL || FIELD == NULL)                               \
             return D_ERR_INVALID_ARG;                                          \

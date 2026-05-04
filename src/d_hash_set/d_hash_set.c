@@ -1,6 +1,5 @@
 #include "raw_map.h"
 #include "d_hash_set.h"
-#include <stdlib.h>
 
 #define VALUE_SIZE 0UL
 
@@ -19,7 +18,7 @@ DHashSet *d_hash_set_new(usize key_size, usize capacity, FnPtrGenHash hash_fn, F
     DHashSet *d_hash_set = d_hash_set_new_raw();
     if (d_hash_set == NULL)
         return NULL;
-    if (raw_map_init(&d_hash_set->raw_map, key_size, VALUE_SIZE, capacity, hash_fn, cmp_fn, free_fn) == NULL)
+    if (raw_map_init(&d_hash_set->raw_map, key_size, VALUE_SIZE, capacity, hash_fn, cmp_fn, free_fn) != D_OK)
         return NULL;
     return d_hash_set;
 }

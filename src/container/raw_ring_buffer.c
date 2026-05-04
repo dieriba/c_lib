@@ -188,6 +188,14 @@ DResult raw_ring_buffer_pop_back(RawRingBuffer *raw_ring_buffer, void *out_elem)
     return pop(raw_ring_buffer, out_elem, pop_back);
 }
 
+DResult raw_ring_buffer_is_empty(RawRingBuffer *raw_ring_buffer, bool *is_empty)
+{
+    if (raw_ring_buffer == NULL || is_empty == NULL)
+        return D_ERR_INVALID_ARG;
+    *is_empty = raw_ring_buffer->size == 0;
+    return D_OK;
+}
+
 void raw_ring_buffer_clear(RawRingBuffer *raw_ring_buffer)
 {
     raw_ring_buffer->size = 0;
