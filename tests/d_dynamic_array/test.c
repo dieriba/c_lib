@@ -40,7 +40,7 @@ usize get_len_arr(int *arr, usize arr_len)
 
 char *print_d_dyn_array_int(void *darray)
 {
-    DynArray *array = (DynArray *)darray;
+    DDynArray *array = (DDynArray *)darray;
 
     int *arr = array->data;
     usize arr_len = get_len_arr(arr, array->len);
@@ -166,7 +166,7 @@ char *print_arr_as_string(void *arr)
 void test_d_dyn_array_new(void)
 {
     usize len = 4;
-    DynArray *array = d_dyn_array_new(true, sizeof(int), len);
+    DDynArray *array = d_dyn_array_new(true, sizeof(int), len);
     int arr[] = {0, 0, 0, 0};
     DbgFn fne = &print_d_dyn_array_int;
     assert_eq_custom(array->data, arr, sizeof(int) * len, fne);
@@ -175,14 +175,14 @@ void test_d_dyn_array_new(void)
 
 void test_d_dyn_array_destroy(void)
 {
-    DynArray *array = d_dyn_array_new(true, sizeof(int), 4);
+    DDynArray *array = d_dyn_array_new(true, sizeof(int), 4);
     d_dyn_array_destroy(&array);
     assert_eq_null_custom(array, print_d_dyn_array_int);
 }
 
 void test_d_dyn_array_push_back(void)
 {
-    DynArray *array = d_dyn_array_new(false, sizeof(int), 0);
+    DDynArray *array = d_dyn_array_new(false, sizeof(int), 0);
     int arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     int s_arr[] = {0, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
@@ -258,7 +258,7 @@ void test_d_dyn_array_push_back(void)
 
 void test_d_dyn_array_append_vals(void)
 {
-    DynArray *array = d_dyn_array_new(false, sizeof(int), 0);
+    DDynArray *array = d_dyn_array_new(false, sizeof(int), 0);
     int arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     usize len = 10;
     d_dyn_array_append_vals(array, arr, len);
@@ -377,11 +377,11 @@ void test_d_dyn_array_append_vals(void)
 
 void test_d_dyn_array_copy(void)
 {
-    DynArray *array = d_dyn_array_new(false, sizeof(int), 0);
+    DDynArray *array = d_dyn_array_new(false, sizeof(int), 0);
     int arr[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     usize g_arr_len = 10;
     d_dyn_array_append_vals(array, arr, g_arr_len);
-    DynArray *copy_array = d_dyn_array_copy(array);
+    DDynArray *copy_array = d_dyn_array_copy(array);
     assert_eq_custom(array->data, copy_array->data, sizeof(int) * g_arr_len, print_d_dyn_array_int);
     assert_eq_custom(&array->len, &copy_array->len, sizeof(usize), itoa_usize);
     d_dyn_array_destroy(&array);
@@ -390,7 +390,7 @@ void test_d_dyn_array_copy(void)
 
 void test_d_dyn_array_get_capacity(void)
 {
-    DynArray *array = d_dyn_array_new(false, sizeof(int), 0);
+    DDynArray *array = d_dyn_array_new(false, sizeof(int), 0);
     usize capacity = d_dyn_array_get_capacity(array); // default capacity is 4
     usize default_capacity = 4;
     assert_eq_custom(&capacity, &default_capacity, sizeof(usize), itoa_usize);
@@ -399,7 +399,7 @@ void test_d_dyn_array_get_capacity(void)
 
 void test_d_dyn_array_modify_capacity(void)
 {
-    DynArray *array = d_dyn_array_new(false, sizeof(int), 0);
+    DDynArray *array = d_dyn_array_new(false, sizeof(int), 0);
     usize new_capacity = 500;
     d_dyn_array_modify_capacity(array, new_capacity);
     usize capacity = d_dyn_array_get_capacity(array);
@@ -417,7 +417,7 @@ void test_d_dyn_array_modify_capacity(void)
 
 void test_d_dyn_array_pop_back(void)
 {
-    DynArray *array = d_dyn_array_new(false, sizeof(int), 0);
+    DDynArray *array = d_dyn_array_new(false, sizeof(int), 0);
     int arr[] = {1, 2, 3, 4};
     g_arr_len = 4;
     d_dyn_array_append_vals(array, arr, g_arr_len);
@@ -446,7 +446,7 @@ void test_d_dyn_array_pop_back(void)
 
 void test_d_dyn_array_remove_index_fast(void)
 {
-    DynArray *array = d_dyn_array_new(false, sizeof(int), 0);
+    DDynArray *array = d_dyn_array_new(false, sizeof(int), 0);
     int arr[] = {1, 2, 3, 4};
     g_arr_len = 4;
     d_dyn_array_append_vals(array, arr, g_arr_len);
@@ -476,7 +476,7 @@ void test_d_dyn_array_remove_index_fast(void)
 
 void test_d_dyn_array_clear_array(void)
 {
-    DynArray *array = d_dyn_array_new(false, sizeof(int), 0);
+    DDynArray *array = d_dyn_array_new(false, sizeof(int), 0);
     int arr[] = {1, 2, 3, 4};
     usize len = 4;
     d_dyn_array_append_vals(array, arr, sizeof(int) * len);

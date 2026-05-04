@@ -422,7 +422,7 @@ static void _free_str(void *elem)
     free(*((void **)elem));
 }
 
-DResult d_string_view_split_by_char_of_str(DynArray **new_dyn_array, DStringView view, BufferOpts opts, char *str)
+DResult d_string_view_split_by_char_of_str(DDynArray **new_dyn_array, DStringView view, BufferOpts opts, char *str)
 {
     if (new_dyn_array == NULL || str == NULL)
         return D_ERR_INVALID_ARG;
@@ -431,7 +431,7 @@ DResult d_string_view_split_by_char_of_str(DynArray **new_dyn_array, DStringView
     if ((op_result = d_dyn_array_new_ptr_arr(new_dyn_array, len, _free_str, opts)) != D_OK)
         return op_result;
     char *string = view.data;
-    DynArray *dyn_array = *new_dyn_array;
+    DDynArray *dyn_array = *new_dyn_array;
     usize str_len = strlen(str);
     for (usize i = 0; i < len;)
     {
@@ -454,7 +454,7 @@ DResult d_string_view_split_by_char_of_str(DynArray **new_dyn_array, DStringView
     return D_OK;
 }
 
-DResult d_string_view_split_by_char(DynArray **new_dyn_array, DStringView view, BufferOpts opts, char c)
+DResult d_string_view_split_by_char(DDynArray **new_dyn_array, DStringView view, BufferOpts opts, char c)
 {
     if (new_dyn_array == NULL)
         return D_ERR_INVALID_ARG;
@@ -464,7 +464,7 @@ DResult d_string_view_split_by_char(DynArray **new_dyn_array, DStringView view, 
         return op_result;
     usize len = view.len;
     char *str = view.data;
-    DynArray *dyn_array = *new_dyn_array;
+    DDynArray *dyn_array = *new_dyn_array;
     for (usize i = 0; i < len;)
     {
         while (i < len && str[i] == c)

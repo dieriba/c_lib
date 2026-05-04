@@ -14,8 +14,8 @@ typedef bool (*FnPtrCmpKey)(void *, void *);
 typedef void (*FnPtrFreeElem)(void *elem);
 
 
-DynArray *d_split_string_by_char(const char *string, char c, BufferOpts opts);
-DynArray *d_split_string_by_char(const char *string, char c, BufferOpts opts);
+DDynArray *d_split_string_by_char(const char *string, char c, BufferOpts opts);
+DDynArray *d_split_string_by_char(const char *string, char c, BufferOpts opts);
 
 /**
  * @brief Extracts a substring from a given string.
