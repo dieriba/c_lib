@@ -19,18 +19,18 @@ DResult d_split_string_by_char(DDynArray **new_dyn_array, const char *string, ch
 /**
  * @brief Extracts a substring from a given string.
  *
- * Allocates a new string and extracts a substring from the specified position `pos` of the input string `str`, extending for `len` characters.
- * If `str` is `NULL`, `NULL` will be returned. If `pos` is equal to or exceeds the length of `str`, or if `len` is `0`, the function will return NULL.
- * If `pos + len` exceeds the end of the string, the substring will include all characters from `pos` to the end of the string.
+ * Allocates a new string and extracts a substring from the specified position `pos` of the input string `str`, extending for `size` characters.
+ * If `str` is `NULL`, `NULL` will be returned. If `pos` is equal to or exceeds the length of `str`, or if `size` is `0`, the function will return NULL.
+ * If `pos + size` exceeds the end of the string, the substring will include all characters from `pos` to the end of the string.
  * The resulting substring is null-terminated. The caller is responsible for freeing the allocated memory.
  *
  * @param str A pointer to the null-terminated input string from which to extract the substring. If `str` is `NULL`, an empty string is returned.
- * @param pos The starting index in the input string from which to begin the substring extraction. If `pos` is equal to or exceeds the length of `str`, or if `len` is `0`, the function will return an empty string.
- * @param len The number of characters to include in the substring. If `len` is `0`, the function will return an empty string. If `pos + len` exceeds the end of the string, the substring will include all characters from `pos` to the end of the string.
+ * @param pos The starting index in the input string from which to begin the substring extraction. If `pos` is equal to or exceeds the length of `str`, or if `size` is `0`, the function will return an empty string.
+ * @param size The number of characters to include in the substring. If `size` is `0`, the function will return an empty string. If `pos + size` exceeds the end of the string, the substring will include all characters from `pos` to the end of the string.
  *
- * @return char* A pointer to the newly allocated string containing the substring. Returns `NULL` if `pos` is equal to or exceeds the length of `str`, `len` is `0`, `str` is NULL, or if memory allocation fails.
+ * @return char* A pointer to the newly allocated string containing the substring. Returns `NULL` if `pos` is equal to or exceeds the length of `str`, `size` is `0`, `str` is NULL, or if memory allocation fails.
  */
-char *d_substr(const char *str, usize pos, usize len);
+char *d_substr(const char *str, usize pos, usize size);
 
 /**
  * @brief Creates a duplicate of a standard null-terminated C string.
@@ -102,6 +102,6 @@ char *d_itoa_usize(usize nb);
  */
 char *d_itoa_usize_no_alloc(usize nb, char *raw_buffer);
 
-void *memfill(void *dst, void *filler_elem, usize filler_size, usize len);
+void *memfill(void *dst, void *filler_elem, usize filler_size, usize size);
 
 #endif

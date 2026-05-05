@@ -21,9 +21,8 @@ typedef enum PRINT_TYPE
 
 #define PRINT_SUCCESS_TEST(message) (printf(GREEN message RESET "\n"))
 
-static void print_outcome(bool success, const char* format, ...)
+static void print_outcome(bool success, const char *format, ...)
 {
-    
 }
 
 void d_assert(CHECK check_for, void *left, void *right, usize size, PrintFn print_function)
@@ -41,35 +40,6 @@ void d_assert(CHECK check_for, void *left, void *right, usize size, PrintFn prin
     }
 
     print_outcome(success, left, right, size, print_function);
-}
-
-void d_assert_int_equal(intmax_t left, intmax_t right, const char *const file, const int line)
-{
-    bool success = left == right;
-
-    print_outcome(success, "", );
-}
-
-void d_assert_usize(CHECK check_for, uintmax_t left, uintmax_t right, const char *const file, const int line)
-{
-    bool success = check_for == EQ ? left == right : left != right;
-
-    print_outcome(success, &left, &right, sizeof(usize), print_usize);
-}
-
-void d_assert_string(CHECK check_for, const char *left, const char *right, const char *const file, const int line)
-{
-    int cmp = strcmp(left, right);
-    bool success = check_for == EQ ? cmp == 0 : cmp != 0;
-
-    print_outcome(success, left, right, 0, print_string);
-}
-
-void d_assert_bool(CHECK check_for, bool left, bool right, const char *const file, const int line)
-{
-    bool success = check_for == EQ ? left == right : left != right;
-
-    print_outcome(success, &left, &right, sizeof(bool), print_bool);
 }
 
 static void print_bool(void *b)
@@ -100,4 +70,31 @@ static void print_int(void *ptr)
 {
     long long number = *(long long *)ptr;
     fprintf(stderr, "%lli\n", number);
+}
+
+void d_assert_int_equal(intmax_t left, intmax_t right, const char *const file, const int line)
+{
+    bool success = left == right;
+}
+
+void d_assert_usize(CHECK check_for, uintmax_t left, uintmax_t right, const char *const file, const int line)
+{
+    bool success = check_for == EQ ? left == right : left != right;
+
+    print_outcome(success, &left, &right, sizeof(usize), print_usize);
+}
+
+void d_assert_string(CHECK check_for, const char *left, const char *right, const char *const file, const int line)
+{
+    int cmp = strcmp(left, right);
+    bool success = check_for == EQ ? cmp == 0 : cmp != 0;
+
+    print_outcome(success, left, right, 0, print_string);
+}
+
+void d_assert_bool(CHECK check_for, bool left, bool right, const char *const file, const int line)
+{
+    bool success = check_for == EQ ? left == right : left != right;
+
+    print_outcome(success, &left, &right, sizeof(bool), print_bool);
 }

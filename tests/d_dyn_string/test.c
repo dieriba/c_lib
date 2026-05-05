@@ -34,8 +34,8 @@ usize is_upper(char c)
 char *print_d_dyn_string(void *_dstring)
 {
     DDynString *dstring = (DDynString *)_dstring;
-    char *str = malloc((sizeof(char) * dstring->len) + 1);
-    memcpy(str, dstring->string, dstring->len + 1);
+    char *str = malloc((sizeof(char) * dstring->size) + 1);
+    memcpy(str, dstring->string, dstring->size + 1);
     return str;
 }
 
@@ -54,9 +54,9 @@ void test_d_dyn_string_new_from_c_string(void)
     for (size_t i = 0; i < 3; i++)
     {
         DDynString *dstring = d_dyn_string_new_from_c_string(test_value[i]);
-        usize len = strlen(test_value[i]);
-        d_assert_eq(dstring->string, test_value[i], len);
-        assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+        usize size = strlen(test_value[i]);
+        d_assert_eq(dstring->string, test_value[i], size);
+        assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
         d_dyn_string_destroy(&dstring);
     }
 }
@@ -70,9 +70,9 @@ void test_d_dyn_string_new_from_dstring(void)
     {
         DDynString *dstring1 = d_dyn_string_new_from_c_string(test_value[i]);
         DDynString *dstring2 = d_dyn_string_new_from_dstring(dstring1);
-        usize len = strlen(test_value[i]);
-        d_assert_eq(dstring1->string, dstring2->string, len);
-        assert_eq_custom(&dstring1->len, &dstring2->len, sizeof(usize), itoa_usize);
+        usize size = strlen(test_value[i]);
+        d_assert_eq(dstring1->string, dstring2->string, size);
+        assert_eq_custom(&dstring1->size, &dstring2->size, sizeof(usize), itoa_usize);
         d_dyn_string_destroy(&dstring1);
         d_dyn_string_destroy(&dstring2);
     }
@@ -108,15 +108,15 @@ void test_d_dyn_string_strdup(void)
 {
     DDynString *dstring = d_dyn_string_new_from_c_string("Bonjour c'est dieriba");
     char *dup = d_dyn_string_strdup(dstring);
-    usize len = strlen(dup);
-    d_assert_eq(dup, dstring->string, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    usize size = strlen(dup);
+    d_assert_eq(dup, dstring->string, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     free(dup);
     d_dyn_string_replace_from_str(dstring, "");
     dup = d_dyn_string_strdup(dstring);
-    len = strlen(dup);
-    d_assert_eq(dup, dstring->string, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    size = strlen(dup);
+    d_assert_eq(dup, dstring->string, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     d_dyn_string_destroy(&dstring);
     free(dup);
 }
@@ -126,49 +126,49 @@ void test_d_dyn_string_new_with_substring(void)
 
     char *str = "Hello world";
     usize pos = 0;
-    usize len = 3;
-    DDynString *dstring = d_dyn_string_new_with_substring(str, pos, len);
-    d_assert_eq(dstring->string, str, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    usize size = 3;
+    DDynString *dstring = d_dyn_string_new_with_substring(str, pos, size);
+    d_assert_eq(dstring->string, str, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     d_dyn_string_destroy(&dstring);
 
-    len = 4;
+    size = 4;
     pos = 4;
     dstring = d_dyn_string_new_with_substring(str, pos, 4);
     str = "o wo";
-    len = strlen(str);
-    d_assert_eq(dstring->string, str, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    size = strlen(str);
+    d_assert_eq(dstring->string, str, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     d_dyn_string_destroy(&dstring);
 
     pos = 0;
     str = "Hello world";
-    len = strlen(str);
-    dstring = d_dyn_string_new_with_substring(str, pos, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
-    d_assert_eq(dstring->string, str, len);
+    size = strlen(str);
+    dstring = d_dyn_string_new_with_substring(str, pos, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
+    d_assert_eq(dstring->string, str, size);
     d_dyn_string_destroy(&dstring);
 
     pos = 0;
     str = "Hello world";
-    len = strlen(str);
+    size = strlen(str);
     dstring = d_dyn_string_new_with_substring(str, pos, MAX_SIZE_T_VALUE);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
-    d_assert_eq(dstring->string, str, len);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
+    d_assert_eq(dstring->string, str, size);
     d_dyn_string_destroy(&dstring);
 
     pos = 11;
     str = "Hello world";
-    len = 0;
+    size = 0;
     dstring = d_dyn_string_new_with_substring(str, pos, MAX_SIZE_T_VALUE);
     str = "";
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     d_assert_eq(dstring->string, str, 1);
     d_dyn_string_destroy(&dstring);
 
     pos = 8445;
     str = "Hello world";
-    len = strlen(str);
+    size = strlen(str);
     dstring = d_dyn_string_new_with_substring(str, pos, MAX_SIZE_T_VALUE);
     assert_eq_null_custom(dstring, print_d_dyn_string);
     if (dstring)
@@ -184,7 +184,7 @@ void test_d_dyn_string_resize(void)
 
     resize = 1000;
     d_dyn_string_resize(dstring, resize);
-    assert_eq_custom(&dstring->len, &resize, sizeof(usize), itoa_usize);
+    assert_eq_custom(&dstring->size, &resize, sizeof(usize), itoa_usize);
     d_dyn_string_destroy(&dstring);
 }
 
@@ -215,10 +215,10 @@ void test_d_dyn_string_push_char(void)
 
     for (usize i = 0; i < strlen(test_str_eq); i++)
     {
-        usize len = i + 1;
+        usize size = i + 1;
         d_dyn_string_push_char(dstring, test_str_eq[i]);
-        d_assert_eq(dstring->string, test_str_eq, len);
-        assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+        d_assert_eq(dstring->string, test_str_eq, size);
+        assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     }
     d_dyn_string_destroy(&dstring);
 }
@@ -228,13 +228,13 @@ void test_d_dyn_string_push_c_str(void)
     char *test_str_arr[] = {"hello", " dieriba", " how", " are you today ", "?"};
     char *test_str_eq = "hello dieriba how are you today ?";
     DDynString *dstring = d_dyn_string_new();
-    usize len = 0;
+    usize size = 0;
     for (size_t i = 0; i < 5; i++)
     {
         d_dyn_string_push_c_str(dstring, test_str_arr[i]);
-        len += strlen(test_str_arr[i]);
-        d_assert_eq(dstring->string, test_str_eq, len);
-        assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+        size += strlen(test_str_arr[i]);
+        d_assert_eq(dstring->string, test_str_eq, size);
+        assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     }
     d_dyn_string_destroy(&dstring);
 }
@@ -257,14 +257,14 @@ void test_d_dyn_string_push_str_with_len(void)
     char *test_str_arr[] = {"hello", " dieriba", " how", " are you today ", "?"};
     char *test_str_eq = "hello dieriba how are you today ?";
     DDynString *dstring = d_dyn_string_new();
-    usize len = 0;
+    usize size = 0;
     for (size_t i = 0; i < 5; i++)
     {
         usize str_len = strlen(test_str_arr[i]);
         d_dyn_string_push_str_with_len(dstring, test_str_arr[i], str_len);
-        len += str_len;
-        d_assert_eq(dstring->string, test_str_eq, len);
-        assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+        size += str_len;
+        d_assert_eq(dstring->string, test_str_eq, size);
+        assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     }
     d_dyn_string_destroy(&dstring);
 }
@@ -273,10 +273,10 @@ void test_d_dyn_string_replace_from_str(void)
 {
     DDynString *dstring = d_dyn_string_new_from_c_string("Dieriba");
     char *str = "success";
-    usize len = strlen(str);
+    usize size = strlen(str);
     d_dyn_string_replace_from_str(dstring, str);
-    d_assert_eq(dstring->string, str, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    d_assert_eq(dstring->string, str, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     d_dyn_string_destroy(&dstring);
 }
 
@@ -285,8 +285,8 @@ void test_d_dyn_string_replace_from_dstring(void)
     DDynString *dstring = d_dyn_string_new_from_c_string("Dieriba");
     DDynString *dstring1 = d_dyn_string_new_from_c_string("sucess");
     d_dyn_string_replace_from_dstring(dstring, dstring1);
-    d_assert_eq(dstring->string, dstring1->string, dstring1->len);
-    assert_eq_custom(&dstring->len, &dstring1->len, sizeof(usize), itoa_usize);
+    d_assert_eq(dstring->string, dstring1->string, dstring1->size);
+    assert_eq_custom(&dstring->size, &dstring1->size, sizeof(usize), itoa_usize);
     d_dyn_string_destroy(&dstring);
     d_dyn_string_destroy(&dstring1);
 }
@@ -612,14 +612,14 @@ void test_d_dyn_string_sub_string_in_place(void)
     DDynString *dstring = d_dyn_string_new_from_c_string("Hello World!");
     d_dyn_string_sub_string_in_place(dstring, 0, 5);
     char *str = "Hello";
-    usize len = strlen(str);
-    d_assert_eq(dstring->string, str, len);
-    d_assert_eq(&dstring->len, &len, sizeof(usize));
+    usize size = strlen(str);
+    d_assert_eq(dstring->string, str, size);
+    d_assert_eq(&dstring->size, &size, sizeof(usize));
     d_dyn_string_sub_string_in_place(dstring, 2, 3);
     str = "llo";
-    len = strlen(str);
-    d_assert_eq(dstring->string, str, len);
-    d_assert_eq(&dstring->len, &len, sizeof(usize));
+    size = strlen(str);
+    d_assert_eq(dstring->string, str, size);
+    d_assert_eq(&dstring->size, &size, sizeof(usize));
     d_dyn_string_destroy(&dstring);
 }
 
@@ -733,7 +733,7 @@ void test_d_dyn_string_find_last_not_matching_char_from_end(void)
 void test_d_dyn_string_find_last_char_not_in_str_from_index(void)
 {
     DDynString *dstring = d_dyn_string_new_from_c_string("bonjour jn");
-    usize pos = d_dyn_string_find_last_char_not_in_str_from_index(dstring, " bonj", dstring->len);
+    usize pos = d_dyn_string_find_last_char_not_in_str_from_index(dstring, " bonj", dstring->size);
     usize found = 6;
     assert_eq_custom(&pos, &found, sizeof(usize), itoa_usize);
     d_dyn_string_replace_from_str(dstring, "eeeeee");
@@ -900,15 +900,15 @@ void test_d_dyn_string_trim_left_by_char_in_place(void)
     DDynString *dstring = d_dyn_string_new_from_c_string("              bonjour");
     d_dyn_string_trim_left_by_char_in_place(dstring, ' ');
     char *str = "bonjour";
-    usize len = strlen(str);
-    d_assert_eq(dstring->string, str, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    usize size = strlen(str);
+    d_assert_eq(dstring->string, str, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     str = "dieribaaa";
     d_dyn_string_replace_from_str(dstring, "aaaadieribaaa");
     d_dyn_string_trim_left_by_char_in_place(dstring, 'a');
-    len = strlen(str);
-    d_assert_eq(dstring->string, str, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    size = strlen(str);
+    d_assert_eq(dstring->string, str, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     d_dyn_string_destroy(&dstring);
 }
 
@@ -917,15 +917,15 @@ void test_d_dyn_string_trim_left_by_predicate_in_place(void)
     DDynString *dstring = d_dyn_string_new_from_c_string("DAZDZADDAbonjour");
     d_dyn_string_trim_left_by_predicate_in_place(dstring, is_upper);
     char *str = "bonjour";
-    usize len = strlen(str);
-    d_assert_eq(dstring->string, str, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    usize size = strlen(str);
+    d_assert_eq(dstring->string, str, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     str = "dieribaaa";
     d_dyn_string_replace_from_str(dstring, "845454554500dieribaaa");
     d_dyn_string_trim_left_by_predicate_in_place(dstring, is_num);
-    len = strlen(str);
-    d_assert_eq(dstring->string, str, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    size = strlen(str);
+    d_assert_eq(dstring->string, str, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     d_dyn_string_destroy(&dstring);
 }
 
@@ -934,19 +934,19 @@ void test_d_dyn_string_trim_left_by_char_new(void)
     DDynString *dstring = d_dyn_string_new_from_c_string("              bonjour");
     DDynString *dstring1 = d_dyn_string_trim_left_by_char_new(dstring, ' ');
     char *str = "bonjour";
-    usize len = strlen(str);
+    usize size = strlen(str);
 
-    d_assert_eq(dstring1->string, str, len);
-    assert_eq_custom(&dstring1->len, &len, sizeof(usize), itoa_usize);
+    d_assert_eq(dstring1->string, str, size);
+    assert_eq_custom(&dstring1->size, &size, sizeof(usize), itoa_usize);
     str = "dieribaaa";
 
     d_dyn_string_destroy(&dstring1);
     d_dyn_string_replace_from_str(dstring, "aaaadieribaaa");
     dstring1 = d_dyn_string_trim_left_by_char_new(dstring, 'a');
 
-    len = strlen(str);
-    d_assert_eq(dstring1->string, str, len);
-    assert_eq_custom(&dstring1->len, &len, sizeof(usize), itoa_usize);
+    size = strlen(str);
+    d_assert_eq(dstring1->string, str, size);
+    assert_eq_custom(&dstring1->size, &size, sizeof(usize), itoa_usize);
 
     d_dyn_string_destroy(&dstring);
     d_dyn_string_destroy(&dstring1);
@@ -958,9 +958,9 @@ void test_d_dyn_string_trim_left_by_predicate_new(void)
     DDynString *dstring1 = d_dyn_string_trim_left_by_predicate_new(dstring, is_upper);
 
     char *str = "bonjour";
-    usize len = strlen(str);
-    d_assert_eq(dstring1->string, str, len);
-    assert_eq_custom(&dstring1->len, &len, sizeof(usize), itoa_usize);
+    usize size = strlen(str);
+    d_assert_eq(dstring1->string, str, size);
+    assert_eq_custom(&dstring1->size, &size, sizeof(usize), itoa_usize);
 
     d_dyn_string_destroy(&dstring1);
 
@@ -968,9 +968,9 @@ void test_d_dyn_string_trim_left_by_predicate_new(void)
     d_dyn_string_replace_from_str(dstring, "845454554500dieribaaa");
     dstring1 = d_dyn_string_trim_left_by_predicate_new(dstring, is_num);
 
-    len = strlen(str);
-    d_assert_eq(dstring1->string, str, len);
-    assert_eq_custom(&dstring1->len, &len, sizeof(usize), itoa_usize);
+    size = strlen(str);
+    d_assert_eq(dstring1->string, str, size);
+    assert_eq_custom(&dstring1->size, &size, sizeof(usize), itoa_usize);
 
     d_dyn_string_destroy(&dstring);
     d_dyn_string_destroy(&dstring1);
@@ -981,15 +981,15 @@ void test_d_dyn_string_trim_right_by_char_in_place(void)
     DDynString *dstring = d_dyn_string_new_from_c_string("bonjour              ");
     d_dyn_string_trim_right_by_char_in_place(dstring, ' ');
     char *str = "bonjour";
-    usize len = strlen(str);
-    d_assert_eq(dstring->string, str, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    usize size = strlen(str);
+    d_assert_eq(dstring->string, str, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     str = "aaadierib";
     d_dyn_string_replace_from_str(dstring, "aaadieribaaaa");
     d_dyn_string_trim_right_by_char_in_place(dstring, 'a');
-    len = strlen(str);
-    d_assert_eq(dstring->string, str, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    size = strlen(str);
+    d_assert_eq(dstring->string, str, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     d_dyn_string_destroy(&dstring);
 }
 
@@ -998,15 +998,15 @@ void test_d_dyn_string_trim_right_by_predicate_in_place(void)
     DDynString *dstring = d_dyn_string_new_from_c_string("dabonjourDAZDZADDA");
     d_dyn_string_trim_right_by_predicate_in_place(dstring, is_upper);
     char *str = "dabonjour";
-    usize len = strlen(str);
-    d_assert_eq(dstring->string, str, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    usize size = strlen(str);
+    d_assert_eq(dstring->string, str, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     str = "dieribaaa";
     d_dyn_string_replace_from_str(dstring, "dieribaaa845454554500");
     d_dyn_string_trim_right_by_predicate_in_place(dstring, is_num);
-    len = strlen(str);
-    d_assert_eq(dstring->string, str, len);
-    assert_eq_custom(&dstring->len, &len, sizeof(usize), itoa_usize);
+    size = strlen(str);
+    d_assert_eq(dstring->string, str, size);
+    assert_eq_custom(&dstring->size, &size, sizeof(usize), itoa_usize);
     d_dyn_string_destroy(&dstring);
 }
 
@@ -1015,19 +1015,19 @@ void test_d_dyn_string_trim_right_by_char_new(void)
     DDynString *dstring = d_dyn_string_new_from_c_string("bonjour              ");
     DDynString *dstring1 = d_dyn_string_trim_right_by_char_new(dstring, ' ');
     char *str = "bonjour";
-    usize len = strlen(str);
+    usize size = strlen(str);
 
-    d_assert_eq(dstring1->string, str, len);
-    assert_eq_custom(&dstring1->len, &len, sizeof(usize), itoa_usize);
+    d_assert_eq(dstring1->string, str, size);
+    assert_eq_custom(&dstring1->size, &size, sizeof(usize), itoa_usize);
     str = "dierib";
 
     d_dyn_string_destroy(&dstring1);
     d_dyn_string_replace_from_str(dstring, "dieribaaaa");
     dstring1 = d_dyn_string_trim_right_by_char_new(dstring, 'a');
 
-    len = strlen(str);
-    d_assert_eq(dstring1->string, str, len);
-    assert_eq_custom(&dstring1->len, &len, sizeof(usize), itoa_usize);
+    size = strlen(str);
+    d_assert_eq(dstring1->string, str, size);
+    assert_eq_custom(&dstring1->size, &size, sizeof(usize), itoa_usize);
 
     d_dyn_string_destroy(&dstring);
     d_dyn_string_destroy(&dstring1);
@@ -1039,9 +1039,9 @@ void test_d_dyn_string_trim_right_by_predicate_new(void)
     DDynString *dstring1 = d_dyn_string_trim_right_by_predicate_new(dstring, is_upper);
 
     char *str = "dabonjour";
-    usize len = strlen(str);
-    d_assert_eq(dstring1->string, str, len);
-    assert_eq_custom(&dstring1->len, &len, sizeof(usize), itoa_usize);
+    usize size = strlen(str);
+    d_assert_eq(dstring1->string, str, size);
+    assert_eq_custom(&dstring1->size, &size, sizeof(usize), itoa_usize);
 
     d_dyn_string_destroy(&dstring1);
 
@@ -1049,9 +1049,9 @@ void test_d_dyn_string_trim_right_by_predicate_new(void)
     d_dyn_string_replace_from_str(dstring, "dieribaaa845454554500");
     dstring1 = d_dyn_string_trim_right_by_predicate_new(dstring, is_num);
 
-    len = strlen(str);
-    d_assert_eq(dstring1->string, str, len);
-    assert_eq_custom(&dstring1->len, &len, sizeof(usize), itoa_usize);
+    size = strlen(str);
+    d_assert_eq(dstring1->string, str, size);
+    assert_eq_custom(&dstring1->size, &size, sizeof(usize), itoa_usize);
 
     d_dyn_string_destroy(&dstring);
     d_dyn_string_destroy(&dstring1);
@@ -1063,9 +1063,9 @@ void test_splitting_by_char(DDynString *dstring, char **tab, usize nb_test, char
     DPointerArray *arr = d_dyn_string_split_by_char(dstring, c);
     if (tab[0] == NULL)
     {
-        usize len = 0;
+        usize size = 0;
         assert_eq_null(arr->pdata[0]);
-        assert_eq_custom(&arr->len, &len, sizeof(usize), itoa_usize);
+        assert_eq_custom(&arr->size, &size, sizeof(usize), itoa_usize);
     }
     else
     {
@@ -1088,9 +1088,9 @@ void test_splitting_by_char_of_str(DDynString *dstring, char **tab, usize nb_tes
     DPointerArray *arr = d_dyn_string_split_by_char_of_str(dstring, delims);
     if (tab[0] == NULL)
     {
-        usize len = 0;
+        usize size = 0;
         assert_eq_null(arr->pdata[0]);
-        assert_eq_custom(&arr->len, &len, sizeof(usize), itoa_usize);
+        assert_eq_custom(&arr->size, &size, sizeof(usize), itoa_usize);
     }
     else
     {

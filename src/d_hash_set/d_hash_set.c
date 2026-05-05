@@ -17,27 +17,27 @@ DResult d_hash_set_new(DHashSet **d_hash_set, usize key_size, usize capacity, Fn
 {
     if (d_hash_set == NULL)
         return D_ERR_INVALID_ARG;
-    else if (*d_hash_set = d_hash_set_new_raw() == NULL)
+    else if ((*d_hash_set = d_hash_set_new_raw()) == NULL)
         return D_ERR_ALLOC;
     return raw_map_init((RawMap *)*d_hash_set, key_size, VALUE_SIZE, capacity, hash_fn, cmp_fn, free_fn);
 }
 
-DResult d_hash_set_get_size(DHashSet *d_hash_set, usize *size)
+DResult d_hash_set_get_size(const DHashSet *d_hash_set, usize *size)
 {
     return raw_map_get_size((RawMap *)d_hash_set, size);
 }
 
-DResult d_hash_set_get_capacity(DHashSet *d_hash_set, usize *capacity)
+DResult d_hash_set_get_capacity(const DHashSet *d_hash_set, usize *capacity)
 {
     return raw_map_get_capacity((RawMap *)d_hash_set, capacity);
 }
 
-DHashSet *d_hash_set_insert(DHashSet *map, void *key)
+DResult d_hash_set_insert(DHashSet *map, void *key)
 {
     return raw_map_insert((RawMap *)map, key, key);
 }
 
-bool d_hash_set_key_exists(DHashSet *map, void *key)
+bool d_hash_set_key_exists(const DHashSet *map, void *key)
 {
     return raw_map_get((RawMap *)map, key) != NULL;
 }

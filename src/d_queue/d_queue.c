@@ -27,20 +27,20 @@ DResult d_queue_push(DQueue *d_queue, const void *elem)
 
 DResult d_queue_pop(DQueue *d_queue, void *out_elem)
 {
-    return raw_ring_buffer_pop_front((DQueue *)d_queue, out_elem);
+    return raw_ring_buffer_pop_front((RawRingBuffer *)d_queue, out_elem);
 }
 
-DResult d_queue_get_size(DQueue *d_queue, usize *size)
+DResult d_queue_get_size(const DQueue *d_queue, usize *size)
 {
-    return raw_ring_buffer_get_size((DQueue *)d_queue, size);
+    return raw_ring_buffer_get_size((RawRingBuffer *)d_queue, size);
 }
 
-DResult d_queue_get_capacity(DQueue *d_queue, usize *capacity)
+DResult d_queue_get_capacity(const DQueue *d_queue, usize *capacity)
 {
-    return raw_ring_buffer_get_capacity((DQueue *)d_queue, capacity);
+    return raw_ring_buffer_get_capacity((RawRingBuffer *)d_queue, capacity);
 }
 
-DResult d_queue_is_empty(DQueue *d_queue, bool *is_empty)
+DResult d_queue_is_empty(const DQueue *d_queue, bool *is_empty)
 {
     return raw_ring_buffer_is_empty((RawRingBuffer *)d_queue, is_empty);
 }

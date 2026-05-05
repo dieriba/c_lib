@@ -3,11 +3,12 @@
 
 #include "d_types.h"
 #include "d_dyn_string.h"
+#include "d_dyn_array.h"
 
 typedef struct DStringView
 {
     const char *data;
-    const usize len;
+    const usize size;
 } DStringView;
 
 typedef bool (*match)(char c);
@@ -18,7 +19,7 @@ typedef bool (*match)(char c);
         d_string_view_from_parts(str, sizeof(str)) \
     } while (0)
 
-DStringView d_string_view_from_parts(const char *data, usize len);
+DStringView d_string_view_from_parts(const char *data, usize size);
 DStringView d_string_view_from_c_string(const char *c_str);
 DStringView d_string_view_from_dyn_string(const DDynString *dstring);
 
@@ -28,7 +29,7 @@ const char *d_string_view_data(DStringView view);
 
 char d_string_view_get_char_at(DStringView view, usize index);
 
-DStringView d_string_view_subview(DStringView view, usize pos, usize len);
+DStringView d_string_view_subview(DStringView view, usize pos, usize size);
 
 int d_string_view_compare(DStringView view1, DStringView view2);
 int d_string_view_compare_against_c_string(DStringView view, const char *c_str);

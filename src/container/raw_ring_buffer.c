@@ -14,13 +14,6 @@
 typedef void (*PushFn)(RawRingBuffer *, const void *elem);
 typedef void (*PopFn)(RawRingBuffer *, void *out_elem);
 
-static bool raw_ring_buffer_compute_new_alloc_size(const RawRingBuffer *raw_ring_buffer, usize capacity, usize *alloc_size)
-{
-    if (d_mathcheck_mul_usize(capacity, raw_ring_buffer->elem_size, alloc_size))
-        return false;
-    return true;
-}
-
 static void raw_ring_buffer_destroy(RawRingBuffer **raw_ring_buffer)
 {
     if (raw_ring_buffer == NULL || *raw_ring_buffer == NULL)
@@ -63,33 +56,30 @@ inline DResult raw_ring_buffer_default_init(RawRingBuffer *raw_ring_buffer, usiz
     return raw_ring_buffer_init(raw_ring_buffer, 0, 0, capacity, elem_size);
 }
 
-DResult raw_ring_buffer_init_with_data(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize elem_size, void *data, usize len)
+DResult raw_ring_buffer_init_with_data(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize elem_size, void *data, usize size)
 {
-    DResult op_result = raw_ring_buffer_init(raw_ring_buffer, head, tail, len, elem_size);
+    DResult op_result = raw_ring_buffer_init(raw_ring_buffer, head, tail, size, elem_size);
     if (op_result != D_OK)
         return op_result;
-    raw_ring_buffer->size = len;
-    memcpy(raw_ring_buffer->data, data, raw_ring_buffer_elt_size(raw_ring_buffer, len));
+    raw_ring_buffer->size = size;
+    memcpy(raw_ring_buffer->data, data, raw_ring_buffer_elt_size(raw_ring_buffer, size));
     return D_OK;
 }
 
-RawRingBuffer *raw_ring_buffer_new_from(const RawRingBuffer *src)
+DResult raw_ring_buffer_new_from(RawRingBuffer **new_raw_ring_buffer, const RawRingBuffer *src)
 {
-    RawRingBuffer *new_raw_ring_buffer;
+    if (new_raw_ring_buffer == NULL || src == NULL)
+        return D_ERR_INVALID_ARG;
 
-    if (src == NULL)
-        return NULL;
-
-    new_raw_ring_buffer = raw_ring_buffer_new_raw();
-    if (new_raw_ring_buffer == NULL)
-        return NULL;
-    DResult op_result = raw_ring_buffer_init_with_data(new_raw_ring_buffer, src->head, src->tail, src->elem_size, src->data, src->capacity);
+    if ((*new_raw_ring_buffer = raw_ring_buffer_new_raw()) == NULL)
+        return D_ERR_ALLOC;
+    DResult op_result = raw_ring_buffer_init_with_data(*new_raw_ring_buffer, src->head, src->tail, src->elem_size, src->data, src->capacity);
     if (op_result != D_OK)
     {
         raw_ring_buffer_destroy(&new_raw_ring_buffer);
-        return NULL;
+        return op_result;
     }
-    return new_raw_ring_buffer;
+    return D_OK;
 }
 
 static DResult increase_buffer_capacity_if_needed(RawRingBuffer *raw_ring_buffer)
@@ -103,7 +93,7 @@ static DResult increase_buffer_capacity_if_needed(RawRingBuffer *raw_ring_buffer
     usize new_capacity = raw_ring_buffer->capacity << 1;
     usize alloc_size;
     if (d_math_overflow_check_mul_usize(new_capacity, raw_ring_buffer->elem_size, &alloc_size))
-        return D_ERR_INVALID_ARG;
+        return D_ERR_OVERFLOW;
 
     void *tmp = realloc(raw_ring_buffer->data, alloc_size);
     if (tmp == NULL)

@@ -24,6 +24,7 @@ typedef enum DResult
     D_ERR_INVALID_ARG,
     D_ERR_NOT_FOUND,
     D_ERR_NOT_EXIST,
+    D_ERR_OVERFLOW
 } DResult;
 
 #endif

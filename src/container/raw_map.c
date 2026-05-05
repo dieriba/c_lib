@@ -71,15 +71,15 @@ static DResult compute_alloc_size_and_capacity(RawMap *raw_map, usize slot_size,
 {
     usize new_capacity = *capacity;
     new_capacity = new_capacity == 0 ? DEFAULT_CAPACITY : new_capacity;
-    if (d_mathcheck_add_usize(new_capacity, RAW_MAP_GROUP_SIZE, &new_capacity))
-        return D_ERR_INVALID_ARG;
+    if (d_math_overflow_check_add_usize(new_capacity, RAW_MAP_GROUP_SIZE, &new_capacity))
+        return D_ERR_OVERFLOW;
     new_capacity = d_math_align_round_down(new_capacity, RAW_MAP_GROUP_SIZE);
     assert(new_capacity % RAW_MAP_GROUP_SIZE == 0);
     *capacity = new_capacity;
 
     usize total_group_size;
-    if (d_mathcheck_mul_usize(new_capacity, slot_size, &total_group_size) || d_mathcheck_add_usize(new_capacity, total_group_size, alloc_size))
-        return D_ERR_INVALID_ARG;
+    if (d_math_overflow_check_mul_usize(new_capacity, slot_size, &total_group_size) || d_math_overflow_check_add_usize(new_capacity, total_group_size, alloc_size))
+        return D_ERR_OVERFLOW;
 
     return D_OK;
 }
@@ -91,11 +91,12 @@ DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize ca
 
     usize slot_size;
     if (d_math_overflow_check_add_usize(key_size, value_size, &slot_size))
-        return D_ERR_INVALID_ARG;
+        return D_ERR_OVERFLOW;
     usize alloc_size;
-    if (compute_alloc_size_and_capacity(raw_map, slot_size, &capacity, &alloc_size) != D_OK)
-        return D_ERR_INVALID_ARG;
     DResult op_result;
+    if ((op_result = compute_alloc_size_and_capacity(raw_map, slot_size, &capacity, &alloc_size)) != D_OK)
+        return op_result;
+
     if ((op_result = init_raw_map_map(raw_map, capacity, alloc_size)) != D_OK)
         return op_result;
 
@@ -109,9 +110,9 @@ DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize ca
 
 static DBits32 get_mask_with_needle_pos_in_haystack(void *haystack, u8 needle)
 {
-    __m128 to_match = _mm_load_si128(haystack);
-    __m128 filter = _mm_set1_epi8(needle);
-    __m128 filtered = _mm_cmpeq_epi8(to_match, filter);
+    __m128i to_match = _mm_load_si128(haystack);
+    __m128i filter = _mm_set1_epi8(needle);
+    __m128i filtered = _mm_cmpeq_epi8(to_match, filter);
     return _mm_movemask_epi8(filtered);
 }
 
@@ -222,24 +223,26 @@ static void copy_slot_from_old_map_to_new_map(RawMap *raw_map, void *old_map, us
     raw_map_insert(raw_map, new_key, new_value);
 }
 
-static RawMap *rehash(RawMap *raw_map, void *key, void *value)
+static DResult rehash(RawMap *raw_map, void *key, void *value)
 {
     usize new_capacity;
+    DResult op_result;
 
     if (d_math_overflow_check_mul_usize(raw_map->capacity, GROWTH_POLICY, &new_capacity))
-        return NULL;
+        return D_ERR_OVERFLOW;
+
     usize alloc_size;
-    if (compute_alloc_size_and_capacity(raw_map, raw_map_compute_slot_size(raw_map), &new_capacity, &alloc_size) == false)
-        return NULL;
+    if ((op_result = compute_alloc_size_and_capacity(raw_map, raw_map_compute_slot_size(raw_map), &new_capacity, &alloc_size)) != D_OK)
+        return op_result;
 
     void *old_map = raw_map->map;
     usize total_occupied_slot = raw_map->size;
     usize old_group_number = raw_map->nb_groups;
-    if (init_raw_map_map(raw_map, new_capacity, alloc_size) == NULL)
-        return NULL;
+    if ((op_result = init_raw_map_map(raw_map, new_capacity, alloc_size)) == D_OK)
+        return op_result;
     copy_slot_from_old_map_to_new_map(raw_map, old_map, old_group_number, total_occupied_slot, key, value);
     free(old_map);
-    return raw_map;
+    return D_OK;
 }
 
 void *raw_map_get(RawMap *raw_map, void *key)
@@ -253,19 +256,24 @@ void *raw_map_get(RawMap *raw_map, void *key)
     return d_bits_8_check_bits_set(*ctrl, MASK_CTRL_BYTE) ? NULL : raw_map_get_slot_value(raw_map, position);
 }
 
-RawMap *raw_map_insert(RawMap *raw_map, void *new_key, void *new_value)
+DResult raw_map_insert(RawMap *raw_map, void *new_key, void *new_value)
 {
     HashInfo hash_info;
-    if (new_value == NULL || compute_hash(raw_map, new_key, &hash_info) == false)
-        return NULL;
+    if (new_value == NULL)
+        return D_ERR_INVALID_ARG;
+
+    DResult op_result;
+    if ((op_result = compute_hash(raw_map, new_key, &hash_info)) != D_OK)
+        return op_result;
+
     usize insert_position = find_from_hash(raw_map, new_key, hash_info);
     assert(insert_position != SIZE_MAX);
 
     if (raw_map->size >= raw_map->max_load_factor)
     {
-        if (rehash(raw_map, new_key, new_value) == NULL)
-            return NULL;
-        return raw_map;
+        if ((op_result = rehash(raw_map, new_key, new_value)) != D_OK)
+            return op_result;
+        return D_OK;
     }
 
     char *ctrl = raw_map_get_control_byte_addr(raw_map, insert_position);
@@ -285,7 +293,7 @@ RawMap *raw_map_insert(RawMap *raw_map, void *new_key, void *new_value)
     }
     *ctrl = hash_info.h2;
     make_insert(raw_map, insert_position, new_key, new_value);
-    return raw_map;
+    return D_OK;
 }
 
 DResult raw_map_remove(RawMap *raw_map, void *key, void *out_elem)
