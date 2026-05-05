@@ -28,17 +28,17 @@ DResult d_stack_push(DStack *d_stack, const void *elem)
 
 DResult d_stack_pop(DStack *d_stack, void *out_elem)
 {
-    return raw_ring_buffer_pop_back((DStack *)d_stack, out_elem);
+    return raw_ring_buffer_pop_back((RawRingBuffer *)d_stack, out_elem);
 }
 
 DResult d_stack_get_size(const DStack *d_stack, usize *size)
 {
-    return raw_ring_buffer_get_size((DStack *)d_stack, size);
+    return raw_ring_buffer_get_size((RawRingBuffer *)d_stack, size);
 }
 
 DResult d_stack_get_capacity(const DStack *d_stack, usize *capacity)
 {
-    return raw_ring_buffer_get_capacity((DStack *)d_stack, capacity);
+    return raw_ring_buffer_get_capacity((RawRingBuffer *)d_stack, capacity);
 }
 
 DResult d_stack_is_empty(const DStack *d_stack, bool *is_empty)

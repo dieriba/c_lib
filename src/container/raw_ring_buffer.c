@@ -14,6 +14,11 @@
 typedef void (*PushFn)(RawRingBuffer *, const void *elem);
 typedef void (*PopFn)(RawRingBuffer *, void *out_elem);
 
+static RawRingBuffer *raw_ring_buffer_new_raw()
+{
+    return malloc(sizeof(RawRingBuffer));
+}
+
 static void raw_ring_buffer_destroy(RawRingBuffer **raw_ring_buffer)
 {
     if (raw_ring_buffer == NULL || *raw_ring_buffer == NULL)
@@ -44,7 +49,7 @@ DResult raw_ring_buffer_init(RawRingBuffer *raw_ring_buffer, usize head, usize t
     raw_ring_buffer->head = head;
     raw_ring_buffer->tail = tail;
     usize alloc_size;
-    if (d_mathcheck_mul_usize(capacity, raw_ring_buffer->elem_size, alloc_size))
+    if (d_math_overflow_check_mul_usize(capacity, raw_ring_buffer->elem_size, &alloc_size))
         return D_ERR_INVALID_ARG;
     if ((raw_ring_buffer->data = malloc(alloc_size)) == NULL)
         return D_ERR_ALLOC;
@@ -76,7 +81,7 @@ DResult raw_ring_buffer_new_from(RawRingBuffer **new_raw_ring_buffer, const RawR
     DResult op_result = raw_ring_buffer_init_with_data(*new_raw_ring_buffer, src->head, src->tail, src->elem_size, src->data, src->capacity);
     if (op_result != D_OK)
     {
-        raw_ring_buffer_destroy(&new_raw_ring_buffer);
+        raw_ring_buffer_destroy(new_raw_ring_buffer);
         return op_result;
     }
     return D_OK;
