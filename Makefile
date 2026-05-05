@@ -23,7 +23,6 @@ $(BUILD_LIB): $(OBJS)
 	ar rcs $@ $^
 
 $(BUILD_DIR)/%.c.o: %.c
-	echo $^
 	mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
