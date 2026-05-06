@@ -13,7 +13,7 @@ typedef usize (*FnPtrGenHash)(void *key);
 typedef bool (*FnPtrCmpKey)(void *, void *);
 typedef void (*FnPtrFreeElem)(void *elem);
 
-DResult d_split_string_by_char(DDynArray **new_dyn_array, const char *string, char c, BufferOpts opts);
+DResult d_split_string_by_char_of_str(DDynArray **new_dyn_array, const char *string, char *delims, BufferOpts opts);
 DResult d_split_string_by_char(DDynArray **new_dyn_array, const char *string, char c, BufferOpts opts);
 
 /**
@@ -55,7 +55,7 @@ char *d_strdup(const char *str);
  *
  * @return char* A pointer to the newly allocated string containing the string representation of the integer. Returns `NULL` if memory allocation fails.
  */
-char *d_itoa_i32(int32 nb);
+char *d_itoa_ll(long long nbr);
 
 /**
  * @brief Converts a 32-bit integer to a string using a user-provided raw_buffer.
@@ -71,7 +71,7 @@ char *d_itoa_i32(int32 nb);
  *
  * @note Ensure the raw_buffer is sufficiently large to hold the result. For a 32-bit integer, the raw_buffer should be at least 12 bytes.
  */
-char *d_itoa_i32_no_alloc(int32 nb, char *raw_buffer);
+char *d_itoa_ll_no_alloc(long long nbr, char *buffer);
 
 /**
  * @brief Converts a `usize` value to a string.

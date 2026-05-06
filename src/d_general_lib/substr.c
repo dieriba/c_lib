@@ -5,8 +5,10 @@ char *d_substr(const char *str, usize pos, usize size)
     usize str_len;
     if (str == NULL || pos > (str_len = strlen(str)))
         return NULL;
-    size = size > str_len ? str_len - pos : pos + size > str_len ? str_len - pos
-                                                                 : size;
+    
+    usize cpyable_char = str_len - pos;
+    if (size > cpyable_char)
+        size = cpyable_char;
     char *sub_str = malloc(sizeof(char) * (size + 1));
     if (sub_str == NULL)
         return NULL;

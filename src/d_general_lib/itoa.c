@@ -1,92 +1,75 @@
 #include "d_general_lib.h"
 
-int32 get_number_len_int32(int32 nb)
-{
-    int32 size = 0;
-    int32 to_add = (nb <= 0);
-
-    while (nb != 0)
-    {
-        nb /= 10;
-        ++size;
+#define fill_buff_with_num_digits(buffer, nbr, size, stop) \
+    buffer[size--] = 0;                                    \
+    for (int32 i = size; i >= stop; --i)                   \
+    {                                                      \
+        buffer[i] = (nbr % 10) + 48;                       \
+        nbr /= 10;                                         \
     }
 
-    return size + to_add;
-}
-
-int32 get_number_len_usize(usize nb)
-{
-    int32 size = (nb == 0);
-
-    while (nb != 0)
-    {
-        nb /= 10;
-        ++size;
+#define get_size_nb(nbr, size) \
+    size = (nbr <= 0);         \
+                               \
+    while (nbr != 0)           \
+    {                          \
+        nbr /= 10;             \
+        ++size;                \
     }
 
-    return size;
+static void num_as_str(long long nbr, int32 size, char *buffer)
+{
+    int32 is_neg = nbr < 0;
+    usize cpy;
+    if (is_neg)
+    {
+        buffer[0] = '-';
+        cpy = -nbr;
+    }
+    else
+        cpy = nbr;
+
+    fill_buff_with_num_digits(buffer, cpy, size, is_neg);
 }
 
-char *d_itoa_i32(int32 nb)
+char *d_itoa_ll(long long nbr)
 {
-    int64 nbr = nb; // storing int32 into int64 so further operation won't overflow
-    int32 size = get_number_len_int32(nbr);
-    int32 stop = (nbr < 0);                   // if nb < 0 stop = 1 else stop = 0
-    nbr = (nbr > 0) * nbr + -(nbr < 0) * nbr; // that line just transform nbr into a positive number if it was negative
-    char *str = malloc(sizeof(char) * (size + 1));
-    if (str == NULL)
+    int32 size;
+    long long cpy = nbr;
+    get_size_nb(cpy, size);
+    char *buffer = malloc(sizeof(char) * (size + 1));
+    if (buffer == NULL)
         return NULL;
-
-    str[size--] = 0; // adding null bytes at end of str
-    str[0] = '-';    // adding '-' char at index 0 by default it will be overwritten if stop = 0
-    for (int32 i = size; i >= stop; --i)
-    {
-        str[i] = (nbr % 10) + 48; // nbr % 10 will get the last unit of the numer and adding 48 will get us the ascii value of that number
-        nbr /= 10;
-    }
-    return str;
+    num_as_str(nbr, size, buffer);
+    return buffer;
 }
 
-char *d_itoa_i32_no_alloc(int32 nb, char *raw_buffer)
+char *d_itoa_ll_no_alloc(long long nbr, char *buffer)
 {
-    int64 nbr = nb; // storing int32 into int64 so further operation won't overflow
-    int32 size = get_number_len_int32(nbr);
-    int32 stop = (nbr < 0);                   // if nb < 0 stop = 1 else stop = 0
-    nbr = (nbr > 0) * nbr + -(nbr < 0) * nbr; // that line just transform nbr into a positive number if it was negative
-
-    raw_buffer[size--] = 0; // adding null bytes at end of raw_buffer
-    raw_buffer[0] = '-';    // adding '-' char at index 0 by default it will be overwritten if stop = 0
-    for (int32 i = size; i >= stop; --i)
-    {
-        raw_buffer[i] = (nbr % 10) + 48; // nbr % 10 will get the last unit of the numer and adding 48 will get us the ascii value of that number
-        nbr /= 10;
-    }
-    return raw_buffer;
+    int32 size;
+    long long cpy = nbr;
+    get_size_nb(cpy, size);
+    num_as_str((usize)nbr, size, buffer);
+    return buffer;
 }
 
-char *d_itoa_usize(usize nb)
+char *d_itoa_usize(usize nbr)
 {
-    int32 size = get_number_len_usize(nb);
-    char *str = malloc(sizeof(char) * (size + 1));
-    if (str == NULL)
+    int32 size;
+    usize cpy = nbr;
+    get_size_nb(cpy, size);
+    char *buffer = malloc(sizeof(char) * (size + 1));
+    if (buffer == NULL)
         return NULL;
-    str[size--] = 0;
-    for (int32 i = size; i >= 0; --i)
-    {
-        str[i] = (nb % 10) + 48; // nb % 10 will get the last unit of the numer and adding 48 will get us the ascii value of that number
-        nb /= 10;
-    }
-    return str;
+    fill_buff_with_num_digits(buffer, nbr, size, 0);
+    return buffer;
 }
 
-char *d_itoa_usize_no_alloc(usize nb, char *raw_buffer)
+char *d_itoa_usize_no_alloc(usize nbr, char *buffer)
 {
-    int32 size = get_number_len_usize(nb);
-    raw_buffer[size--] = 0;
-    for (int32 i = size; i >= 0; --i)
-    {
-        raw_buffer[i] = (nb % 10) + 48; // nb % 10 will get the last unit of the numer and adding 48 will get us the ascii value of that number
-        nb /= 10;
-    }
-    return raw_buffer;
+    int32 size;
+    usize cpy = nbr;
+    get_size_nb(cpy, size);
+    fill_buff_with_num_digits(buffer, nbr, size, 0);
+    return buffer;
 }
