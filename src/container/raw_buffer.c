@@ -78,9 +78,8 @@ DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, 
     raw_buffer->data = NULL;
 
     usize alloc_size;
-    DResult op_result = raw_buffer_compute_new_alloc_size(raw_buffer, raw_buffer->capacity, &alloc_size);
-    if (op_result != D_OK)
-        return op_result;
+    if (!raw_buffer_compute_new_alloc_size(raw_buffer, raw_buffer->capacity, &alloc_size) != D_OK)
+        return D_ERR_OVERFLOW;
     if ((raw_buffer->data = malloc(alloc_size)) == NULL)
         return D_ERR_ALLOC;
     raw_buffer_write_sentinel(raw_buffer);
@@ -187,7 +186,7 @@ DResult raw_buffer_insert_data(RawBuffer *dst, usize dst_pos, const void *data, 
     usize bytes_to_move;
     char *base;
 
-    if (dst == NULL || data == NULL || size == 0)
+    if (dst == NULL || data == NULL)
         return D_ERR_INVALID_ARG;
 
     dst_size = raw_buffer_nb_occupied_elem_slot(dst);
@@ -256,10 +255,10 @@ DResult raw_buffer_replace_data(RawBuffer *raw_buffer, usize pos, const void *da
         return D_ERR_INVALID_ARG;
     usize total_size;
     if (d_math_overflow_check_add_usize(pos, size, &total_size))
-        return D_ERR_INVALID_ARG;
+        return D_ERR_OVERFLOW;
     usize extra_elem_to_allocate = total_size > raw_buffer->capacity ? total_size - raw_buffer->capacity : 0;
     DResult op_result;
-    if (extra_elem_to_allocate != 0 && (op_result = increase_raw_buffer_capacity_if_needed(raw_buffer, extra_elem_to_allocate)) != D_OK)
+    if (extra_elem_to_allocate != 0 && (op_result = increase_raw_buffer_capacity_if_needed(raw_buffer, total_size)) != D_OK)
         return op_result;
     memmove(raw_buffer_elt_pos(raw_buffer, pos), data, raw_buffer_elt_size(raw_buffer, size));
     if (extra_elem_to_allocate != 0)

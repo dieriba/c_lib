@@ -27,4 +27,26 @@ typedef enum DResult
     D_ERR_OVERFLOW
 } DResult;
 
+static inline char *d_types_print_result_as_str(DResult result)
+{
+    switch (result)
+    {
+    case D_OK:
+        return "OK";
+        break;
+    case D_ERR_ALLOC:
+        return "ERR_ALLOC";
+    case D_ERR_INVALID_ARG:
+        return "ERR_INVALID_ARG";
+    case D_ERR_NOT_FOUND:
+        return "ERR_NOT_FOUND";
+    case D_ERR_NOT_EXIST:
+        return "ERR_NOT_EXIST";
+    case D_ERR_OVERFLOW:
+        return "ERR_OVERFLOW";
+    default:
+        return "UNKNOWN_RESULT";
+    }
+}
+
 #endif

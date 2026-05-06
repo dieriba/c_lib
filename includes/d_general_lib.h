@@ -102,6 +102,6 @@ char *d_itoa_usize(usize nb);
  */
 char *d_itoa_usize_no_alloc(usize nb, char *raw_buffer);
 
-void *memfill(void *dst, void *filler_elem, usize filler_size, usize size);
+void *memfill(void *dst, void *filler_elem, usize filler_elem_size, usize nb_slot_to_fill);
 
 #endif

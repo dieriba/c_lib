@@ -1,6 +1,7 @@
 #include <string.h>
 #include "d_test.h"
 #include "d_dyn_string.h"
+#include <stdio.h>
 #include "d_types.h"
 
 static void expect_size(DDynString *s, usize expected)
@@ -174,7 +175,6 @@ static void test_new_from_c_string_does_not_alias_source(void)
 static void test_new_from_c_string_accepts_empty_string(void)
 {
     DDynString *s = NULL;
-
     D_TEST_EXPR(d_dyn_string_new_from_c_string(&s, "") == D_OK);
     expect_string(s, "");
 
