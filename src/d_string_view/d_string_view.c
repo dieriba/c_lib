@@ -135,14 +135,19 @@ DStringView d_string_view_subview(DStringView view, usize pos, usize size)
 {
     if (view.data == NULL || pos > view.size)
         return d_string_view_from_parts(NULL, 0);
+    else if (pos == view.size)
+        return d_string_view_from_parts("", 0);
 
-    size = (pos + size > view.size) ? (view.size - pos) : size;
+    usize chr_viewable = view.size - pos;
+    size = chr_viewable < size ? chr_viewable : size;
     return d_string_view_from_parts(view.data + pos, size);
 }
 
 int d_string_view_compare(DStringView view1, DStringView view2)
 {
-    return strcmp(view1.data, view2.data);
+    if (view1.size != view2.size)
+        return -1;
+    return memcmp(view1.data, view2.data, view1.size);
 }
 
 int d_string_view_compare_against_c_string(DStringView view, const char *c_str)
