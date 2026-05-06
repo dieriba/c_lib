@@ -270,7 +270,7 @@ DResult raw_buffer_replace_data_at(RawBuffer *raw_buffer, usize pos, const void 
     return D_OK;
 }
 
-DResult raw_buffer_replace(RawBuffer *dst, const RawBuffer *src, usize pos)
+DResult raw_buffer_replace_with(RawBuffer *dst, const RawBuffer *src, usize pos)
 {
     if (dst == NULL || src == NULL)
         return D_ERR_INVALID_ARG;

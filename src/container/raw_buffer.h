@@ -34,7 +34,7 @@ DResult raw_buffer_get_first_elem(RawBuffer *raw_buffer, void *out_elem);
 DResult raw_buffer_insert_data_from_raw_data(RawBuffer *dst, usize dst_pos, const void *data, usize size);
 DResult raw_buffer_resize(RawBuffer *raw_buffer, usize new_size, void *filler);
 DResult raw_buffer_remove(RawBuffer *raw_buffer, usize pos, usize len_to_remove);
-DResult raw_buffer_replace(RawBuffer *dst, const RawBuffer *src, usize pos);
+DResult raw_buffer_replace_with(RawBuffer *dst, const RawBuffer *src, usize pos);
 DResult raw_buffer_replace_data_at(RawBuffer *raw_buffer, usize pos, const void *data, usize size);
 DResult raw_buffer_append_buffer(RawBuffer *dst, const RawBuffer *src);
 DResult raw_buffer_append_data(RawBuffer *dst, const void *data, usize size);

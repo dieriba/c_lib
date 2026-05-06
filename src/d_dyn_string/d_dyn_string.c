@@ -156,7 +156,7 @@ DResult d_dyn_string_replace_from_str(DDynString *dstring, const char *str)
 
 DResult d_dyn_string_replace_from_dstring(DDynString *dstring, const DDynString *to_copy)
 {
-    return raw_buffer_replace((RawBuffer *)dstring, (RawBuffer *)to_copy, 0);
+    return raw_buffer_replace_with((RawBuffer *)dstring, (RawBuffer *)to_copy, 0);
 }
 
 void d_dyn_string_destroy(DDynString **dstring)
