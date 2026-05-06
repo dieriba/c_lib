@@ -12,36 +12,62 @@ static DStack *new_d_stack()
     return malloc(sizeof(DStack));
 }
 
-DResult d_stack_new(DStack** d_stack, usize capacity, usize elem_size)
+DResult d_stack_new(DStack **d_stack, usize capacity, usize elem_size)
 {
     if (d_stack == NULL)
         return D_ERR_INVALID_ARG;
     else if ((*d_stack = new_d_stack()) == NULL)
         return D_ERR_ALLOC;
-    return raw_ring_buffer_default_init((RawRingBuffer *)*d_stack, capacity, elem_size);
+    DResult op_result = raw_ring_buffer_default_init((RawRingBuffer *)*d_stack, capacity, elem_size);
+    if (op_result != D_OK)
+    {
+        free(*d_stack);
+        *d_stack = NULL;
+    }
+    return op_result;
 }
 
 DResult d_stack_push(DStack *d_stack, const void *elem)
 {
-    return raw_ring_buffer_push_back((RawRingBuffer *)d_stack, elem);
+    if (d_stack == NULL)
+        return D_ERR_INVALID_ARG;
+    return raw_ring_buffer_push_back(&d_stack->raw_ring_buffer, elem);
 }
 
 DResult d_stack_pop(DStack *d_stack, void *out_elem)
 {
-    return raw_ring_buffer_pop_back((RawRingBuffer *)d_stack, out_elem);
+    if (d_stack == NULL)
+        return D_ERR_INVALID_ARG;
+    return raw_ring_buffer_pop_back(&d_stack->raw_ring_buffer, out_elem);
 }
 
 DResult d_stack_get_size(const DStack *d_stack, usize *size)
 {
-    return raw_ring_buffer_get_size((RawRingBuffer *)d_stack, size);
+    if (d_stack == NULL)
+        return D_ERR_INVALID_ARG;
+    return raw_ring_buffer_get_size(&d_stack->raw_ring_buffer, size);
 }
 
 DResult d_stack_get_capacity(const DStack *d_stack, usize *capacity)
 {
-    return raw_ring_buffer_get_capacity((RawRingBuffer *)d_stack, capacity);
+    if (d_stack == NULL)
+        return D_ERR_INVALID_ARG;
+    return raw_ring_buffer_get_capacity(&d_stack->raw_ring_buffer, capacity);
 }
 
 DResult d_stack_is_empty(const DStack *d_stack, bool *is_empty)
 {
-    return raw_ring_buffer_is_empty((RawRingBuffer *)d_stack, is_empty);
+    if (d_stack == NULL)
+        return D_ERR_INVALID_ARG;
+    return raw_ring_buffer_is_empty(&d_stack->raw_ring_buffer, is_empty);
+}
+
+void d_stack_destroy(DStack **d_stack)
+{
+    if (d_stack == NULL || *d_stack == NULL)
+        return;
+    DStack *stk = *d_stack;
+    raw_ring_buffer_free(&stk->raw_ring_buffer);
+    free(stk);
+    *d_stack = NULL;
 }

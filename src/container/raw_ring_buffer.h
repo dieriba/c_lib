@@ -25,7 +25,7 @@ DResult raw_ring_buffer_pop_front(RawRingBuffer *raw_ring_buffer, void *out_elem
 DResult raw_ring_buffer_push_back(RawRingBuffer *raw_ring_buffer, const void *elem);
 DResult raw_ring_buffer_pop_back(RawRingBuffer *raw_ring_buffer, void *out_elem);
 
-DResult raw_ring_buffer_is_empty(RawRingBuffer *raw_ring_buffer, bool *is_empty);
+DResult raw_ring_buffer_is_empty(const RawRingBuffer *raw_ring_buffer, bool *is_empty);
 
 void raw_ring_buffer_clear(RawRingBuffer *raw_ring_buffer);
 void raw_ring_buffer_free(RawRingBuffer *raw_ring_buffer);

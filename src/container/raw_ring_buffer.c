@@ -31,9 +31,8 @@ static void raw_ring_buffer_destroy(RawRingBuffer **raw_ring_buffer)
 
 DResult raw_ring_buffer_init(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize capacity, usize elem_size)
 {
-    if (raw_ring_buffer == NULL || elem_size == 0 || capacity == 0)
+    if (raw_ring_buffer == NULL || elem_size == 0)
         return D_ERR_INVALID_ARG;
-    raw_ring_buffer->size = 0;
     if (capacity == 0)
         capacity = DEFAULT_CAPACITY;
     else
@@ -43,6 +42,7 @@ DResult raw_ring_buffer_init(RawRingBuffer *raw_ring_buffer, usize head, usize t
             new_capacity <<= 1;
         capacity = new_capacity;
     }
+    raw_ring_buffer->size = 0;
     raw_ring_buffer->capacity = capacity;
     raw_ring_buffer->elem_size = elem_size;
     raw_ring_buffer->data = NULL;
@@ -91,10 +91,8 @@ static DResult increase_buffer_capacity_if_needed(RawRingBuffer *raw_ring_buffer
 {
     if (raw_ring_buffer == NULL)
         return D_ERR_INVALID_ARG;
-
-    if (raw_ring_buffer->size != raw_ring_buffer->capacity)
+    if (raw_ring_buffer->size + 1 < raw_ring_buffer->capacity)
         return D_OK;
-
     usize new_capacity = raw_ring_buffer->capacity << 1;
     usize alloc_size;
     if (d_math_overflow_check_mul_usize(new_capacity, raw_ring_buffer->elem_size, &alloc_size))
@@ -183,7 +181,7 @@ DResult raw_ring_buffer_pop_back(RawRingBuffer *raw_ring_buffer, void *out_elem)
     return pop(raw_ring_buffer, out_elem, pop_back);
 }
 
-DResult raw_ring_buffer_is_empty(RawRingBuffer *raw_ring_buffer, bool *is_empty)
+DResult raw_ring_buffer_is_empty(const RawRingBuffer *raw_ring_buffer, bool *is_empty)
 {
     if (raw_ring_buffer == NULL || is_empty == NULL)
         return D_ERR_INVALID_ARG;
