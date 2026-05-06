@@ -115,7 +115,7 @@ DResult d_dyn_array_remove_elem_fast(DDynArray *dyn_array, usize index, void *ou
 		return D_ERR_INVALID_ARG;
 	DResult op_result;
 	void *elem;
-	if ((op_result = raw_buffer_get_elem_at(&dyn_array->array, index, &elem)) != D_OK)
+	if ((op_result = raw_buffer_get_elem_addr(&dyn_array->array, index, &elem)) != D_OK)
 		return op_result;
 	DestroyElemFunc free_func = dyn_array->free_func;
 	if (free_func && !out_elem)
@@ -140,12 +140,15 @@ static void destroy_elements(DDynArray *dyn_array)
 	DestroyElemFunc free_func = dyn_array->free_func;
 	if (!free_func)
 		return;
-	RawBuffer *raw_buffer = &dyn_array->array;
-	usize elem_size = raw_buffer->elem_size;
+	usize elem_size;
+	usize arr_size;
+	raw_buffer_get_size((RawBuffer *)dyn_array, &arr_size);
+	raw_buffer_get_elem_size((RawBuffer *)dyn_array, &elem_size);
+
 	void *elem;
-	for (size_t i = 0; i < dyn_array->array.size; i++)
+	for (size_t i = 0; i < arr_size; i++)
 	{
-		raw_buffer_get_elem_at(raw_buffer, i, &elem);
+		raw_buffer_get_elem_addr((RawBuffer *)dyn_array, i, &elem);
 		free_func(elem);
 		memset(elem, 0, elem_size);
 	}

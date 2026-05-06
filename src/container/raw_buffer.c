@@ -166,6 +166,14 @@ DResult raw_buffer_get_elem_at(RawBuffer *raw_buffer, usize index, void *out_ele
     return D_OK;
 }
 
+DResult raw_buffer_get_elem_addr(RawBuffer *raw_buffer, usize index, void **out_elem)
+{
+    if (raw_buffer == NULL || index >= raw_buffer->size || out_elem == NULL)
+        return D_ERR_INVALID_ARG;
+    *out_elem = raw_buffer_elt_pos(raw_buffer, index);
+    return D_OK;
+}
+
 DResult raw_buffer_get_last_elem(RawBuffer *raw_buffer, void *out_elem)
 {
     if (raw_buffer == NULL)

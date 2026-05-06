@@ -29,6 +29,7 @@ void raw_buffer_destroy(RawBuffer **raw_buffer);
 
 void *raw_buffer_get_data(RawBuffer *raw_buffer);
 DResult raw_buffer_get_elem_at(RawBuffer *raw_buffer, usize index, void *out_elem);
+DResult raw_buffer_get_elem_addr(RawBuffer *raw_buffer, usize index, void **out_elem);
 DResult raw_buffer_get_last_elem(RawBuffer *raw_buffer, void *out_elem);
 DResult raw_buffer_get_first_elem(RawBuffer *raw_buffer, void *out_elem);
 DResult raw_buffer_insert_data_from_raw_data(RawBuffer *dst, usize dst_pos, const void *data, usize size);
