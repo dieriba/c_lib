@@ -1,12 +1,11 @@
+TARGET_DIR := target
 
-
-BUILD_DIR := build
+BUILD_DIR := $(TARGET_DIR)/build
 BUILD_LIB := $(BUILD_DIR)/lib/d_lib.a
 
 SRC_DIRS := src
 SRCS := $(shell find $(SRC_DIRS) -name '*.c')
-OBJS_DIR := $(BUILD_DIR)/objs
-OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.c=.o))
 
 DEPS := $(OBJS:.o=.d)
 
@@ -22,7 +21,7 @@ $(BUILD_LIB): $(OBJS)
 	mkdir -p $(dir $@)
 	ar rcs $@ $^
 
-$(BUILD_DIR)/%.c.o: %.c
+$(BUILD_DIR)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
