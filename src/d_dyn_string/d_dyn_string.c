@@ -109,7 +109,7 @@ DResult d_dyn_string_sub_string_in_place(DDynString *dstring, usize pos, usize s
         return D_ERR_INVALID_ARG;
     size = pos + size > cnt_size ? cnt_size - pos : size;
     const char *s = raw_buffer_get_data((RawBuffer *)dstring);
-    return raw_buffer_replace_data_trunc(&dstring->str, 0, s + pos, size);
+    return raw_buffer_replace_data_at(&dstring->str, 0, s + pos, size);
 }
 
 DResult d_dyn_string_get_char_at(const DDynString *dstring, usize i, void *out_elem)
@@ -134,6 +134,8 @@ DResult d_dyn_string_push_str_with_len(DDynString *dstring, const char *str_to_a
 
 DResult d_dyn_string_push_c_str(DDynString *dstring, const char *str_to_append)
 {
+    if (str_to_append == NULL)
+        return D_ERR_INVALID_ARG;
     return d_dyn_string_push_str_with_len(dstring, str_to_append, strlen(str_to_append));
 }
 
@@ -149,14 +151,12 @@ DResult d_dyn_string_replace_from_str(DDynString *dstring, const char *str)
     if (dstring == NULL || str == NULL)
         return D_ERR_INVALID_ARG;
 
-    return raw_buffer_replace_data_trunc(&dstring->str, 0, str, strlen(str));
+    return raw_buffer_replace_data_at(&dstring->str, 0, str, strlen(str));
 }
 
 DResult d_dyn_string_replace_from_dstring(DDynString *dstring, const DDynString *to_copy)
 {
-    if (dstring == NULL || to_copy == NULL)
-        return D_ERR_INVALID_ARG;
-    return raw_buffer_replace_raw_buffer_trunc(&dstring->str, &to_copy->str);
+    return raw_buffer_replace((RawBuffer *)dstring, (RawBuffer *)to_copy, 0);
 }
 
 void d_dyn_string_destroy(DDynString **dstring)

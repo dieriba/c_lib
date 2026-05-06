@@ -34,10 +34,10 @@ $(BUILD_DIR)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
-tests: $(BUILD_LIB) $(BIN_TESTS) 
+tests: $(BIN_TESTS) 
 .PHONY: tests
 
-$(BIN_TESTS): %: %.o
+$(BIN_TESTS): %: %.o $(BUILD_LIB)
 	mkdir -p $(dir $@)
 	$(CC) $< $(BUILD_LIB) -o $@
 
