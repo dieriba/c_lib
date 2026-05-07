@@ -34,6 +34,9 @@
 #define MAX_LOAD_FACTOR 0.7
 #define MASK_CTRL_BYTE 0x80
 
+#define compute_index_from_group_offset(group_number, offset) (group_number * RAW_MAP_GROUP_SIZE) + offset
+#define d_index_least_least_significant_bits_zero_based(value) d_bits_get_index_least_significant_bit_set_int(value) - 1
+
 typedef enum RawMapCtrl
 {
     kEmpty = -128, // 0b10000000
@@ -119,13 +122,13 @@ static DBits32 get_mask_with_needle_pos_in_haystack(void *haystack, u8 needle)
 static usize try_get_pos_empty_flag_from_ctrl_group(void *ctrl_group_addr)
 {
     DBits32 mask = get_mask_with_needle_pos_in_haystack(ctrl_group_addr, kEmpty);
-    return d_bits_get_index_least_significant_bit_set_int(mask);
+    return d_index_least_least_significant_bits_zero_based(mask);
 }
 
 static usize try_get_pos_deleted_in_group(void *addr_group)
 {
     DBits32 mask = get_mask_with_needle_pos_in_haystack(addr_group, kDeleted);
-    return d_bits_get_index_least_significant_bit_set_int(mask);
+    return d_index_least_least_significant_bits_zero_based(mask);
 }
 
 static usize try_find_key_pos_in_group(RawMap *raw_map, void *key, usize group_number, u8 h2)
@@ -135,10 +138,10 @@ static usize try_find_key_pos_in_group(RawMap *raw_map, void *key, usize group_n
     void *slot_group_addr = raw_map_get_slot_group_start_addr(raw_map, group_number);
     while (candidate_keys != 0)
     {
-        int16 candidate_pos = d_bits_get_index_least_significant_bit_set_int((int)candidate_keys);
+        int16 candidate_pos = d_index_least_least_significant_bits_zero_based((int)candidate_keys);
         void *candidate_key = raw_map_get_slot_key_from_group_addr(slot_group_addr, candidate_pos);
         if (raw_map->cmp_fn(key, candidate_key))
-            return (group_number * RAW_MAP_GROUP_SIZE) + candidate_pos;
+            return candidate_pos;
         candidate_keys = d_bits_clear_least_significant_bit_set(candidate_keys);
     }
     return SIZE_MAX;
@@ -167,11 +170,11 @@ static usize find_from_hash(RawMap *raw_map, void *key, HashInfo hash_info)
     {
         usize key_pos = try_find_key_pos_in_group(raw_map, key, group_number, hash_info.h2);
         if (key_pos != SIZE_MAX)
-            return key_pos;
+            return compute_index_from_group_offset(group_number, key_pos);
         void *ctrl_group_addr = raw_map_get_control_byte_group_start_addr(raw_map, group_number);
         usize empty_pos = try_get_pos_empty_flag_from_ctrl_group(ctrl_group_addr);
         if (empty_pos != SIZE_MAX)
-            return empty_pos;
+            return compute_index_from_group_offset(group_number, empty_pos);
         group_number = (group_number + 1) % raw_map->nb_groups;
     }
     return SIZE_MAX;
@@ -210,7 +213,7 @@ static void copy_slot_from_old_map_to_new_map(RawMap *raw_map, void *old_map, us
         DBits32 mask_occupied_slot = get_mask_with_needle_pos_in_haystack(&haystack_with_only_ctrl_b, 0);
         while (mask_occupied_slot != 0)
         {
-            usize key_pos_in_mask = d_bits_get_index_least_significant_bit_set_int(mask_occupied_slot);
+            usize key_pos_in_mask = d_index_least_least_significant_bits_zero_based(mask_occupied_slot);
             usize key_pos = (RAW_MAP_GROUP_SIZE * group_number) + key_pos_in_mask;
             raw_map_insert(raw_map,
                            map_get_slot_key_from_map_addr(old_map, old_group_number, raw_map_compute_slot_size(raw_map), key_pos),
@@ -250,7 +253,7 @@ void *raw_map_get(RawMap *raw_map, void *key)
     HashInfo hash_info;
     if (compute_hash(raw_map, key, &hash_info) != D_OK)
         return NULL;
-    int position = find_from_hash(raw_map, key, hash_info);
+    usize position = find_from_hash(raw_map, key, hash_info);
     assert(position != SIZE_MAX);
     char *ctrl = raw_map_get_control_byte_addr(raw_map, position);
     return d_bits_8_check_bits_set(*ctrl, MASK_CTRL_BYTE) ? NULL : raw_map_get_slot_value(raw_map, position);
@@ -259,7 +262,7 @@ void *raw_map_get(RawMap *raw_map, void *key)
 DResult raw_map_insert(RawMap *raw_map, void *new_key, void *new_value)
 {
     HashInfo hash_info;
-    if (new_value == NULL)
+    if (new_key == NULL || new_value == NULL)
         return D_ERR_INVALID_ARG;
 
     DResult op_result;
@@ -301,7 +304,7 @@ DResult raw_map_remove(RawMap *raw_map, void *key, void *out_elem)
     HashInfo hash_info;
     if (compute_hash(raw_map, key, &hash_info) != D_OK)
         return D_ERR_INVALID_ARG;
-    int position = find_from_hash(raw_map, key, hash_info);
+    usize position = find_from_hash(raw_map, key, hash_info);
     assert(position != SIZE_MAX);
 
     char *ctrl = raw_map_get_control_byte_addr(raw_map, position);
