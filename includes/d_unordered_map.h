@@ -2,6 +2,7 @@
 #define D_UNORDERED_MAP
 #include "d_types.h"
 #include "container.h"
+#include "d_general_lib.h"
 
 #define D_UNORDERED_MAP_TYPED_CTORS(KEY_TYPE, KEY_NAME) \
     DResult d_unordered_map_new_##KEY_NAME##_key(DUnorderedMap **d_unordered_map, usize value_size, usize capacity, FnPtrFreeElem free_fn);

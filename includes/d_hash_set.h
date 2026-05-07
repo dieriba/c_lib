@@ -2,6 +2,7 @@
 #define D_HASH_SET
 #include "d_types.h"
 #include "container.h"
+#include "d_general_lib.h"
 
 #define D_HASH_SET_TYPED_CTORS(KEY_TYPE, KEY_NAME) \
     DResult d_hash_set_new_##KEY_NAME##_key(DHashSet **d_hash_set, usize capacity, FnPtrFreeElem free_fn);

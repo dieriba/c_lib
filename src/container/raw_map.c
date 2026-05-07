@@ -238,7 +238,7 @@ static DResult rehash(RawMap *raw_map, void *key, void *value)
     void *old_map = raw_map->map;
     usize total_occupied_slot = raw_map->size;
     usize old_group_number = raw_map->nb_groups;
-    if ((op_result = init_raw_map_map(raw_map, new_capacity, alloc_size)) == D_OK)
+    if ((op_result = init_raw_map_map(raw_map, new_capacity, alloc_size)) != D_OK)
         return op_result;
     copy_slot_from_old_map_to_new_map(raw_map, old_map, old_group_number, total_occupied_slot, key, value);
     free(old_map);

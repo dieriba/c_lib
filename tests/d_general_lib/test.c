@@ -7,6 +7,7 @@
 #include "d_dyn_array.h"
 #include "d_string_view.h"
 #include "d_types.h"
+#include <stdio.h>
 
 #define ARRAY_DEFAULT_OPTS ((BufferOpts)0)
 

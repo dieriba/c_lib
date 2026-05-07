@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #define D_UNORDERED_MAP_DEFINE_TYPED_CTOR(KEY_TYPE, KEY_NAME)                                                                                    \
-    DResult d_unordered_map_new_##KEY_NAME(DUnorderedMap **d_unordered_map, usize value_size, usize capacity, FnPtrFreeElem free_fn)             \
+    DResult d_unordered_map_new_##KEY_NAME##_key(DUnorderedMap **d_unordered_map, usize value_size, usize capacity, FnPtrFreeElem free_fn)             \
     {                                                                                                                                            \
         return d_unordered_map_new(d_unordered_map, sizeof(KEY_TYPE), value_size, capacity, hash_##KEY_NAME##_key, compare_##KEY_NAME, free_fn); \
     }
