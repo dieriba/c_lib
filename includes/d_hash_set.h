@@ -5,12 +5,12 @@
 #include "d_general_lib.h"
 
 #define D_HASH_SET_TYPED_CTORS(KEY_TYPE, KEY_NAME) \
-    DResult d_hash_set_new_##KEY_NAME##_key(DHashSet **d_hash_set, usize capacity, FnPtrFreeElem free_fn);
+    DResult d_hash_set_new_##KEY_NAME##_key(DHashSet **d_hash_set, usize capacity, FnPtrFreeHashMap free_fn);
 
 typedef struct DHashSet DHashSet;
 
-DResult d_hash_set_new(DHashSet **d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn);
-DResult d_hash_set_new_str(DHashSet **d_hash_set, usize capacity, FnPtrFreeElem free_fn);
+DResult d_hash_set_new(DHashSet **d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeHashMap free_fn);
+DResult d_hash_set_new_str(DHashSet **d_hash_set, usize capacity, FnPtrFreeHashMap free_fn);
 D_HASH_SET_TYPED_CTORS(int8, int8)
 D_HASH_SET_TYPED_CTORS(int16, int16)
 D_HASH_SET_TYPED_CTORS(int32, int32)
@@ -25,7 +25,8 @@ D_HASH_SET_TYPED_CTORS(char, char)
 
 DResult d_hash_set_insert(DHashSet *map, void *key);
 bool d_hash_set_key_exists(const DHashSet *map, void *key);
-DResult d_hash_set_remove(DHashSet *map, void *key);
+DResult d_hash_set_delete(DHashSet *map, void *key);
+DResult d_hash_set_remove(DHashSet *map, void *key, void *slot_key);
 DResult d_hash_set_get_size(const DHashSet *d_hash_set, usize *size);
 DResult d_hash_set_get_capacity(const DHashSet *d_hash_set, usize *capacity);
 

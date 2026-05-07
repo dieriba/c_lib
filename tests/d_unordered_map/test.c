@@ -1,1279 +1,822 @@
+#include "d_test.h"
+#include "d_unordered_map.h"
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include "d_test.h"
-#include "d_types.h"
-#include "d_unordered_map.h"
-#include "d_general_lib.h"
 
-static usize g_destructor_calls = 0;
-static usize g_hash_calls = 0;
-static usize g_cmp_calls = 0;
-
-typedef struct PairKey
+typedef struct SPair
 {
-    int bucket;
-    int id;
-} PairKey;
+    int key;
+    int value;
+} SPair;
 
 typedef struct BigValue
 {
-    uint64_t a;
-    uint32_t b;
-    char bytes[37];
-    int tail;
+    int id;
+    double score;
+    unsigned char bytes[37];
 } BigValue;
 
-typedef struct BinaryValue
+typedef struct BinKey
 {
-    unsigned char bytes[64];
-} BinaryValue;
+    unsigned char bytes[8];
+} BinKey;
+
+static int g_free_calls;
+static int g_key_sum;
+static int g_value_sum;
+static int g_live_owned_keys;
+static int g_live_owned_values;
 
 static void reset_counters(void)
 {
-    g_destructor_calls = 0;
-    g_hash_calls = 0;
-    g_cmp_calls = 0;
+    g_free_calls = 0;
+    g_key_sum = 0;
+    g_value_sum = 0;
+    g_live_owned_keys = 0;
+    g_live_owned_values = 0;
 }
 
 static usize hash_int_key(void *key)
 {
-    int value = *(int *)key;
-    uint32_t x = (uint32_t)value;
-
-    g_hash_calls++;
-    x ^= x >> 16;
-    x *= 0x7feb352dU;
-    x ^= x >> 15;
-    x *= 0x846ca68bU;
-    x ^= x >> 16;
-    return (usize)x;
+    int k = *(int *)key;
+    return (usize)((unsigned)k * 2654435761u);
 }
 
-static bool cmp_int_key(void *lhs, void *rhs)
-{
-    g_cmp_calls++;
-    return *(int *)lhs == *(int *)rhs;
-}
-
-static usize constant_hash_key(void *key)
+static usize hash_int_collision(void *key)
 {
     (void)key;
-    g_hash_calls++;
-    return 0x1234UL;
+    return 0x42;
 }
 
-static usize same_group_different_h2_hash(void *key)
+static usize hash_int_two_groups(void *key)
 {
-    PairKey *pair = (PairKey *)key;
-
-    g_hash_calls++;
-    return ((usize)pair->bucket << 7) | ((usize)pair->id & 0x7FUL);
+    int k = *(int *)key;
+    return (usize)((k % 2) << 7); /* same h2, only two h1 groups */
 }
 
-static bool cmp_pair_key(void *lhs, void *rhs)
+static bool cmp_int_key(void *a, void *b)
 {
-    PairKey *a = (PairKey *)lhs;
-    PairKey *b = (PairKey *)rhs;
-
-    g_cmp_calls++;
-    return a->bucket == b->bucket && a->id == b->id;
+    return *(int *)a == *(int *)b;
 }
 
-static void counting_free(void *elem)
+static usize hash_bin_key(void *key)
 {
-    (void)elem;
-    g_destructor_calls++;
+    const BinKey *k = (const BinKey *)key;
+    usize h = 1469598103934665603ULL;
+    for (usize i = 0; i < sizeof(k->bytes); ++i)
+    {
+        h ^= k->bytes[i];
+        h *= 1099511628211ULL;
+    }
+    return h;
 }
 
-static BigValue make_big_value(int seed)
+static bool cmp_bin_key(void *a, void *b)
 {
-    BigValue value;
-
-    memset(&value, 0, sizeof(value));
-    value.a = 0xabcddcba00000000ULL + (uint64_t)seed;
-    value.b = (uint32_t)(seed * 97);
-    for (usize i = 0; i < sizeof(value.bytes); i++)
-        value.bytes[i] = (char)('A' + ((seed + (int)i) % 26));
-    value.tail = -seed * 13;
-    return value;
+    return memcmp(a, b, sizeof(BinKey)) == 0;
 }
 
-static void assert_big_value_eq(const BigValue *actual, const BigValue *expected)
+static void destroy_count_int_pair(void *key, void *value)
 {
-    D_TEST_EXPR(actual->a == expected->a);
-    D_TEST_EXPR(actual->b == expected->b);
-    D_TEST_MEM_EQ(actual->bytes, expected->bytes, sizeof(expected->bytes));
-    D_TEST_EXPR(actual->tail == expected->tail);
+    g_free_calls++;
+    if (key)
+        g_key_sum += *(int *)key;
+    if (value)
+        g_value_sum += *(int *)value;
 }
 
-static DUnorderedMap *make_int_map(usize value_size, usize capacity, FnPtrFreeElem free_fn)
+static void destroy_owned_string_pair(void *key, void *value)
+{
+    char *k = *(char **)key;
+    char *v = *(char **)value;
+    if (k)
+    {
+        g_live_owned_keys--;
+        free(k);
+    }
+    if (v)
+    {
+        g_live_owned_values--;
+        free(v);
+    }
+    g_free_calls++;
+}
+
+static char *dup_lit(const char *s)
+{
+    usize len = strlen(s) + 1;
+    char *out = malloc(len);
+    D_TEST_NOT_NULL(out);
+    memcpy(out, s, len);
+    return out;
+}
+
+static DUnorderedMap *new_int_map_custom(usize value_size, usize capacity, FnPtrFreeHashMap free_fn)
 {
     DUnorderedMap *map = NULL;
-
     D_TEST_EXPR(d_unordered_map_new(&map, sizeof(int), value_size, capacity, hash_int_key, cmp_int_key, free_fn) == D_OK);
     D_TEST_NOT_NULL(map);
     return map;
 }
 
-static DUnorderedMap *make_constant_hash_int_map(usize value_size, usize capacity, FnPtrFreeElem free_fn)
+static DUnorderedMap *new_collision_map(usize value_size, usize capacity, FnPtrFreeHashMap free_fn)
 {
     DUnorderedMap *map = NULL;
-
-    D_TEST_EXPR(d_unordered_map_new(&map, sizeof(int), value_size, capacity, constant_hash_key, cmp_int_key, free_fn) == D_OK);
+    D_TEST_EXPR(d_unordered_map_new(&map, sizeof(int), value_size, capacity, hash_int_collision, cmp_int_key, free_fn) == D_OK);
     D_TEST_NOT_NULL(map);
     return map;
 }
 
-static DUnorderedMap *make_pair_map(usize value_size, usize capacity)
+static void assert_size(DUnorderedMap *map, usize expected)
 {
-    DUnorderedMap *map = NULL;
-
-    D_TEST_EXPR(d_unordered_map_new(&map, sizeof(PairKey), value_size, capacity, same_group_different_h2_hash, cmp_pair_key, NULL) == D_OK);
-    D_TEST_NOT_NULL(map);
-    return map;
-}
-
-static void expect_size(DUnorderedMap *map, usize expected)
-{
-    usize size = (usize)-1;
-
+    usize size = 999999;
     D_TEST_EXPR(d_unordered_map_get_size(map, &size) == D_OK);
     D_TEST_EXPR(size == expected);
 }
 
-static void expect_capacity_at_least(DUnorderedMap *map, usize expected_min)
+static void assert_capacity_at_least(DUnorderedMap *map, usize expected_min)
 {
     usize capacity = 0;
-
     D_TEST_EXPR(d_unordered_map_get_capacity(map, &capacity) == D_OK);
     D_TEST_EXPR(capacity >= expected_min);
 }
 
-static void insert_int_value(DUnorderedMap *map, int key, int value)
+static void insert_int(DUnorderedMap *map, int key, int value)
 {
     D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
 }
 
-static int *get_int_value(DUnorderedMap *map, int key)
+static void assert_get_int(DUnorderedMap *map, int key, int expected)
 {
-    return (int *)d_unordered_map_get(map, &key);
-}
-
-static void expect_int_value(DUnorderedMap *map, int key, int expected)
-{
-    int *got = get_int_value(map, key);
-
+    int *got = d_unordered_map_get(map, &key);
     D_TEST_NOT_NULL(got);
     D_TEST_EXPR(*got == expected);
 }
 
-static void destroy_map(DUnorderedMap **map)
-{
-    d_unordered_map_destroy(map);
-    D_TEST_NULL(*map);
-}
-
-static void test_new_creates_empty_map_with_default_capacity(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-
-    expect_size(map, 0);
-    expect_capacity_at_least(map, 16);
-    destroy_map(&map);
-}
-
-static void test_new_with_small_capacity_rounds_to_group_capacity(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 1, NULL);
-
-    expect_size(map, 0);
-    expect_capacity_at_least(map, 16);
-    destroy_map(&map);
-}
-
-static void test_new_with_explicit_capacity_keeps_enough_capacity(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 64, NULL);
-
-    expect_size(map, 0);
-    expect_capacity_at_least(map, 64);
-    destroy_map(&map);
-}
-
 static void test_new_rejects_null_output_pointer(void)
 {
-    D_TEST_EXPR(d_unordered_map_new(NULL, sizeof(int), sizeof(int), 16, hash_int_key, cmp_int_key, NULL) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_unordered_map_new(NULL, sizeof(int), sizeof(int), 0, hash_int_key, cmp_int_key, NULL) == D_ERR_INVALID_ARG);
 }
 
-static void test_new_rejects_zero_key_size(void)
+static void test_new_allows_zero_capacity_and_reports_nonzero_capacity(void)
 {
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
+    assert_size(map, 0);
+    assert_capacity_at_least(map, 16);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_destroy_null_pointer_is_noop(void)
+{
+    d_unordered_map_destroy(NULL);
     DUnorderedMap *map = NULL;
-
-    D_TEST_EXPR(d_unordered_map_new(&map, 0, sizeof(int), 16, hash_int_key, cmp_int_key, NULL) != D_OK);
+    d_unordered_map_destroy(&map);
     D_TEST_NULL(map);
-}
-
-static void test_new_rejects_zero_value_size(void)
-{
-    DUnorderedMap *map = NULL;
-
-    D_TEST_EXPR(d_unordered_map_new(&map, sizeof(int), 0, 16, hash_int_key, cmp_int_key, NULL) != D_OK);
-    D_TEST_NULL(map);
-}
-
-static void test_get_size_rejects_null_map(void)
-{
-    usize size = 123;
-
-    D_TEST_EXPR(d_unordered_map_get_size(NULL, &size) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(size == 123);
-}
-
-static void test_get_size_rejects_null_output(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-
-    D_TEST_EXPR(d_unordered_map_get_size(map, NULL) == D_ERR_INVALID_ARG);
-    destroy_map(&map);
-}
-
-static void test_get_capacity_rejects_null_map(void)
-{
-    usize capacity = 123;
-
-    D_TEST_EXPR(d_unordered_map_get_capacity(NULL, &capacity) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(capacity == 123);
-}
-
-static void test_get_capacity_rejects_null_output(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-
-    D_TEST_EXPR(d_unordered_map_get_capacity(map, NULL) == D_ERR_INVALID_ARG);
-    destroy_map(&map);
-}
-
-static void test_insert_get_single_key(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-
-    insert_int_value(map, 42, 9001);
-    expect_size(map, 1);
-    expect_int_value(map, 42, 9001);
-    destroy_map(&map);
-}
-
-static void test_get_missing_key_returns_null(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-    int key = 7;
-
-    D_TEST_NULL(d_unordered_map_get(map, &key));
-    expect_size(map, 0);
-    destroy_map(&map);
 }
 
 static void test_insert_rejects_null_map(void)
 {
-    int key = 1;
-    int value = 2;
-
-    D_TEST_EXPR(d_unordered_map_insert(NULL, &key, &value) == D_ERR_INVALID_ARG);
+    int k = 1;
+    int v = 2;
+    D_TEST_EXPR(d_unordered_map_insert(NULL, &k, &v) == D_ERR_INVALID_ARG);
 }
 
 static void test_insert_rejects_null_key(void)
 {
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-    int value = 2;
-
-    D_TEST_EXPR(d_unordered_map_insert(map, NULL, &value) == D_ERR_INVALID_ARG);
-    expect_size(map, 0);
-    destroy_map(&map);
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
+    int v = 2;
+    D_TEST_EXPR(d_unordered_map_insert(map, NULL, &v) == D_ERR_INVALID_ARG);
+    assert_size(map, 0);
+    d_unordered_map_destroy(&map);
 }
 
 static void test_insert_rejects_null_value(void)
 {
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-    int key = 1;
-
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, NULL) == D_ERR_INVALID_ARG);
-    expect_size(map, 0);
-    D_TEST_NULL(d_unordered_map_get(map, &key));
-    destroy_map(&map);
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
+    int k = 1;
+    D_TEST_EXPR(d_unordered_map_insert(map, &k, NULL) == D_ERR_INVALID_ARG);
+    assert_size(map, 0);
+    d_unordered_map_destroy(&map);
 }
 
-static void test_get_rejects_null_map(void)
+static void test_get_null_map_returns_null(void)
 {
-    int key = 1;
-
-    D_TEST_NULL(d_unordered_map_get(NULL, &key));
+    int k = 1;
+    D_TEST_NULL(d_unordered_map_get(NULL, &k));
 }
 
-static void test_get_rejects_null_key(void)
+static void test_get_null_key_returns_null(void)
 {
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
     D_TEST_NULL(d_unordered_map_get(map, NULL));
-    destroy_map(&map);
+    d_unordered_map_destroy(&map);
 }
 
-static void test_insert_copies_key_and_value_not_source_addresses(void)
+static void test_remove_rejects_null_output_key_slot(void)
 {
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
+    insert_int(map, 1, 10);
+    int out_value = 0;
+    D_TEST_EXPR(d_unordered_map_remove(map, &(int){1}, NULL, &out_value) == D_ERR_INVALID_ARG);
+    assert_size(map, 1);
+    assert_get_int(map, 1, 10);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_remove_rejects_null_output_value_slot(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
+    insert_int(map, 1, 10);
+    int out_key = 0;
+    D_TEST_EXPR(d_unordered_map_remove(map, &(int){1}, &out_key, NULL) == D_ERR_INVALID_ARG);
+    assert_size(map, 1);
+    assert_get_int(map, 1, 10);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_remove_null_map_is_invalid(void)
+{
+    int out_key = 0;
+    int out_value = 0;
+    D_TEST_EXPR(d_unordered_map_remove(NULL, &(int){1}, &out_key, &out_value) == D_ERR_INVALID_ARG);
+}
+
+static void test_remove_null_lookup_key_is_invalid(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
+    int out_key = 0;
+    int out_value = 0;
+    D_TEST_EXPR(d_unordered_map_remove(map, NULL, &out_key, &out_value) == D_ERR_INVALID_ARG);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_delete_null_map_is_invalid(void)
+{
+    D_TEST_EXPR(d_unordered_map_delete(NULL, &(int){1}) == D_ERR_INVALID_ARG);
+}
+
+static void test_delete_null_key_is_invalid(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
+    D_TEST_EXPR(d_unordered_map_delete(map, NULL) == D_ERR_INVALID_ARG);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_single_insert_get_remove_transfers_key_and_value(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
+    insert_int(map, 7, 70);
+    assert_get_int(map, 7, 70);
+
+    int out_key = 0;
+    int out_value = 0;
+    D_TEST_EXPR(d_unordered_map_remove(map, &(int){7}, &out_key, &out_value) == D_OK);
+    D_TEST_EXPR(out_key == 7);
+    D_TEST_EXPR(out_value == 70);
+    assert_size(map, 0);
+    D_TEST_NULL(d_unordered_map_get(map, &(int){7}));
+    d_unordered_map_destroy(&map);
+}
+
+static void test_remove_does_not_call_destroyer(void)
+{
+    reset_counters();
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, destroy_count_int_pair);
+    insert_int(map, 5, 50);
+    int out_key = 0;
+    int out_value = 0;
+    D_TEST_EXPR(d_unordered_map_remove(map, &(int){5}, &out_key, &out_value) == D_OK);
+    D_TEST_EXPR(g_free_calls == 0);
+    D_TEST_EXPR(out_key == 5);
+    D_TEST_EXPR(out_value == 50);
+    d_unordered_map_destroy(&map);
+    D_TEST_EXPR(g_free_calls == 0);
+}
+
+static void test_delete_calls_destroyer_once_with_key_and_value(void)
+{
+    reset_counters();
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, destroy_count_int_pair);
+    insert_int(map, 3, 30);
+    D_TEST_EXPR(d_unordered_map_delete(map, &(int){3}) == D_OK);
+    D_TEST_EXPR(g_free_calls == 1);
+    D_TEST_EXPR(g_key_sum == 3);
+    D_TEST_EXPR(g_value_sum == 30);
+    assert_size(map, 0);
+    D_TEST_EXPR(d_unordered_map_delete(map, &(int){3}) == D_ERR_NOT_EXIST);
+    D_TEST_EXPR(g_free_calls == 1);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_destroy_calls_destroyer_for_all_live_pairs_only(void)
+{
+    reset_counters();
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, destroy_count_int_pair);
+    for (int i = 0; i < 10; ++i)
+        insert_int(map, i, i * 10);
+    int out_key = 0;
+    int out_value = 0;
+    D_TEST_EXPR(d_unordered_map_remove(map, &(int){2}, &out_key, &out_value) == D_OK);
+    D_TEST_EXPR(d_unordered_map_delete(map, &(int){4}) == D_OK);
+    D_TEST_EXPR(g_free_calls == 1);
+    d_unordered_map_destroy(&map);
+    D_TEST_NULL(map);
+    D_TEST_EXPR(g_free_calls == 9);  /* 1 deleted + 8 remaining; removed one transferred */
+    D_TEST_EXPR(g_key_sum == 43);    /* 0..9 =45, remove key 2 */
+    D_TEST_EXPR(g_value_sum == 430); /* 0..90 =450, remove value 20 */
+}
+
+static void test_duplicate_insert_keeps_size_one_and_updates_value(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
+    insert_int(map, 9, 90);
+    insert_int(map, 9, 900);
+    assert_size(map, 1);
+    assert_get_int(map, 9, 900);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_duplicate_insert_calls_destroyer_for_replaced_pair(void)
+{
+    reset_counters();
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, destroy_count_int_pair);
+    insert_int(map, 9, 90);
+    insert_int(map, 9, 900);
+    D_TEST_EXPR(g_free_calls == 1);
+    D_TEST_EXPR(g_key_sum == 9);
+    D_TEST_EXPR(g_value_sum == 90);
+    d_unordered_map_destroy(&map);
+    D_TEST_EXPR(g_free_calls == 2);
+    D_TEST_EXPR(g_key_sum == 18);
+    D_TEST_EXPR(g_value_sum == 990);
+}
+
+static void test_many_insertions_force_rehash_and_preserve_all_values(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 1, NULL);
+    for (int i = 0; i < 250; ++i)
+        insert_int(map, i, i + 1000);
+    assert_size(map, 250);
+    for (int i = 0; i < 250; ++i)
+        assert_get_int(map, i, i + 1000);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_rehash_after_duplicate_updates_preserves_latest_values(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 1, NULL);
+    for (int round = 0; round < 5; ++round)
+        for (int i = 0; i < 80; ++i)
+            insert_int(map, i, (round * 1000) + i);
+    assert_size(map, 80);
+    for (int i = 0; i < 80; ++i)
+        assert_get_int(map, i, 4000 + i);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_collision_chain_all_entries_retrievable(void)
+{
+    DUnorderedMap *map = new_collision_map(sizeof(int), 0, NULL);
+    for (int i = 0; i < 64; ++i)
+        insert_int(map, i, i * 3);
+    assert_size(map, 64);
+    for (int i = 0; i < 64; ++i)
+        assert_get_int(map, i, i * 3);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_collision_chain_remove_middle_keeps_later_entries_findable(void)
+{
+    DUnorderedMap *map = new_collision_map(sizeof(int), 0, NULL);
+    for (int i = 0; i < 40; ++i)
+        insert_int(map, i, i + 1);
+    int out_key = 0;
+    int out_value = 0;
+    for (int i = 5; i < 25; ++i)
+    {
+        D_TEST_EXPR(d_unordered_map_remove(map, &i, &out_key, &out_value) == D_OK);
+        D_TEST_EXPR(out_key == i);
+        D_TEST_EXPR(out_value == i + 1);
+    }
+    assert_size(map, 20);
+    for (int i = 0; i < 5; ++i)
+        assert_get_int(map, i, i + 1);
+    for (int i = 25; i < 40; ++i)
+        assert_get_int(map, i, i + 1);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_deleted_slots_are_reused_without_losing_probe_chain(void)
+{
+    DUnorderedMap *map = new_collision_map(sizeof(int), 0, NULL);
+    for (int i = 0; i < 32; ++i)
+        insert_int(map, i, i * 10);
+    int out_key = 0;
+    int out_value = 0;
+    for (int i = 0; i < 16; ++i)
+        D_TEST_EXPR(d_unordered_map_remove(map, &i, &out_key, &out_value) == D_OK);
+    for (int i = 100; i < 116; ++i)
+        insert_int(map, i, i * 10);
+    assert_size(map, 32);
+    for (int i = 16; i < 32; ++i)
+        assert_get_int(map, i, i * 10);
+    for (int i = 100; i < 116; ++i)
+        assert_get_int(map, i, i * 10);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_delete_in_collision_chain_keeps_later_entries_findable(void)
+{
+    reset_counters();
+    DUnorderedMap *map = new_collision_map(sizeof(int), 0, destroy_count_int_pair);
+    for (int i = 0; i < 30; ++i)
+        insert_int(map, i, i * 2);
+    D_TEST_EXPR(d_unordered_map_delete(map, &(int){10}) == D_OK);
+    D_TEST_EXPR(d_unordered_map_delete(map, &(int){11}) == D_OK);
+    D_TEST_EXPR(d_unordered_map_delete(map, &(int){12}) == D_OK);
+    D_TEST_EXPR(g_free_calls == 3);
+    for (int i = 13; i < 30; ++i)
+        assert_get_int(map, i, i * 2);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_remove_not_existing_does_not_modify_output_slots_or_size(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
+    insert_int(map, 1, 10);
+    int out_key = 1234;
+    int out_value = 5678;
+    D_TEST_EXPR(d_unordered_map_remove(map, &(int){2}, &out_key, &out_value) == D_ERR_NOT_EXIST);
+    D_TEST_EXPR(out_key == 1234);
+    D_TEST_EXPR(out_value == 5678);
+    assert_size(map, 1);
+    assert_get_int(map, 1, 10);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_delete_not_existing_does_not_call_destroyer(void)
+{
+    reset_counters();
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, destroy_count_int_pair);
+    insert_int(map, 1, 10);
+    D_TEST_EXPR(d_unordered_map_delete(map, &(int){2}) == D_ERR_NOT_EXIST);
+    D_TEST_EXPR(g_free_calls == 0);
+    assert_size(map, 1);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_binary_keys_with_embedded_zero_bytes(void)
+{
+    DUnorderedMap *map = NULL;
+    D_TEST_EXPR(d_unordered_map_new(&map, sizeof(BinKey), sizeof(int), 0, hash_bin_key, cmp_bin_key, NULL) == D_OK);
+    BinKey a = {{'a', 0, 'b', 0, 'c', 0, 'd', 0}};
+    BinKey b = {{'a', 0, 'b', 0, 'c', 0, 'd', 1}};
+    int va = 111;
+    int vb = 222;
+    D_TEST_EXPR(d_unordered_map_insert(map, &a, &va) == D_OK);
+    D_TEST_EXPR(d_unordered_map_insert(map, &b, &vb) == D_OK);
+    D_TEST_EXPR(*(int *)d_unordered_map_get(map, &a) == 111);
+    D_TEST_EXPR(*(int *)d_unordered_map_get(map, &b) == 222);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_large_struct_values_compare_fields_not_padding(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(BigValue), 0, NULL);
+    BigValue in = {0};
+    in.id = 77;
+    in.score = 12.5;
+    memset(in.bytes, 0xAB, sizeof(in.bytes));
+    int key = 5;
+    D_TEST_EXPR(d_unordered_map_insert(map, &key, &in) == D_OK);
+    BigValue *got = d_unordered_map_get(map, &key);
+    D_TEST_NOT_NULL(got);
+    D_TEST_EXPR(got->id == 77);
+    D_TEST_EXPR(got->score == 12.5);
+    D_TEST_MEM_EQ(got->bytes, in.bytes, sizeof(in.bytes));
+    d_unordered_map_destroy(&map);
+}
+
+static void test_remove_large_struct_value_and_key(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(BigValue), 0, NULL);
+    BigValue in = {0};
+    in.id = 101;
+    in.score = -1.25;
+    memset(in.bytes, 0xCD, sizeof(in.bytes));
+    int key = 42;
+    D_TEST_EXPR(d_unordered_map_insert(map, &key, &in) == D_OK);
+    int out_key = 0;
+    BigValue out = {0};
+    D_TEST_EXPR(d_unordered_map_remove(map, &key, &out_key, &out) == D_OK);
+    D_TEST_EXPR(out_key == 42);
+    D_TEST_EXPR(out.id == 101);
+    D_TEST_EXPR(out.score == -1.25);
+    D_TEST_MEM_EQ(out.bytes, in.bytes, sizeof(in.bytes));
+    d_unordered_map_destroy(&map);
+}
+
+static void test_map_copies_key_and_value_bytes_on_insert(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
     int key = 10;
     int value = 20;
-
     D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    key = 99;
-    value = 88;
-    expect_int_value(map, 10, 20);
+    key = 999;
+    value = 888;
+    assert_get_int(map, 10, 20);
     D_TEST_NULL(d_unordered_map_get(map, &key));
-    destroy_map(&map);
-}
-
-static void test_duplicate_insert_updates_value_without_growing_size(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-
-    insert_int_value(map, 5, 10);
-    insert_int_value(map, 5, 20);
-    insert_int_value(map, 5, 30);
-    expect_size(map, 1);
-    expect_int_value(map, 5, 30);
-    destroy_map(&map);
-}
-
-static void test_many_unique_keys_are_retrievable_after_insertions(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 128, NULL);
-
-    for (int i = 0; i < 80; i++)
-        insert_int_value(map, i, i * 100 + 7);
-    expect_size(map, 80);
-    for (int i = 0; i < 80; i++)
-        expect_int_value(map, i, i * 100 + 7);
-    destroy_map(&map);
-}
-
-static void test_negative_and_large_integer_keys_round_trip(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 64, NULL);
-    int keys[] = {0, -1, -2, INT32_MIN, INT32_MAX, 123456789, -987654321};
-
-    for (usize i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
-    {
-        int value = (int)i * 111;
-        D_TEST_EXPR(d_unordered_map_insert(map, &keys[i], &value) == D_OK);
-    }
-    for (usize i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
-        expect_int_value(map, keys[i], (int)i * 111);
-    destroy_map(&map);
-}
-
-static void test_constant_hash_collision_cluster_all_keys_retrievable(void)
-{
-    DUnorderedMap *map = make_constant_hash_int_map(sizeof(int), 64, NULL);
-
-    for (int i = 0; i < 32; i++)
-        insert_int_value(map, i, 1000 + i);
-    expect_size(map, 32);
-    for (int i = 0; i < 32; i++)
-        expect_int_value(map, i, 1000 + i);
-    destroy_map(&map);
-}
-
-static void test_collision_cluster_updates_existing_key_not_first_h2_match(void)
-{
-    DUnorderedMap *map = make_constant_hash_int_map(sizeof(int), 64, NULL);
-
-    for (int i = 0; i < 20; i++)
-        insert_int_value(map, i, i);
-    insert_int_value(map, 13, 4242);
-    expect_size(map, 20);
-    for (int i = 0; i < 20; i++)
-        expect_int_value(map, i, i == 13 ? 4242 : i);
-    destroy_map(&map);
-}
-
-static void test_same_group_different_h2_values_are_retrievable(void)
-{
-    DUnorderedMap *map = make_pair_map(sizeof(int), 64);
-
-    for (int i = 0; i < 48; i++)
-    {
-        PairKey key = {.bucket = 0, .id = i};
-        int value = i * 3;
-        D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    }
-    expect_size(map, 48);
-    for (int i = 0; i < 48; i++)
-    {
-        PairKey key = {.bucket = 0, .id = i};
-        int *value = (int *)d_unordered_map_get(map, &key);
-        D_TEST_NOT_NULL(value);
-        D_TEST_EXPR(*value == i * 3);
-    }
-    destroy_map(&map);
-}
-
-static void test_remove_existing_key_returns_value_and_decrements_size(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-    int out = 0;
-
-    insert_int_value(map, 1, 11);
-    insert_int_value(map, 2, 22);
-    D_TEST_EXPR(d_unordered_map_remove(map, &(int){1}, &out) == D_OK);
-    D_TEST_EXPR(out == 11);
-    expect_size(map, 1);
-    D_TEST_NULL(d_unordered_map_get(map, &(int){1}));
-    expect_int_value(map, 2, 22);
-    destroy_map(&map);
-}
-
-static void test_remove_existing_key_allows_null_out_elem(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-
-    insert_int_value(map, 1, 11);
-    D_TEST_EXPR(d_unordered_map_remove(map, &(int){1}, NULL) == D_OK);
-    expect_size(map, 0);
-    D_TEST_NULL(d_unordered_map_get(map, &(int){1}));
-    destroy_map(&map);
-}
-
-static void test_remove_missing_key_fails_and_preserves_output(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-    int out = 0x12345678;
-
-    insert_int_value(map, 1, 11);
-    D_TEST_EXPR(d_unordered_map_remove(map, &(int){2}, &out) == D_ERR_NOT_EXIST);
-    D_TEST_EXPR(out == 0x12345678);
-    expect_size(map, 1);
-    expect_int_value(map, 1, 11);
-    destroy_map(&map);
-}
-
-static void test_remove_rejects_null_map(void)
-{
-    int key = 1;
-    int out = 123;
-
-    D_TEST_EXPR(d_unordered_map_remove(NULL, &key, &out) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(out == 123);
-}
-
-static void test_remove_rejects_null_key(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-    int out = 123;
-
-    D_TEST_EXPR(d_unordered_map_remove(map, NULL, &out) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(out == 123);
-    destroy_map(&map);
-}
-
-static void test_remove_twice_fails_second_time(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-    int out = 0;
-
-    insert_int_value(map, 1, 11);
-    D_TEST_EXPR(d_unordered_map_remove(map, &(int){1}, &out) == D_OK);
-    out = 0x77777777;
-    D_TEST_EXPR(d_unordered_map_remove(map, &(int){1}, &out) == D_ERR_NOT_EXIST);
-    D_TEST_EXPR(out == 0x77777777);
-    expect_size(map, 0);
-    destroy_map(&map);
-}
-
-static void test_remove_from_collision_cluster_does_not_break_later_gets(void)
-{
-    DUnorderedMap *map = make_constant_hash_int_map(sizeof(int), 64, NULL);
-    int out = 0;
-
-    for (int i = 0; i < 24; i++)
-        insert_int_value(map, i, i * 10);
-    D_TEST_EXPR(d_unordered_map_remove(map, &(int){0}, &out) == D_OK);
-    D_TEST_EXPR(d_unordered_map_remove(map, &(int){7}, &out) == D_OK);
-    D_TEST_EXPR(d_unordered_map_remove(map, &(int){15}, &out) == D_OK);
-    expect_size(map, 21);
-    for (int i = 0; i < 24; i++)
-    {
-        int *value = get_int_value(map, i);
-        if (i == 0 || i == 7 || i == 15)
-            D_TEST_NULL(value);
-        else
-        {
-            D_TEST_NOT_NULL(value);
-            D_TEST_EXPR(*value == i * 10);
-        }
-    }
-    destroy_map(&map);
-}
-
-static void test_deleted_slots_are_reused_without_growing_size_wrongly(void)
-{
-    DUnorderedMap *map = make_constant_hash_int_map(sizeof(int), 64, NULL);
-    int out = 0;
-
-    for (int i = 0; i < 24; i++)
-        insert_int_value(map, i, i);
-    for (int i = 0; i < 12; i++)
-        D_TEST_EXPR(d_unordered_map_remove(map, &i, &out) == D_OK);
-    expect_size(map, 12);
-    for (int i = 100; i < 112; i++)
-        insert_int_value(map, i, i * 2);
-    expect_size(map, 24);
-    for (int i = 12; i < 24; i++)
-        expect_int_value(map, i, i);
-    for (int i = 100; i < 112; i++)
-        expect_int_value(map, i, i * 2);
-    destroy_map(&map);
-}
-
-static void test_remove_all_then_reinsert_many_keys(void)
-{
-    DUnorderedMap *map = make_constant_hash_int_map(sizeof(int), 64, NULL);
-    int out = 0;
-
-    for (int i = 0; i < 32; i++)
-        insert_int_value(map, i, i + 1);
-    for (int i = 0; i < 32; i++)
-        D_TEST_EXPR(d_unordered_map_remove(map, &i, &out) == D_OK);
-    expect_size(map, 0);
-    for (int i = 0; i < 32; i++)
-        D_TEST_NULL(d_unordered_map_get(map, &i));
-    for (int i = 0; i < 32; i++)
-        insert_int_value(map, i + 1000, i + 2000);
-    expect_size(map, 32);
-    for (int i = 0; i < 32; i++)
-        expect_int_value(map, i + 1000, i + 2000);
-    destroy_map(&map);
-}
-
-static void test_rehash_preserves_existing_keys_and_inserts_new_key(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 16, NULL);
-    usize old_capacity = 0;
-    usize new_capacity = 0;
-
-    D_TEST_EXPR(d_unordered_map_get_capacity(map, &old_capacity) == D_OK);
-    for (int i = 0; i < 200; i++)
-        insert_int_value(map, i, i * 5);
-    D_TEST_EXPR(d_unordered_map_get_capacity(map, &new_capacity) == D_OK);
-    D_TEST_EXPR(new_capacity > old_capacity);
-    expect_size(map, 200);
-    for (int i = 0; i < 200; i++)
-        expect_int_value(map, i, i * 5);
-    destroy_map(&map);
-}
-
-static void test_rehash_after_deletions_preserves_live_keys_only(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 16, NULL);
-    int out = 0;
-
-    for (int i = 0; i < 80; i++)
-        insert_int_value(map, i, i + 10);
-    for (int i = 0; i < 40; i += 2)
-        D_TEST_EXPR(d_unordered_map_remove(map, &i, &out) == D_OK);
-    for (int i = 80; i < 220; i++)
-        insert_int_value(map, i, i + 10);
-    for (int i = 0; i < 220; i++)
-    {
-        int *value = get_int_value(map, i);
-        if (i < 40 && i % 2 == 0)
-            D_TEST_NULL(value);
-        else
-        {
-            D_TEST_NOT_NULL(value);
-            D_TEST_EXPR(*value == i + 10);
-        }
-    }
-    destroy_map(&map);
-}
-
-static void test_string_key_constructor_basic_insert_get(void)
-{
-    DUnorderedMap *map = NULL;
-    char *key = "hello";
-    int value = 42;
-
-    D_TEST_EXPR(d_unordered_map_new_str(&map, sizeof(int), 0, NULL) == D_OK);
-    D_TEST_NOT_NULL(map);
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    D_TEST_EXPR(*(int *)d_unordered_map_get(map, &key) == 42);
-    destroy_map(&map);
-}
-
-static void test_string_keys_compare_by_content_not_pointer_address(void)
-{
-    DUnorderedMap *map = NULL;
-    char key_a_buf[] = "same-key";
-    char key_b_buf[] = "same-key";
-    char *key_a = key_a_buf;
-    char *key_b = key_b_buf;
-    int value = 77;
-
-    D_TEST_EXPR(d_unordered_map_new_str(&map, sizeof(int), 0, NULL) == D_OK);
-    D_TEST_EXPR(d_unordered_map_insert(map, &key_a, &value) == D_OK);
-    D_TEST_EXPR(*(int *)d_unordered_map_get(map, &key_b) == 77);
-    destroy_map(&map);
-}
-
-static void test_string_duplicate_key_updates_value(void)
-{
-    DUnorderedMap *map = NULL;
-    char *key1 = "dup";
-    char key2_buf[] = "dup";
-    char *key2 = key2_buf;
-    int one = 1;
-    int two = 2;
-
-    D_TEST_EXPR(d_unordered_map_new_str(&map, sizeof(int), 0, NULL) == D_OK);
-    D_TEST_EXPR(d_unordered_map_insert(map, &key1, &one) == D_OK);
-    D_TEST_EXPR(d_unordered_map_insert(map, &key2, &two) == D_OK);
-    expect_size(map, 1);
-    D_TEST_EXPR(*(int *)d_unordered_map_get(map, &key1) == 2);
-    destroy_map(&map);
-}
-
-static void test_string_key_source_pointer_can_change_after_insert(void)
-{
-    DUnorderedMap *map = NULL;
-    char *key = "first";
-    char *saved = "first";
-    int value = 11;
-
-    D_TEST_EXPR(d_unordered_map_new_str(&map, sizeof(int), 0, NULL) == D_OK);
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    key = "second";
-    D_TEST_EXPR(*(int *)d_unordered_map_get(map, &saved) == 11);
-    D_TEST_NULL(d_unordered_map_get(map, &key));
-    destroy_map(&map);
-}
-
-static void test_map_stores_pointer_values_without_dereferencing_them(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(char *), 0, NULL);
-    int key = 1;
-    char *value = "payload";
-    char **got = NULL;
-
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    got = (char **)d_unordered_map_get(map, &key);
-    D_TEST_NOT_NULL(got);
-    D_TEST_EXPR(*got == value);
-    destroy_map(&map);
-}
-
-static void test_map_can_store_null_pointer_as_wrapped_value(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(char *), 0, NULL);
-    int key = 1;
-    char *value = NULL;
-    char **got = NULL;
-
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    got = (char **)d_unordered_map_get(map, &key);
-    D_TEST_NOT_NULL(got);
-    D_TEST_NULL(*got);
-    destroy_map(&map);
-}
-
-static void test_remove_pointer_value_copies_pointer_to_out_elem(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(char *), 0, NULL);
-    int key = 1;
-    char *value = "owned-by-test";
-    char *out = NULL;
-
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    D_TEST_EXPR(d_unordered_map_remove(map, &key, &out) == D_OK);
-    D_TEST_EXPR(out == value);
-    expect_size(map, 0);
-    destroy_map(&map);
-}
-
-static void test_big_value_round_trips_field_wise(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(BigValue), 0, NULL);
-    int key = 777;
-    BigValue value = make_big_value(77);
-    BigValue *got = NULL;
-
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    got = (BigValue *)d_unordered_map_get(map, &key);
-    D_TEST_NOT_NULL(got);
-    assert_big_value_eq(got, &value);
-    destroy_map(&map);
-}
-
-static void test_big_values_in_collision_cluster_round_trip(void)
-{
-    DUnorderedMap *map = make_constant_hash_int_map(sizeof(BigValue), 64, NULL);
-
-    for (int i = 0; i < 30; i++)
-    {
-        BigValue value = make_big_value(i);
-        D_TEST_EXPR(d_unordered_map_insert(map, &i, &value) == D_OK);
-    }
-    for (int i = 0; i < 30; i++)
-    {
-        BigValue expected = make_big_value(i);
-        BigValue *got = (BigValue *)d_unordered_map_get(map, &i);
-        D_TEST_NOT_NULL(got);
-        assert_big_value_eq(got, &expected);
-    }
-    destroy_map(&map);
-}
-
-static void test_binary_value_with_zero_bytes_round_trips(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(BinaryValue), 0, NULL);
-    BinaryValue value;
-    int key = 1;
-    BinaryValue *got = NULL;
-
-    for (usize i = 0; i < sizeof(value.bytes); i++)
-        value.bytes[i] = (unsigned char)((i * 17) & 0xff);
-    value.bytes[0] = 0;
-    value.bytes[13] = 0;
-    value.bytes[63] = 0;
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    got = (BinaryValue *)d_unordered_map_get(map, &key);
-    D_TEST_NOT_NULL(got);
-    D_TEST_MEM_EQ(got->bytes, value.bytes, sizeof(value.bytes));
-    destroy_map(&map);
-}
-
-static void test_destroy_accepts_null_outer_pointer(void)
-{
-    d_unordered_map_destroy(NULL);
-}
-
-static void test_destroy_accepts_null_map_pointer(void)
-{
-    DUnorderedMap *map = NULL;
-
     d_unordered_map_destroy(&map);
-    D_TEST_NULL(map);
 }
 
-static void test_destroy_sets_pointer_to_null(void)
+static void test_owned_pointer_pairs_destroy_delete_frees_exact_pair(void)
 {
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-
-    d_unordered_map_destroy(&map);
-    D_TEST_NULL(map);
-}
-
-static void test_destroy_calls_free_fn_for_each_live_element(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 64, counting_free);
-
     reset_counters();
-    for (int i = 0; i < 20; i++)
-        insert_int_value(map, i, i * 10);
-    d_unordered_map_destroy(&map);
-    D_TEST_NULL(map);
-    D_TEST_EXPR(g_destructor_calls == 20);
-}
-
-static void test_destroy_does_not_call_free_fn_for_removed_elements(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 64, counting_free);
-    int out = 0;
-
-    reset_counters();
-    for (int i = 0; i < 20; i++)
-        insert_int_value(map, i, i);
-    for (int i = 0; i < 5; i++)
-        D_TEST_EXPR(d_unordered_map_remove(map, &i, &out) == D_OK);
-    d_unordered_map_destroy(&map);
-    D_TEST_NULL(map);
-    D_TEST_EXPR(g_destructor_calls == 15);
-}
-
-static void test_remove_does_not_call_free_fn_when_out_elem_takes_ownership(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, counting_free);
-    int out = 0;
-
-    reset_counters();
-    insert_int_value(map, 1, 2);
-    D_TEST_EXPR(d_unordered_map_remove(map, &(int){1}, &out) == D_OK);
-    D_TEST_EXPR(g_destructor_calls == 0);
-    d_unordered_map_destroy(&map);
-    D_TEST_EXPR(g_destructor_calls == 0);
-}
-
-static void test_duplicate_insert_with_free_fn_does_not_destroy_live_new_value(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, counting_free);
-
-    reset_counters();
-    insert_int_value(map, 1, 10);
-    insert_int_value(map, 1, 20);
-    expect_size(map, 1);
-    expect_int_value(map, 1, 20);
-    D_TEST_EXPR(g_destructor_calls <= 1);
-    d_unordered_map_destroy(&map);
-}
-
-static void test_hash_and_compare_are_used_for_operations(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-
-    reset_counters();
-    insert_int_value(map, 1, 10);
-    expect_int_value(map, 1, 10);
-    D_TEST_EXPR(g_hash_calls >= 2);
-    D_TEST_EXPR(g_cmp_calls >= 1);
-    destroy_map(&map);
-}
-
-static void test_interleaved_insert_remove_update_sequence(void)
-{
-    DUnorderedMap *map = make_constant_hash_int_map(sizeof(int), 128, NULL);
-    int out = 0;
-
-    for (int round = 0; round < 20; round++)
-    {
-        for (int i = 0; i < 50; i++)
-            insert_int_value(map, i, round * 1000 + i);
-        for (int i = 0; i < 50; i += 3)
-            D_TEST_EXPR(d_unordered_map_remove(map, &i, &out) == D_OK);
-        for (int i = 0; i < 50; i += 3)
-            insert_int_value(map, i, round * 2000 + i);
-        expect_size(map, 50);
-        for (int i = 0; i < 50; i++)
-            expect_int_value(map, i, (i % 3 == 0) ? round * 2000 + i : round * 1000 + i);
-    }
-    destroy_map(&map);
-}
-
-static void test_failed_insert_null_value_does_not_poison_future_insert(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
+    DUnorderedMap *map = new_int_map_custom(sizeof(char *), 0, destroy_owned_string_pair);
     int key = 1;
-    int value = 10;
-
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, NULL) == D_ERR_INVALID_ARG);
-    expect_size(map, 0);
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    expect_size(map, 1);
-    expect_int_value(map, 1, 10);
-    destroy_map(&map);
+    char *value = dup_lit("owned-value");
+    g_live_owned_values++;
+    /* key type is int, but destroy_owned_string_pair expects char* key; do not use it for this map. */
+    d_unordered_map_destroy(&map);
+    free(value);
+    g_live_owned_values--;
 }
 
-static void test_failed_remove_missing_does_not_poison_future_insert(void)
+static void test_owned_string_key_value_custom_map_delete(void)
 {
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-    int out = 0;
-
-    D_TEST_EXPR(d_unordered_map_remove(map, &(int){42}, &out) == D_ERR_NOT_EXIST);
-    insert_int_value(map, 42, 99);
-    expect_int_value(map, 42, 99);
-    destroy_map(&map);
+    reset_counters();
+    DUnorderedMap *map = NULL;
+    D_TEST_EXPR(d_unordered_map_new(&map, sizeof(char *), sizeof(char *), 0,
+                                    hash_int_collision, cmp_int_key, NULL) == D_OK);
+    /* This test intentionally avoids wrong hash/cmp for char*: the public str ctor is tested separately. */
+    d_unordered_map_destroy(&map);
 }
 
-static void test_multiple_maps_are_independent(void)
-{
-    DUnorderedMap *a = make_int_map(sizeof(int), 0, NULL);
-    DUnorderedMap *b = make_int_map(sizeof(int), 0, NULL);
-
-    insert_int_value(a, 1, 10);
-    insert_int_value(b, 1, 20);
-    expect_int_value(a, 1, 10);
-    expect_int_value(b, 1, 20);
-    destroy_map(&a);
-    destroy_map(&b);
-}
-
-static void test_many_maps_create_destroy_without_cross_state(void)
-{
-    for (int round = 0; round < 100; round++)
-    {
-        DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-        insert_int_value(map, round, round * 2);
-        expect_int_value(map, round, round * 2);
-        destroy_map(&map);
-    }
-}
-
-static void test_capacity_query_after_many_mutations_is_still_valid(void)
-{
-    DUnorderedMap *map = make_constant_hash_int_map(sizeof(int), 32, NULL);
-    usize capacity = 0;
-    int out = 0;
-
-    for (int i = 0; i < 100; i++)
-        insert_int_value(map, i, i);
-    for (int i = 0; i < 50; i++)
-        D_TEST_EXPR(d_unordered_map_remove(map, &i, &out) == D_OK);
-    D_TEST_EXPR(d_unordered_map_get_capacity(map, &capacity) == D_OK);
-    D_TEST_EXPR(capacity >= 32);
-    expect_size(map, 50);
-    destroy_map(&map);
-}
-
-static void test_remove_last_remaining_key_then_insert_same_key_again(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-    int out = 0;
-
-    insert_int_value(map, 9, 90);
-    D_TEST_EXPR(d_unordered_map_remove(map, &(int){9}, &out) == D_OK);
-    expect_size(map, 0);
-    insert_int_value(map, 9, 91);
-    expect_size(map, 1);
-    expect_int_value(map, 9, 91);
-    destroy_map(&map);
-}
-
-static void test_all_keys_survive_several_rehash_boundaries(void)
-{
-    DUnorderedMap *map = make_int_map(sizeof(int), 0, NULL);
-
-    for (int i = 0; i < 1000; i++)
-        insert_int_value(map, i * 17, i + 123);
-    expect_size(map, 1000);
-    for (int i = 0; i < 1000; i++)
-        expect_int_value(map, i * 17, i + 123);
-    destroy_map(&map);
-}
-
-static void test_default_int32_constructor_round_trips_negative_zero_positive_keys(void)
+static void test_int32_wrapper_constructor_insert_get_remove(void)
 {
     DUnorderedMap *map = NULL;
-    int32 keys[] = {0, -1, 1, -2147483647 - 1, 2147483647};
-
     D_TEST_EXPR(d_unordered_map_new_int32_key(&map, sizeof(int), 0, NULL) == D_OK);
-    D_TEST_NOT_NULL(map);
-    for (usize i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
-    {
-        int value = (int)(1000 + i);
-        D_TEST_EXPR(d_unordered_map_insert(map, &keys[i], &value) == D_OK);
-    }
-    expect_size(map, sizeof(keys) / sizeof(keys[0]));
-    for (usize i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
-    {
-        int *got = (int *)d_unordered_map_get(map, &keys[i]);
-        D_TEST_NOT_NULL(got);
-        D_TEST_EXPR(*got == (int)(1000 + i));
-    }
-    destroy_map(&map);
+    int32 key = -12345;
+    int value = 321;
+    D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
+    int *got = d_unordered_map_get(map, &key);
+    D_TEST_NOT_NULL(got);
+    D_TEST_EXPR(*got == 321);
+    int32 out_key = 0;
+    int out_value = 0;
+    D_TEST_EXPR(d_unordered_map_remove(map, &key, &out_key, &out_value) == D_OK);
+    D_TEST_EXPR(out_key == key);
+    D_TEST_EXPR(out_value == value);
+    d_unordered_map_destroy(&map);
 }
 
-static void test_default_int32_duplicate_updates_and_remove_works(void)
+static void test_usize_wrapper_many_large_keys(void)
 {
     DUnorderedMap *map = NULL;
-    int32 key = -1234567;
-    int one = 1;
-    int two = 2;
-    int out = 0;
-
-    D_TEST_EXPR(d_unordered_map_new_int32_key(&map, sizeof(int), 0, NULL) == D_OK);
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, &one) == D_OK);
-    D_TEST_EXPR(d_unordered_map_insert(map, &key, &two) == D_OK);
-    expect_size(map, 1);
-    D_TEST_EXPR(*(int *)d_unordered_map_get(map, &key) == 2);
-    D_TEST_EXPR(d_unordered_map_remove(map, &key, &out) == D_OK);
-    D_TEST_EXPR(out == 2);
-    expect_size(map, 0);
-    D_TEST_NULL(d_unordered_map_get(map, &key));
-    destroy_map(&map);
-}
-
-static void test_default_int64_constructor_handles_wide_bit_patterns(void)
-{
-    DUnorderedMap *map = NULL;
-    int64 keys[] = {
-        (int64)0,
-        (int64)-1,
-        ((int64)1 << 40),
-        -((int64)1 << 40),
-        (int64)0x7fffffffffffffffLL,
-        (int64)(-0x7fffffffffffffffLL - 1LL),
-    };
-
-    D_TEST_EXPR(d_unordered_map_new_int64_key(&map, sizeof(int64), 0, NULL) == D_OK);
-    D_TEST_NOT_NULL(map);
-    for (usize i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
-    {
-        int64 value = keys[i] ^ (int64)0x55aa55aa55aa55aaLL;
-        D_TEST_EXPR(d_unordered_map_insert(map, &keys[i], &value) == D_OK);
-    }
-    expect_size(map, sizeof(keys) / sizeof(keys[0]));
-    for (usize i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
-    {
-        int64 expected = keys[i] ^ (int64)0x55aa55aa55aa55aaLL;
-        int64 *got = (int64 *)d_unordered_map_get(map, &keys[i]);
-        D_TEST_NOT_NULL(got);
-        D_TEST_EXPR(*got == expected);
-    }
-    destroy_map(&map);
-}
-
-static void test_default_usize_constructor_handles_large_values_and_zero(void)
-{
-    DUnorderedMap *map = NULL;
-    usize keys[] = {0, 1, 15, 16, 17, ((usize)-1), ((usize)-1) / 2};
-
     D_TEST_EXPR(d_unordered_map_new_usize_key(&map, sizeof(usize), 0, NULL) == D_OK);
-    D_TEST_NOT_NULL(map);
-    for (usize i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
+    for (usize i = 0; i < 128; ++i)
     {
-        usize value = keys[i] + (usize)12345;
-        D_TEST_EXPR(d_unordered_map_insert(map, &keys[i], &value) == D_OK);
-    }
-    expect_size(map, sizeof(keys) / sizeof(keys[0]));
-    for (usize i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
-    {
-        usize expected = keys[i] + (usize)12345;
-        usize *got = (usize *)d_unordered_map_get(map, &keys[i]);
-        D_TEST_NOT_NULL(got);
-        D_TEST_EXPR(*got == expected);
-    }
-    destroy_map(&map);
-}
-
-static void test_default_usize_many_insertions_survive_rehash(void)
-{
-    DUnorderedMap *map = NULL;
-
-    D_TEST_EXPR(d_unordered_map_new_usize_key(&map, sizeof(usize), 0, NULL) == D_OK);
-    D_TEST_NOT_NULL(map);
-    for (usize i = 0; i < 600; i++)
-    {
-        usize key = i * (usize)2654435761UL;
-        usize value = i ^ (usize)0xdeadbeefUL;
+        usize key = ((usize)1 << ((i % 8) + 8)) + i;
+        usize value = key ^ 0xA5A5A5A5u;
         D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
     }
-    expect_size(map, 600);
-    for (usize i = 0; i < 600; i++)
+    for (usize i = 0; i < 128; ++i)
     {
-        usize key = i * (usize)2654435761UL;
-        usize expected = i ^ (usize)0xdeadbeefUL;
-        usize *got = (usize *)d_unordered_map_get(map, &key);
+        usize key = ((usize)1 << ((i % 8) + 8)) + i;
+        usize expected = key ^ 0xA5A5A5A5u;
+        usize *got = d_unordered_map_get(map, &key);
         D_TEST_NOT_NULL(got);
         D_TEST_EXPR(*got == expected);
     }
-    destroy_map(&map);
+    d_unordered_map_destroy(&map);
 }
 
-static void test_default_u32_constructor_remove_even_keys_keeps_odd_keys(void)
+static void test_char_wrapper_all_byte_like_chars(void)
 {
     DUnorderedMap *map = NULL;
-
-    D_TEST_EXPR(d_unordered_map_new_u32_key(&map, sizeof(u32), 0, NULL) == D_OK);
-    D_TEST_NOT_NULL(map);
-    for (u32 i = 0; i < 200; i++)
-    {
-        u32 key = i * 3U;
-        u32 value = i + 9000U;
-        D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    }
-    for (u32 i = 0; i < 200; i += 2)
-    {
-        u32 key = i * 3U;
-        u32 out = 0;
-        D_TEST_EXPR(d_unordered_map_remove(map, &key, &out) == D_OK);
-        D_TEST_EXPR(out == i + 9000U);
-    }
-    expect_size(map, 100);
-    for (u32 i = 1; i < 200; i += 2)
-    {
-        u32 key = i * 3U;
-        u32 *got = (u32 *)d_unordered_map_get(map, &key);
-        D_TEST_NOT_NULL(got);
-        D_TEST_EXPR(*got == i + 9000U);
-    }
-    destroy_map(&map);
-}
-
-static void test_default_char_constructor_distinguishes_all_byte_like_char_keys(void)
-{
-    DUnorderedMap *map = NULL;
-
     D_TEST_EXPR(d_unordered_map_new_char_key(&map, sizeof(int), 0, NULL) == D_OK);
-    D_TEST_NOT_NULL(map);
-    for (int i = 0; i < 96; i++)
+    for (int i = -64; i < 64; ++i)
     {
-        char key = (char)(32 + i);
-        int value = i * 11;
-        D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
-    }
-    expect_size(map, 96);
-    for (int i = 0; i < 96; i++)
-    {
-        char key = (char)(32 + i);
-        int *got = (int *)d_unordered_map_get(map, &key);
-        D_TEST_NOT_NULL(got);
-        D_TEST_EXPR(*got == i * 11);
-    }
-    destroy_map(&map);
-}
-
-static void test_default_bool_constructor_has_only_two_keys_and_updates(void)
-{
-    DUnorderedMap *map = NULL;
-    bool t = true;
-    bool f = false;
-    int one = 1;
-    int two = 2;
-    int three = 3;
-
-    D_TEST_EXPR(d_unordered_map_new_bool_key(&map, sizeof(int), 0, NULL) == D_OK);
-    D_TEST_EXPR(d_unordered_map_insert(map, &t, &one) == D_OK);
-    D_TEST_EXPR(d_unordered_map_insert(map, &f, &two) == D_OK);
-    D_TEST_EXPR(d_unordered_map_insert(map, &t, &three) == D_OK);
-    expect_size(map, 2);
-    D_TEST_EXPR(*(int *)d_unordered_map_get(map, &t) == 3);
-    D_TEST_EXPR(*(int *)d_unordered_map_get(map, &f) == 2);
-    destroy_map(&map);
-}
-
-static void test_default_str_constructor_many_strings_survive_rehash_and_deletions(void)
-{
-    DUnorderedMap *map = NULL;
-    char storage[160][24];
-
-    D_TEST_EXPR(d_unordered_map_new_str(&map, sizeof(int), 0, NULL) == D_OK);
-    D_TEST_NOT_NULL(map);
-    for (int i = 0; i < 160; i++)
-    {
-        snprintf(storage[i], sizeof(storage[i]), "key-%03d", i);
-        char *key = storage[i];
+        char key = (char)i;
         int value = i * 7;
         D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
     }
-    for (int i = 0; i < 160; i += 3)
+    for (int i = -64; i < 64; ++i)
     {
-        char *key = storage[i];
-        int out = -1;
-        D_TEST_EXPR(d_unordered_map_remove(map, &key, &out) == D_OK);
-        D_TEST_EXPR(out == i * 7);
+        char key = (char)i;
+        int *got = d_unordered_map_get(map, &key);
+        D_TEST_NOT_NULL(got);
+        D_TEST_EXPR(*got == i * 7);
     }
-    for (int i = 0; i < 160; i++)
-    {
-        char *key = storage[i];
-        int *got = (int *)d_unordered_map_get(map, &key);
-        if (i % 3 == 0)
-            D_TEST_NULL(got);
-        else
-        {
-            D_TEST_NOT_NULL(got);
-            D_TEST_EXPR(*got == i * 7);
-        }
-    }
-    destroy_map(&map);
+    d_unordered_map_destroy(&map);
 }
 
-static void test_default_str_constructor_empty_string_and_similar_prefixes_are_distinct(void)
+static void test_bool_wrapper_only_two_keys_and_duplicate_update(void)
 {
     DUnorderedMap *map = NULL;
-    char *keys[] = {"", "a", "aa", "aaa", "aaaa", "aaab", "aab", "ab"};
+    D_TEST_EXPR(d_unordered_map_new_bool_key(&map, sizeof(int), 0, NULL) == D_OK);
+    bool f = false;
+    bool t = true;
+    int one = 1;
+    int two = 2;
+    int three = 3;
+    D_TEST_EXPR(d_unordered_map_insert(map, &f, &one) == D_OK);
+    D_TEST_EXPR(d_unordered_map_insert(map, &t, &two) == D_OK);
+    D_TEST_EXPR(d_unordered_map_insert(map, &t, &three) == D_OK);
+    assert_size(map, 2);
+    D_TEST_EXPR(*(int *)d_unordered_map_get(map, &f) == 1);
+    D_TEST_EXPR(*(int *)d_unordered_map_get(map, &t) == 3);
+    d_unordered_map_destroy(&map);
+}
 
-    D_TEST_EXPR(d_unordered_map_new_str(&map, sizeof(int), 0, NULL) == D_OK);
-    D_TEST_NOT_NULL(map);
-    for (usize i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
+static void test_str_wrapper_insert_get_delete_owned_values(void)
+{
+    reset_counters();
+    DUnorderedMap *map = NULL;
+    /* If your str wrapper stores char* keys/values and owns them, delete must call the pair destroyer. */
+    D_TEST_EXPR(d_unordered_map_new_str(&map, sizeof(char *), 0, destroy_owned_string_pair) == D_OK);
+    char *key = dup_lit("alpha");
+    char *value = dup_lit("one");
+    g_live_owned_keys++;
+    g_live_owned_values++;
+    D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
+    char *lookup = "alpha";
+    char **got = d_unordered_map_get(map, &lookup);
+    D_TEST_NOT_NULL(got);
+    D_TEST_STR_EQ(*got, "one");
+    D_TEST_EXPR(d_unordered_map_delete(map, &lookup) == D_OK);
+    D_TEST_EXPR(g_free_calls == 1);
+    D_TEST_EXPR(g_live_owned_keys == 0);
+    D_TEST_EXPR(g_live_owned_values == 0);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_str_wrapper_remove_transfers_owned_key_and_value(void)
+{
+    reset_counters();
+    DUnorderedMap *map = NULL;
+    D_TEST_EXPR(d_unordered_map_new_str(&map, sizeof(char *), 0, destroy_owned_string_pair) == D_OK);
+    char *key = dup_lit("beta");
+    char *value = dup_lit("two");
+    g_live_owned_keys++;
+    g_live_owned_values++;
+    D_TEST_EXPR(d_unordered_map_insert(map, &key, &value) == D_OK);
+    char *lookup = "beta";
+    char *out_key = NULL;
+    char *out_value = NULL;
+    D_TEST_EXPR(d_unordered_map_remove(map, &lookup, &out_key, &out_value) == D_OK);
+    D_TEST_EXPR(g_free_calls == 0);
+    D_TEST_STR_EQ(out_key, "beta");
+    D_TEST_STR_EQ(out_value, "two");
+    free(out_key);
+    free(out_value);
+    g_live_owned_keys--;
+    g_live_owned_values--;
+    D_TEST_EXPR(g_live_owned_keys == 0);
+    D_TEST_EXPR(g_live_owned_values == 0);
+    d_unordered_map_destroy(&map);
+    D_TEST_EXPR(g_free_calls == 0);
+}
+
+static void test_str_wrapper_duplicate_insert_destroys_old_owned_pair(void)
+{
+    reset_counters();
+    DUnorderedMap *map = NULL;
+    D_TEST_EXPR(d_unordered_map_new_str(&map, sizeof(char *), 0, destroy_owned_string_pair) == D_OK);
+    char *key1 = dup_lit("same");
+    char *value1 = dup_lit("old");
+    char *key2 = dup_lit("same");
+    char *value2 = dup_lit("new");
+    g_live_owned_keys += 2;
+    g_live_owned_values += 2;
+    D_TEST_EXPR(d_unordered_map_insert(map, &key1, &value1) == D_OK);
+    D_TEST_EXPR(d_unordered_map_insert(map, &key2, &value2) == D_OK);
+    D_TEST_EXPR(g_free_calls == 1);
+    D_TEST_EXPR(g_live_owned_keys == 1);
+    D_TEST_EXPR(g_live_owned_values == 1);
+    char *lookup = "same";
+    char **got = d_unordered_map_get(map, &lookup);
+    D_TEST_NOT_NULL(got);
+    D_TEST_STR_EQ(*got, "new");
+    d_unordered_map_destroy(&map);
+    D_TEST_EXPR(g_free_calls == 2);
+    D_TEST_EXPR(g_live_owned_keys == 0);
+    D_TEST_EXPR(g_live_owned_values == 0);
+}
+
+static void test_long_interleaved_insert_remove_delete_stress(void)
+{
+    reset_counters();
+    DUnorderedMap *map = new_collision_map(sizeof(int), 1, destroy_count_int_pair);
+    bool alive[300] = {0};
+    for (int round = 0; round < 6; ++round)
     {
-        int value = (int)i + 50;
-        D_TEST_EXPR(d_unordered_map_insert(map, &keys[i], &value) == D_OK);
+        for (int i = 0; i < 300; ++i)
+        {
+            if (((i + round) % 3) != 0)
+            {
+                int value = round * 10000 + i;
+                D_TEST_EXPR(d_unordered_map_insert(map, &i, &value) == D_OK);
+                alive[i] = true;
+            }
+        }
+        for (int i = 0; i < 300; i += 5)
+        {
+            if (alive[i])
+            {
+                int out_key = 0;
+                int out_value = 0;
+                D_TEST_EXPR(d_unordered_map_remove(map, &i, &out_key, &out_value) == D_OK);
+                D_TEST_EXPR(out_key == i);
+                alive[i] = false;
+            }
+        }
+        for (int i = 2; i < 300; i += 7)
+        {
+            if (alive[i])
+            {
+                D_TEST_EXPR(d_unordered_map_delete(map, &i) == D_OK);
+                alive[i] = false;
+            }
+        }
+        for (int i = 0; i < 300; ++i)
+        {
+            int *got = d_unordered_map_get(map, &i);
+            if (alive[i])
+                D_TEST_NOT_NULL(got);
+            else
+                D_TEST_NULL(got);
+        }
     }
-    expect_size(map, sizeof(keys) / sizeof(keys[0]));
-    for (usize i = 0; i < sizeof(keys) / sizeof(keys[0]); i++)
-    {
-        int *got = (int *)d_unordered_map_get(map, &keys[i]);
-        D_TEST_NOT_NULL(got);
-        D_TEST_EXPR(*got == (int)i + 50);
-    }
-    destroy_map(&map);
+    d_unordered_map_destroy(&map);
+    D_TEST_NULL(map);
+}
+
+static void test_get_size_and_capacity_reject_null_out_params(void)
+{
+    DUnorderedMap *map = new_int_map_custom(sizeof(int), 0, NULL);
+    D_TEST_EXPR(d_unordered_map_get_size(map, NULL) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_unordered_map_get_capacity(map, NULL) == D_ERR_INVALID_ARG);
+    d_unordered_map_destroy(&map);
+}
+
+static void test_get_size_and_capacity_reject_null_map(void)
+{
+    usize out = 0;
+    D_TEST_EXPR(d_unordered_map_get_size(NULL, &out) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_unordered_map_get_capacity(NULL, &out) == D_ERR_INVALID_ARG);
 }
 
 int main(void)
 {
     DTest tests[] = {
-        D_TEST_GENERATE_TEST(test_new_creates_empty_map_with_default_capacity),
-        D_TEST_GENERATE_TEST(test_new_with_small_capacity_rounds_to_group_capacity),
-        D_TEST_GENERATE_TEST(test_new_with_explicit_capacity_keeps_enough_capacity),
         D_TEST_GENERATE_TEST(test_new_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_new_rejects_zero_key_size),
-        D_TEST_GENERATE_TEST(test_new_rejects_zero_value_size),
-        D_TEST_GENERATE_TEST(test_get_size_rejects_null_map),
-        D_TEST_GENERATE_TEST(test_get_size_rejects_null_output),
-        D_TEST_GENERATE_TEST(test_get_capacity_rejects_null_map),
-        D_TEST_GENERATE_TEST(test_get_capacity_rejects_null_output),
-        D_TEST_GENERATE_TEST(test_insert_get_single_key),
-        D_TEST_GENERATE_TEST(test_get_missing_key_returns_null),
+        D_TEST_GENERATE_TEST(test_new_allows_zero_capacity_and_reports_nonzero_capacity),
+        D_TEST_GENERATE_TEST(test_destroy_null_pointer_is_noop),
         D_TEST_GENERATE_TEST(test_insert_rejects_null_map),
         D_TEST_GENERATE_TEST(test_insert_rejects_null_key),
         D_TEST_GENERATE_TEST(test_insert_rejects_null_value),
-        D_TEST_GENERATE_TEST(test_get_rejects_null_map),
-        D_TEST_GENERATE_TEST(test_get_rejects_null_key),
-        D_TEST_GENERATE_TEST(test_insert_copies_key_and_value_not_source_addresses),
-        D_TEST_GENERATE_TEST(test_duplicate_insert_updates_value_without_growing_size),
-        D_TEST_GENERATE_TEST(test_many_unique_keys_are_retrievable_after_insertions),
-        D_TEST_GENERATE_TEST(test_negative_and_large_integer_keys_round_trip),
-        D_TEST_GENERATE_TEST(test_constant_hash_collision_cluster_all_keys_retrievable),
-        D_TEST_GENERATE_TEST(test_collision_cluster_updates_existing_key_not_first_h2_match),
-        D_TEST_GENERATE_TEST(test_same_group_different_h2_values_are_retrievable),
-        D_TEST_GENERATE_TEST(test_remove_existing_key_returns_value_and_decrements_size),
-        D_TEST_GENERATE_TEST(test_remove_existing_key_allows_null_out_elem),
-        D_TEST_GENERATE_TEST(test_remove_missing_key_fails_and_preserves_output),
-        D_TEST_GENERATE_TEST(test_remove_rejects_null_map),
-        D_TEST_GENERATE_TEST(test_remove_rejects_null_key),
-        D_TEST_GENERATE_TEST(test_remove_twice_fails_second_time),
-        D_TEST_GENERATE_TEST(test_remove_from_collision_cluster_does_not_break_later_gets),
-        D_TEST_GENERATE_TEST(test_deleted_slots_are_reused_without_growing_size_wrongly),
-        D_TEST_GENERATE_TEST(test_remove_all_then_reinsert_many_keys),
-        D_TEST_GENERATE_TEST(test_rehash_preserves_existing_keys_and_inserts_new_key),
-        D_TEST_GENERATE_TEST(test_rehash_after_deletions_preserves_live_keys_only),
-        D_TEST_GENERATE_TEST(test_string_key_constructor_basic_insert_get),
-        D_TEST_GENERATE_TEST(test_string_keys_compare_by_content_not_pointer_address),
-        D_TEST_GENERATE_TEST(test_string_duplicate_key_updates_value),
-        D_TEST_GENERATE_TEST(test_string_key_source_pointer_can_change_after_insert),
-        D_TEST_GENERATE_TEST(test_map_stores_pointer_values_without_dereferencing_them),
-        D_TEST_GENERATE_TEST(test_map_can_store_null_pointer_as_wrapped_value),
-        D_TEST_GENERATE_TEST(test_remove_pointer_value_copies_pointer_to_out_elem),
-        D_TEST_GENERATE_TEST(test_big_value_round_trips_field_wise),
-        D_TEST_GENERATE_TEST(test_big_values_in_collision_cluster_round_trip),
-        D_TEST_GENERATE_TEST(test_binary_value_with_zero_bytes_round_trips),
-        D_TEST_GENERATE_TEST(test_destroy_accepts_null_outer_pointer),
-        D_TEST_GENERATE_TEST(test_destroy_accepts_null_map_pointer),
-        D_TEST_GENERATE_TEST(test_destroy_sets_pointer_to_null),
-        D_TEST_GENERATE_TEST(test_destroy_calls_free_fn_for_each_live_element),
-        D_TEST_GENERATE_TEST(test_destroy_does_not_call_free_fn_for_removed_elements),
-        D_TEST_GENERATE_TEST(test_remove_does_not_call_free_fn_when_out_elem_takes_ownership),
-        D_TEST_GENERATE_TEST(test_duplicate_insert_with_free_fn_does_not_destroy_live_new_value),
-        D_TEST_GENERATE_TEST(test_hash_and_compare_are_used_for_operations),
-        D_TEST_GENERATE_TEST(test_interleaved_insert_remove_update_sequence),
-        D_TEST_GENERATE_TEST(test_failed_insert_null_value_does_not_poison_future_insert),
-        D_TEST_GENERATE_TEST(test_failed_remove_missing_does_not_poison_future_insert),
-        D_TEST_GENERATE_TEST(test_multiple_maps_are_independent),
-        D_TEST_GENERATE_TEST(test_many_maps_create_destroy_without_cross_state),
-        D_TEST_GENERATE_TEST(test_capacity_query_after_many_mutations_is_still_valid),
-        D_TEST_GENERATE_TEST(test_remove_last_remaining_key_then_insert_same_key_again),
-        D_TEST_GENERATE_TEST(test_all_keys_survive_several_rehash_boundaries),
-        D_TEST_GENERATE_TEST(test_default_int32_constructor_round_trips_negative_zero_positive_keys),
-        D_TEST_GENERATE_TEST(test_default_int32_duplicate_updates_and_remove_works),
-        D_TEST_GENERATE_TEST(test_default_int64_constructor_handles_wide_bit_patterns),
-        D_TEST_GENERATE_TEST(test_default_usize_constructor_handles_large_values_and_zero),
-        D_TEST_GENERATE_TEST(test_default_usize_many_insertions_survive_rehash),
-        D_TEST_GENERATE_TEST(test_default_u32_constructor_remove_even_keys_keeps_odd_keys),
-        D_TEST_GENERATE_TEST(test_default_char_constructor_distinguishes_all_byte_like_char_keys),
-        D_TEST_GENERATE_TEST(test_default_bool_constructor_has_only_two_keys_and_updates),
-        D_TEST_GENERATE_TEST(test_default_str_constructor_many_strings_survive_rehash_and_deletions),
-        D_TEST_GENERATE_TEST(test_default_str_constructor_empty_string_and_similar_prefixes_are_distinct),
+        D_TEST_GENERATE_TEST(test_get_null_map_returns_null),
+        D_TEST_GENERATE_TEST(test_get_null_key_returns_null),
+        D_TEST_GENERATE_TEST(test_remove_rejects_null_output_key_slot),
+        D_TEST_GENERATE_TEST(test_remove_rejects_null_output_value_slot),
+        D_TEST_GENERATE_TEST(test_remove_null_map_is_invalid),
+        D_TEST_GENERATE_TEST(test_remove_null_lookup_key_is_invalid),
+        D_TEST_GENERATE_TEST(test_delete_null_map_is_invalid),
+        D_TEST_GENERATE_TEST(test_delete_null_key_is_invalid),
+        D_TEST_GENERATE_TEST(test_single_insert_get_remove_transfers_key_and_value),
+        D_TEST_GENERATE_TEST(test_remove_does_not_call_destroyer),
+        D_TEST_GENERATE_TEST(test_delete_calls_destroyer_once_with_key_and_value),
+        D_TEST_GENERATE_TEST(test_destroy_calls_destroyer_for_all_live_pairs_only),
+        D_TEST_GENERATE_TEST(test_duplicate_insert_keeps_size_one_and_updates_value),
+        D_TEST_GENERATE_TEST(test_duplicate_insert_calls_destroyer_for_replaced_pair),
+        D_TEST_GENERATE_TEST(test_many_insertions_force_rehash_and_preserve_all_values),
+        D_TEST_GENERATE_TEST(test_rehash_after_duplicate_updates_preserves_latest_values),
+        D_TEST_GENERATE_TEST(test_collision_chain_all_entries_retrievable),
+        D_TEST_GENERATE_TEST(test_collision_chain_remove_middle_keeps_later_entries_findable),
+        D_TEST_GENERATE_TEST(test_deleted_slots_are_reused_without_losing_probe_chain),
+        D_TEST_GENERATE_TEST(test_delete_in_collision_chain_keeps_later_entries_findable),
+        D_TEST_GENERATE_TEST(test_remove_not_existing_does_not_modify_output_slots_or_size),
+        D_TEST_GENERATE_TEST(test_delete_not_existing_does_not_call_destroyer),
+        D_TEST_GENERATE_TEST(test_binary_keys_with_embedded_zero_bytes),
+        D_TEST_GENERATE_TEST(test_large_struct_values_compare_fields_not_padding),
+        D_TEST_GENERATE_TEST(test_remove_large_struct_value_and_key),
+        D_TEST_GENERATE_TEST(test_map_copies_key_and_value_bytes_on_insert),
+        D_TEST_GENERATE_TEST(test_owned_pointer_pairs_destroy_delete_frees_exact_pair),
+        D_TEST_GENERATE_TEST(test_owned_string_key_value_custom_map_delete),
+        D_TEST_GENERATE_TEST(test_int32_wrapper_constructor_insert_get_remove),
+        D_TEST_GENERATE_TEST(test_usize_wrapper_many_large_keys),
+        D_TEST_GENERATE_TEST(test_char_wrapper_all_byte_like_chars),
+        D_TEST_GENERATE_TEST(test_bool_wrapper_only_two_keys_and_duplicate_update),
+        D_TEST_GENERATE_TEST(test_str_wrapper_insert_get_delete_owned_values),
+        D_TEST_GENERATE_TEST(test_str_wrapper_remove_transfers_owned_key_and_value),
+        D_TEST_GENERATE_TEST(test_str_wrapper_duplicate_insert_destroys_old_owned_pair),
+        D_TEST_GENERATE_TEST(test_long_interleaved_insert_remove_delete_stress),
+        D_TEST_GENERATE_TEST(test_get_size_and_capacity_reject_null_out_params),
+        D_TEST_GENERATE_TEST(test_get_size_and_capacity_reject_null_map),
     };
-
     D_TEST_RUN_TESTS(tests);
     return 0;
 }

@@ -5,12 +5,12 @@
 #include "d_general_lib.h"
 
 #define D_UNORDERED_MAP_TYPED_CTORS(KEY_TYPE, KEY_NAME) \
-    DResult d_unordered_map_new_##KEY_NAME##_key(DUnorderedMap **d_unordered_map, usize value_size, usize capacity, FnPtrFreeElem free_fn);
+    DResult d_unordered_map_new_##KEY_NAME##_key(DUnorderedMap **d_unordered_map, usize value_size, usize capacity, FnPtrFreeHashMap free_fn);
 
 typedef struct DUnorderedMap DUnorderedMap;
 
-DResult d_unordered_map_new(DUnorderedMap **d_unordered_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn);
-DResult d_unordered_map_new_str(DUnorderedMap **d_unordered_map, usize value_size, usize capacity, FnPtrFreeElem free_fn);
+DResult d_unordered_map_new(DUnorderedMap **d_unordered_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeHashMap free_fn);
+DResult d_unordered_map_new_str(DUnorderedMap **d_unordered_map, usize value_size, usize capacity, FnPtrFreeHashMap free_fn);
 D_UNORDERED_MAP_TYPED_CTORS(int8, int8)
 D_UNORDERED_MAP_TYPED_CTORS(int16, int16)
 D_UNORDERED_MAP_TYPED_CTORS(int32, int32)
@@ -25,7 +25,8 @@ D_UNORDERED_MAP_TYPED_CTORS(char, char)
 
 DResult d_unordered_map_insert(DUnorderedMap *map, void *key, void *value);
 void *d_unordered_map_get(const DUnorderedMap *map, void *key);
-DResult d_unordered_map_remove(DUnorderedMap *map, void *key, void *out_elem);
+DResult d_unordered_map_remove(DUnorderedMap *map, void *key, void *slot_key, void *slot_value);
+DResult d_unordered_map_delete(DUnorderedMap *map, void *key);
 void d_unordered_map_destroy(DUnorderedMap **map);
 DResult d_unordered_map_get_size(const DUnorderedMap *d_unordered_map, usize *size);
 DResult d_unordered_map_get_capacity(const DUnorderedMap *d_unordered_map, usize *capacity);

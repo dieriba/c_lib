@@ -15,15 +15,16 @@ typedef struct RawMap
     usize nb_groups;
     usize max_load_factor;
     FnPtrGenHash hash_fn;
-    FnPtrFreeElem free_fn;
+    FnPtrFreeHashMap free_fn;
     FnPtrCmpKey cmp_fn;
 } RawMap;
 
-DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn);
+DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeHashMap free_fn);
 DResult raw_map_insert(RawMap *raw_map, void *new_key, void *new_value);
 
 void *raw_map_get(RawMap *raw_map, void *key);
-DResult raw_map_remove(RawMap *raw_map, void *key, void *out_elem);
+DResult raw_map_remove(RawMap *raw_map, void *key, void *slot_key, void *slot_value);
+DResult raw_map_delete(RawMap *raw_map, void *key);
 void raw_map_free(RawMap *raw_map);
 
 #define RAW_MAP_GETTER(FIELD, FIELD_TYPE)                                               \

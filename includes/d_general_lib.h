@@ -12,6 +12,7 @@ typedef bool (*DCompareFnc)(char);
 typedef usize (*FnPtrGenHash)(void *key);
 typedef bool (*FnPtrCmpKey)(void *, void *);
 typedef void (*FnPtrFreeElem)(void *elem);
+typedef void (*FnPtrFreeHashMap)(void *key, void *value);
 
 DResult d_split_string_by_char_of_str(DDynArray **new_dyn_array, const char *string, char *delims, BufferOpts opts);
 DResult d_split_string_by_char(DDynArray **new_dyn_array, const char *string, char c, BufferOpts opts);

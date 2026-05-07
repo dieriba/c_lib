@@ -84,7 +84,7 @@ DResult d_dyn_string_new_from_dstring(DDynString **new_dyn_string, DDynString *d
     return d_dyn_string_new_with_sub_string(new_dyn_string, dstring->str.data, 0, dstring->str.size);
 }
 
-const char const *d_dyn_string_get_string(const DDynString *dstring)
+const char *d_dyn_string_get_string(const DDynString *dstring)
 {
     return raw_buffer_get_data((RawBuffer *)dstring);
 }

@@ -11,7 +11,7 @@ DResult d_dyn_string_new_from_dstring(DDynString **dyn_string, DDynString *dstri
 DResult d_dyn_string_new_with_capacity(DDynString **dyn_string, usize reserve);
 DResult d_dyn_string_new_with_sub_string(DDynString **dyn_string, const char *str, usize pos, usize size);
 
-const char const *d_dyn_string_get_string(const DDynString *dstring);
+const char *d_dyn_string_get_string(const DDynString *dstring);
 DResult d_dyn_string_get_char_at(const DDynString *dstring, usize i, void *out_elem);
 
 DResult d_dyn_string_get_size(const DDynString *dstring, usize *size);

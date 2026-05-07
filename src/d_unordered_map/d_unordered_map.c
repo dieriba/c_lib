@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 #define D_UNORDERED_MAP_DEFINE_TYPED_CTOR(KEY_TYPE, KEY_NAME)                                                                                    \
-    DResult d_unordered_map_new_##KEY_NAME##_key(DUnorderedMap **d_unordered_map, usize value_size, usize capacity, FnPtrFreeElem free_fn)             \
+    DResult d_unordered_map_new_##KEY_NAME##_key(DUnorderedMap **d_unordered_map, usize value_size, usize capacity, FnPtrFreeHashMap free_fn)    \
     {                                                                                                                                            \
         return d_unordered_map_new(d_unordered_map, sizeof(KEY_TYPE), value_size, capacity, hash_##KEY_NAME##_key, compare_##KEY_NAME, free_fn); \
     }
@@ -18,16 +18,16 @@ static DUnorderedMap *d_unordered_map_new_raw()
     return malloc(sizeof(DUnorderedMap));
 }
 
-DResult d_unordered_map_new(DUnorderedMap **d_unordered_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
+DResult d_unordered_map_new(DUnorderedMap **d_unordered_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeHashMap free_fn)
 {
-    if (d_unordered_map == NULL || key_size == 0 || value_size == 0)
+    if (d_unordered_map == NULL)
         return D_ERR_INVALID_ARG;
     else if ((*d_unordered_map = d_unordered_map_new_raw()) == NULL)
         return D_ERR_ALLOC;
     return raw_map_init((RawMap *)(*d_unordered_map), key_size, value_size, capacity, hash_fn, cmp_fn, free_fn);
 }
 
-DResult d_unordered_map_new_str(DUnorderedMap **d_unordered_map, usize value_size, usize capacity, FnPtrFreeElem free_fn)
+DResult d_unordered_map_new_str(DUnorderedMap **d_unordered_map, usize value_size, usize capacity, FnPtrFreeHashMap free_fn)
 {
     return d_unordered_map_new(d_unordered_map, sizeof(char *), value_size, capacity, hash_string_key, compare_str, free_fn);
 }
@@ -64,10 +64,18 @@ void *d_unordered_map_get(const DUnorderedMap *map, void *key)
     return raw_map_get((RawMap *)map, key);
 }
 
-DResult d_unordered_map_remove(DUnorderedMap *map, void *key, void *out_elem)
+DResult d_unordered_map_remove(DUnorderedMap *map, void *key, void *slot_key, void *slot_value)
 {
-    return raw_map_remove((RawMap *)map, key, out_elem);
+    if (slot_key == NULL || slot_value == NULL)
+        return D_ERR_INVALID_ARG;
+    return raw_map_remove((RawMap *)map, key, slot_key, slot_value);
 }
+
+DResult d_unordered_map_delete(DUnorderedMap *map, void *key)
+{
+    return raw_map_delete((RawMap *)map, key);
+}
+
 
 void d_unordered_map_destroy(DUnorderedMap **map)
 {
