@@ -20,7 +20,7 @@ static DHashSet *d_hash_set_new_raw()
 
 DResult d_hash_set_new(DHashSet **d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
 {
-    if (d_hash_set == NULL)
+    if (d_hash_set == NULL || key_size == 0)
         return D_ERR_INVALID_ARG;
     else if ((*d_hash_set = d_hash_set_new_raw()) == NULL)
         return D_ERR_ALLOC;

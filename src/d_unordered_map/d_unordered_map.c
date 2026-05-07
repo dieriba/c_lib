@@ -20,7 +20,7 @@ static DUnorderedMap *d_unordered_map_new_raw()
 
 DResult d_unordered_map_new(DUnorderedMap **d_unordered_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem free_fn)
 {
-    if (d_unordered_map == NULL)
+    if (d_unordered_map == NULL || key_size == 0 || value_size == 0)
         return D_ERR_INVALID_ARG;
     else if ((*d_unordered_map = d_unordered_map_new_raw()) == NULL)
         return D_ERR_ALLOC;
