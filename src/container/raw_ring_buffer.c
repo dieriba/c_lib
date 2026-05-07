@@ -38,9 +38,8 @@ DResult raw_ring_buffer_init(RawRingBuffer *raw_ring_buffer, usize head, usize t
     else
     {
         usize new_capacity = d_math_compute_pow2(d_bits_get_index_least_significant_bit_set_ll(capacity));
-        if (new_capacity < capacity)
-            new_capacity <<= 1;
-        capacity = new_capacity;
+        if (new_capacity < capacity && container_next_pow2_checked(&capacity) != D_OK)
+            return D_ERR_OVERFLOW;
     }
     raw_ring_buffer->size = 0;
     raw_ring_buffer->capacity = capacity;
@@ -93,7 +92,9 @@ static DResult increase_buffer_capacity_if_needed(RawRingBuffer *raw_ring_buffer
         return D_ERR_INVALID_ARG;
     if (raw_ring_buffer->size + 1 < raw_ring_buffer->capacity)
         return D_OK;
-    usize new_capacity = raw_ring_buffer->capacity << 1;
+    usize new_capacity = raw_ring_buffer->capacity;
+    if (container_next_pow2_checked(&new_capacity) != D_OK)
+        return D_ERR_OVERFLOW;
     usize alloc_size;
     if (d_math_overflow_check_mul_usize(new_capacity, raw_ring_buffer->elem_size, &alloc_size))
         return D_ERR_OVERFLOW;

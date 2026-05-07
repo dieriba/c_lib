@@ -5,4 +5,6 @@
 #define GROWTH_POLICY 2UL
 #define DEFAULT_CAPACITY 16UL
 
+DResult container_next_pow2_checked(usize *pow2);
+
 #endif

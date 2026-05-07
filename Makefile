@@ -19,7 +19,7 @@ BIN_TESTS := $(OBJS_TESTS:.o=)
 DEPS := $(OBJS:.o=.d) $(OBJS_TESTS:.o=.d)
 
 INC_DIRS := ./includes
-INC_DIRS += $(SRC_DIRS)/container
+INC_DIRS += $(shell find $(SRC_DIRS) -type d)
 
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
