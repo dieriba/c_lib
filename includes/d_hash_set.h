@@ -30,6 +30,7 @@ D_HASH_SET_NEW_WITH_NOT_OWNED_KEY(u64, u64)
 D_HASH_SET_NEW_WITH_NOT_OWNED_KEY(usize, usize)
 D_HASH_SET_NEW_WITH_NOT_OWNED_KEY(bool, bool)
 D_HASH_SET_NEW_WITH_NOT_OWNED_KEY(char, char)
+D_HASH_SET_NEW_WITH_NOT_OWNED_KEY(d_string_view, DStringView)
 
 D_HASH_SET_NEW_WITH_OWNED_KEY(str, char *, _free_str)
 D_HASH_SET_NEW_WITH_OWNED_KEY(d_dyn_string, DDynString *, (FnPtrFreeElem)d_dyn_string_destroy)

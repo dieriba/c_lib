@@ -32,6 +32,7 @@ D_UNORDERED_MAP_NEW_WITH_NOT_OWNED_KEY(usize, usize)
 D_UNORDERED_MAP_NEW_WITH_NOT_OWNED_KEY(bool, bool)
 D_UNORDERED_MAP_NEW_WITH_NOT_OWNED_KEY(char, char)
 D_UNORDERED_MAP_NEW_WITH_NOT_OWNED_KEY(str, char *)
+D_UNORDERED_MAP_NEW_WITH_NOT_OWNED_KEY(d_string_view, DStringView)
 
 D_UNORDERED_MAP_NEW_WITH_OWNED_KEY(str, char *, _free_str)
 D_UNORDERED_MAP_NEW_WITH_OWNED_KEY(d_dyn_string, DDynString *, (FnPtrFreeElem)d_dyn_string_destroy)
