@@ -1,5 +1,4 @@
 #include "d_general_lib.h"
-
 char *d_substr(const char *str, usize pos, usize size)
 {
     usize str_len;

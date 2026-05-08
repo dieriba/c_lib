@@ -75,7 +75,9 @@ static usize find_last_from_index(DStringView view, usize pos, char_match_fn mat
 
 char *d_string_view_substr(DStringView view, usize pos, usize size)
 {
-    return d_substr(view.data, pos, size);
+    if (pos > view.size)
+        return NULL;
+    return d_substr(view.data + pos, 0, size);
 }
 
 DStringView d_string_view_from_parts(const char *data, usize size)
