@@ -1,9 +1,11 @@
 #ifndef RAW_MAP_H
 #define RAW_MAP_H
+#include <stdlib.h>
+#include "d_string_view.h"
+#include "d_dyn_string.h"
 #include "d_types.h"
 #include "container.h"
 #include "d_general_lib.h"
-#include <stdlib.h>
 #include "wyhash.h"
 typedef struct RawMap
 {
@@ -15,11 +17,12 @@ typedef struct RawMap
     usize nb_groups;
     usize max_load_factor;
     FnPtrGenHash hash_fn;
-    FnPtrFreeHashMap free_fn;
+    FnPtrFreeElem key_destructor_fn;
+    FnPtrFreeElem value_destructor_fn;
     FnPtrCmpKey cmp_fn;
 } RawMap;
 
-DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeHashMap free_fn);
+DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem key_destructor_fn, FnPtrFreeElem value_destructor_fn);
 DResult raw_map_insert(RawMap *raw_map, void *new_key, void *new_value);
 
 void *raw_map_get(RawMap *raw_map, void *key);
@@ -42,6 +45,16 @@ RAW_MAP_GETTER(capacity, usize)
 static inline bool compare_str(void *s1, void *s2)
 {
     return s1 && s2 && strcmp(*(char **)s1, *(char **)s2) == 0;
+}
+
+static inline bool compare_d_string_view(void *view1, void *view2)
+{
+    return view1 && view2 && d_string_view_compare(*(DStringView *)view1, *(DStringView *)view2) == D_COMPARE_EQUAL;
+}
+
+static inline bool compare_d_dyn_string(void *d_dyn_str_1, void *d_dyn_str_2)
+{
+    return d_dyn_str_1 && d_dyn_str_2 && d_dyn_string_compare(*(DDynString **)d_dyn_str_1, *(DDynString **)d_dyn_str_2) == D_COMPARE_EQUAL;
 }
 
 static inline bool compare_ptr(void *a, void *b)
@@ -69,10 +82,24 @@ GENERATE_COMPARE_X_TYPE(usize, usize)
 GENERATE_COMPARE_X_TYPE(bool, bool)
 GENERATE_COMPARE_X_TYPE(char, char)
 
-static inline u64 hash_string_key(void *data)
+static inline u64 hash_str_key(void *data)
 {
     char *s = *((char **)data);
     return wyhash(s, strlen(s), 0, _wyp);
+}
+
+static inline u64 hash_d_string_view_key(void *data)
+{
+    DStringView *s = (DStringView *)data;
+    return wyhash(s->data, s->size, 0, _wyp);
+}
+
+static inline u64 hash_d_dyn_string_key(void *data)
+{
+    DDynString *s = *((DDynString **)data);
+    usize size;
+    d_dyn_string_get_size(s, &size);
+    return wyhash(d_dyn_string_get_string(s), size, 0, _wyp);
 }
 
 #define GENERATE_HASH_X_TYPE(KEY_TYPE_NAME, KEY_TYPE)        \

@@ -27,6 +27,13 @@ typedef enum DResult
     D_ERR_OVERFLOW
 } DResult;
 
+typedef enum
+{
+    D_COMPARE_ERROR = -2,
+    D_COMPARE_EQUAL = 0,
+    D_COMPARE_NOT_EQUAL = 1
+} DCompareResult;
+
 static inline char *d_types_print_result_as_str(DResult result)
 {
     switch (result)

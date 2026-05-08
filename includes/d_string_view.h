@@ -32,7 +32,7 @@ char d_string_view_get_char_at(DStringView view, usize index);
 DStringView d_string_view_subview(DStringView view, usize pos, usize size);
 char *d_string_view_substr(DStringView view, usize pos, usize size);
 
-int d_string_view_compare(DStringView view1, DStringView view2);
+DCompareResult d_string_view_compare(DStringView view1, DStringView view2);
 int d_string_view_compare_against_c_string(DStringView view, const char *c_str);
 bool d_string_view_equals(DStringView view1, DStringView view2);
 bool d_string_view_equals_c_string(DStringView view, const char *c_str);

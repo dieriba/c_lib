@@ -13,6 +13,7 @@ DResult d_dyn_string_new_with_sub_string(DDynString **dyn_string, const char *st
 
 const char *d_dyn_string_get_string(const DDynString *dstring);
 DResult d_dyn_string_get_char_at(const DDynString *dstring, usize i, void *out_elem);
+DCompareResult d_dyn_string_compare(DDynString *d1, DDynString *d2);
 
 DResult d_dyn_string_get_size(const DDynString *dstring, usize *size);
 DResult d_dyn_string_get_capacity(const DDynString *dstring, usize *capacity);

@@ -6,8 +6,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 typedef struct BinKey
 {
     unsigned char bytes[16];
@@ -144,7 +142,7 @@ static char *dup_lit(const char *s)
     return out;
 }
 
-static DHashSet *new_int_set_custom(usize capacity, FnPtrFreeHashMap free_fn)
+static DHashSet *new_int_set_custom(usize capacity, FnPtrFreeElem free_fn)
 {
     DHashSet *set = NULL;
     D_TEST_EXPR(d_hash_set_new(&set, sizeof(int), capacity, hash_int_key, cmp_int_key, free_fn) == D_OK);
@@ -152,7 +150,7 @@ static DHashSet *new_int_set_custom(usize capacity, FnPtrFreeHashMap free_fn)
     return set;
 }
 
-static DHashSet *new_collision_set(usize capacity, FnPtrFreeHashMap free_fn)
+static DHashSet *new_collision_set(usize capacity, FnPtrFreeElem free_fn)
 {
     DHashSet *set = NULL;
     D_TEST_EXPR(d_hash_set_new(&set, sizeof(int), capacity, hash_int_collision, cmp_int_key, free_fn) == D_OK);

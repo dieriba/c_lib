@@ -5,6 +5,7 @@
 #include "d_dyn_string.h"
 #include "raw_buffer.h"
 #include "d_general_lib.h"
+#include "d_string_view.h"
 
 struct DDynString
 {
@@ -82,6 +83,13 @@ DResult d_dyn_string_new_from_dstring(DDynString **new_dyn_string, DDynString *d
     if (dstring == NULL)
         return D_ERR_INVALID_ARG;
     return d_dyn_string_new_with_sub_string(new_dyn_string, dstring->str.data, 0, dstring->str.size);
+}
+
+DCompareResult d_dyn_string_compare(DDynString *d1, DDynString *d2)
+{
+    if (d1 == NULL || d2 == NULL)
+        return D_COMPARE_ERROR;
+    return d_string_view_compare(d_string_view_from_dyn_string(d1), d_string_view_from_dyn_string(d2));
 }
 
 const char *d_dyn_string_get_string(const DDynString *dstring)

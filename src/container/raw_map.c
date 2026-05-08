@@ -80,7 +80,7 @@ static DResult compute_alloc_size_and_capacity(RawMap *raw_map, usize slot_size,
     return D_OK;
 }
 
-DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeHashMap free_fn)
+DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem key_destructor_fn, FnPtrFreeElem value_destructor_fn)
 {
     if (raw_map == NULL || hash_fn == NULL)
         return D_ERR_INVALID_ARG;
@@ -101,7 +101,8 @@ DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize ca
     raw_map->cmp_fn = cmp_fn;
     raw_map->hash_fn = hash_fn;
     raw_map->cmp_fn = cmp_fn;
-    raw_map->free_fn = free_fn;
+    raw_map->key_destructor_fn = key_destructor_fn;
+    raw_map->value_destructor_fn = value_destructor_fn;
     return D_OK;
 }
 
@@ -245,7 +246,10 @@ static DResult rehash(RawMap *raw_map, void *new_key, void *new_value)
 
 static inline DResult free_slot(RawMap *raw_map, void *key, void *value)
 {
-    raw_map->free_fn(key, value);
+    if (raw_map->key_destructor_fn)
+        raw_map->key_destructor_fn(key);
+    if (raw_map->value_destructor_fn)
+        raw_map->value_destructor_fn(value);
     return D_OK;
 }
 
@@ -302,7 +306,7 @@ DResult raw_map_insert(RawMap *raw_map, void *new_key, void *new_value)
         ctrl = raw_map_get_control_byte_addr(raw_map, insert_position);
         raw_map->size++;
     }
-    else if (raw_map->free_fn)
+    else if (raw_map->key_destructor_fn || raw_map->value_destructor_fn)
         free_slot_at(raw_map, insert_position);
     *ctrl = hash_info.h2;
     make_insert(raw_map, insert_position, new_key, new_value);
@@ -321,7 +325,7 @@ DResult raw_map_delete(RawMap *raw_map, void *key)
     {
         *ctrl = kDeleted;
         raw_map->size--;
-        if (raw_map->free_fn)
+        if (raw_map->key_destructor_fn || raw_map->value_destructor_fn)
             free_slot_at(raw_map, position);
         return D_OK;
     }
@@ -353,7 +357,7 @@ void raw_map_free(RawMap *raw_map)
 {
     if (raw_map == NULL)
         return;
-    if (raw_map->free_fn)
+    if (raw_map->key_destructor_fn || raw_map->value_destructor_fn)
         iterate_on_map_occupied_slot(raw_map, raw_map->map, raw_map->nb_groups, raw_map->size, free_slot);
     free(raw_map->map);
     memset(raw_map, 0, sizeof(RawMap));

@@ -113,7 +113,7 @@ static char *dup_lit(const char *s)
     return out;
 }
 
-static DUnorderedMap *new_int_map_custom(usize value_size, usize capacity, FnPtrFreeHashMap free_fn)
+static DUnorderedMap *new_int_map_custom(usize value_size, usize capacity, FnPtrFreeElem free_fn)
 {
     DUnorderedMap *map = NULL;
     D_TEST_EXPR(d_unordered_map_new(&map, sizeof(int), value_size, capacity, hash_int_key, cmp_int_key, free_fn) == D_OK);
@@ -121,7 +121,7 @@ static DUnorderedMap *new_int_map_custom(usize value_size, usize capacity, FnPtr
     return map;
 }
 
-static DUnorderedMap *new_collision_map(usize value_size, usize capacity, FnPtrFreeHashMap free_fn)
+static DUnorderedMap *new_collision_map(usize value_size, usize capacity, FnPtrFreeElem free_fn)
 {
     DUnorderedMap *map = NULL;
     D_TEST_EXPR(d_unordered_map_new(&map, sizeof(int), value_size, capacity, hash_int_collision, cmp_int_key, free_fn) == D_OK);
