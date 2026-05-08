@@ -1,15 +1,18 @@
 #ifndef D_DYN_STRING_H
 #define D_DYN_STRING_H
-
+#include "raw_buffer.h"
 #include "d_types.h"
 
-typedef struct DDynString DDynString;
+typedef struct DDynString
+{
+    RawBuffer str;
+} DDynString;
 
-DResult d_dyn_string_new(DDynString **dyn_string);
-DResult d_dyn_string_new_from_c_string(DDynString **dyn_string, const char *str);
-DResult d_dyn_string_new_from_dstring(DDynString **dyn_string, DDynString *dstring);
-DResult d_dyn_string_new_with_capacity(DDynString **dyn_string, usize reserve);
-DResult d_dyn_string_new_with_sub_string(DDynString **dyn_string, const char *str, usize pos, usize size);
+DResult d_dyn_string_init(DDynString *dyn_string);
+DResult d_dyn_string_init_from_c_string(DDynString *dyn_string, const char *str);
+DResult d_dyn_string_init_from_dstring(DDynString *dyn_string, DDynString *dstring);
+DResult d_dyn_string_init_with_capacity(DDynString *dyn_string, usize reserve);
+DResult d_dyn_string_init_with_sub_string(DDynString *dyn_string, const char *str, usize pos, usize size);
 
 const char *d_dyn_string_get_string(const DDynString *dstring);
 DResult d_dyn_string_get_char_at(const DDynString *dstring, usize i, void *out_elem);
@@ -29,5 +32,5 @@ DResult d_dyn_string_replace_from_dstring(DDynString *dstring, const DDynString 
 
 DResult d_dyn_string_sub_string_in_place(DDynString *dstring, usize pos, usize size);
 
-void d_dyn_string_destroy(DDynString **dstring);
+void d_dyn_string_destroy(DDynString *dstring);
 #endif

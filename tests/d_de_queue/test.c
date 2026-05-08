@@ -7,13 +7,11 @@
 #include "d_de_queue.h"
 #include "d_types.h"
 
-
-
 static DDeQueue *make_int_deque(usize capacity)
 {
     DDeQueue *deque = NULL;
 
-    D_TEST_EXPR(d_de_queue_new(&deque, capacity, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, capacity, sizeof(int)) == D_OK);
     D_TEST_NOT_NULL(deque);
     return deque;
 }
@@ -101,7 +99,7 @@ static void test_new_creates_empty_deque_with_zero_capacity_request(void)
 {
     DDeQueue *deque = NULL;
 
-    D_TEST_EXPR(d_de_queue_new(&deque, 0, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 0, sizeof(int)) == D_OK);
     D_TEST_NOT_NULL(deque);
     expect_size(deque, 0);
     expect_empty(deque, true);
@@ -112,7 +110,7 @@ static void test_new_with_capacity_sets_capacity_and_empty_state(void)
 {
     DDeQueue *deque = NULL;
 
-    D_TEST_EXPR(d_de_queue_new(&deque, 8, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 8, sizeof(int)) == D_OK);
     D_TEST_NOT_NULL(deque);
     expect_capacity_at_least(deque, 8);
     expect_size(deque, 0);
@@ -122,14 +120,14 @@ static void test_new_with_capacity_sets_capacity_and_empty_state(void)
 
 static void test_new_rejects_null_output_pointer(void)
 {
-    D_TEST_EXPR(d_de_queue_new(NULL, 4, sizeof(int)) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_de_queue_init(NULL, 4, sizeof(int)) == D_ERR_INVALID_ARG);
 }
 
 static void test_new_rejects_zero_elem_size_and_leaves_output_null(void)
 {
     DDeQueue *deque = NULL;
 
-    D_TEST_EXPR(d_de_queue_new(&deque, 4, 0) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_de_queue_init(&deque, 4, 0) == D_ERR_INVALID_ARG);
     D_TEST_NULL(deque);
 }
 
@@ -389,7 +387,7 @@ static void test_binary_payload_with_zero_bytes_round_trips(void)
         in.bytes[i] = (unsigned char)(i * 17u);
     memset(&out, 0xff, sizeof(out));
 
-    D_TEST_EXPR(d_de_queue_new(&deque, 1, sizeof(BinaryPayload)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(BinaryPayload)) == D_OK);
     D_TEST_EXPR(d_de_queue_push_back(deque, &in) == D_OK);
     memset(&in, 0, sizeof(in));
     D_TEST_EXPR(d_de_queue_pop_front(deque, &out) == D_OK);
@@ -408,7 +406,7 @@ static void test_pointer_values_are_stored_as_values_not_deep_copied(void)
     int *pb = &b;
     int *out = NULL;
 
-    D_TEST_EXPR(d_de_queue_new(&deque, 1, sizeof(int *)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(int *)) == D_OK);
     D_TEST_EXPR(d_de_queue_push_back(deque, &pa) == D_OK);
     D_TEST_EXPR(d_de_queue_push_front(deque, &pb) == D_OK);
 
@@ -428,7 +426,7 @@ static void test_large_struct_round_trips_from_front_without_padding_memcmp(void
     LargeStruct out;
 
     memset(&out, 0xcc, sizeof(out));
-    D_TEST_EXPR(d_de_queue_new(&deque, 1, sizeof(LargeStruct)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(LargeStruct)) == D_OK);
     D_TEST_EXPR(d_de_queue_push_front(deque, &in) == D_OK);
     memset(&in, 0, sizeof(in));
     in = make_large_struct(7);
@@ -445,7 +443,7 @@ static void test_large_struct_round_trips_from_back_without_padding_memcmp(void)
     LargeStruct out;
 
     memset(&out, 0xcc, sizeof(out));
-    D_TEST_EXPR(d_de_queue_new(&deque, 1, sizeof(LargeStruct)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(LargeStruct)) == D_OK);
     D_TEST_EXPR(d_de_queue_push_back(deque, &in) == D_OK);
     memset(&in, 0, sizeof(in));
     D_TEST_EXPR(d_de_queue_pop_back(deque, &out) == D_OK);
@@ -850,7 +848,7 @@ static void test_multiple_data_types_char_values(void)
     DDeQueue *deque = NULL;
     char c;
 
-    D_TEST_EXPR(d_de_queue_new(&deque, 2, sizeof(char)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 2, sizeof(char)) == D_OK);
     c = 'a';
     D_TEST_EXPR(d_de_queue_push_back(deque, &c) == D_OK);
     c = '\0';

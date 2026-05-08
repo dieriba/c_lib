@@ -3,75 +3,33 @@
 #include "raw_buffer.h"
 
 #include <string.h>
-struct DDynArray
-{
-	RawBuffer array;
-	/*
-	 * free_func (optional):
-	 *
-	 * If non-NULL, this function is called to destroy elements before they are
-	 * removed from the array (e.g., during clear, destroy, or remove operations).
-	 *
-	 * IMPORTANT:
-	 *   The function is called with a pointer to the element *inside the array*,
-	 *   not the element value interpreted as a pointer.
-	 *
-	 *   In other words, the argument is the address of the element slot.
-	 *
-	 * Example:
-	 *
-	 *   If elem_size == sizeof(Person):
-	 *       free_func receives a `Person *`
-	 *
-	 *   If elem_size == sizeof(char *):
-	 *       free_func receives a `char **`
-	 *
-	 * It is the responsibility of the user to cast the pointer to the correct
-	 * type and destroy the element accordingly.
-	 */
-	DestroyElemFunc free_func;
-};
 
 #define d_dyn_array_elt_len(arr, i) ((arr)->array.elem_size * (i))
 #define d_dyn_array_elt_pos(arr, i) ((char *)(arr)->array.data + d_dyn_array_elt_len((arr), (i)))
 
-static DDynArray *d_dyn_array_new_raw()
-{
-	return malloc(sizeof(DDynArray));
-}
-
-DResult d_dyn_array_new(DDynArray **new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts)
+DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts)
 {
 	if (new_dyn_array == NULL || elem_size == 0)
 		return D_ERR_INVALID_ARG;
 
-	DDynArray *arr = d_dyn_array_new_raw();
-	if ((*new_dyn_array = arr) == NULL)
-		return D_ERR_ALLOC;
-	DResult op_result = raw_buffer_init((RawBuffer *)arr, elem_size, reserved_elem, opts);
-	if (op_result != D_OK)
-	{
-		free(new_dyn_array);
-		return op_result;
-	}
-	arr->free_func = free_func;
-	return D_OK;
+	new_dyn_array->free_func = free_func;
+	return raw_buffer_init((RawBuffer *)new_dyn_array, elem_size, reserved_elem, opts);
 }
 
-DResult d_dyn_array_new_ptr_arr(DDynArray **new_dyn_array, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts)
+DResult d_dyn_array_init_ptr_arr(DDynArray *new_dyn_array, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts)
 {
-	return d_dyn_array_new(new_dyn_array, sizeof(void *), reserved_elem, free_func, opts);
+	return d_dyn_array_init(new_dyn_array, sizeof(void *), reserved_elem, free_func, opts);
 }
 
-DResult d_dyn_array_new_from(DDynArray **new_dyn_array, DDynArray *dyn_array)
+DResult d_dyn_array_init_from(DDynArray *new_dyn_array, DDynArray *dyn_array)
 {
 	if (new_dyn_array == NULL || dyn_array == NULL)
 		return D_ERR_INVALID_ARG;
 	RawBuffer *raw_buffer = &dyn_array->array;
-	DResult op_result = d_dyn_array_new(new_dyn_array, raw_buffer->elem_size, raw_buffer->capacity, dyn_array->free_func, raw_buffer->opts);
+	DResult op_result = d_dyn_array_init(new_dyn_array, raw_buffer->elem_size, raw_buffer->capacity, dyn_array->free_func, raw_buffer->opts);
 	if (op_result != D_OK)
 		return op_result;
-	if ((op_result = d_dyn_array_append(*new_dyn_array, raw_buffer->data, raw_buffer->size)) != D_OK)
+	if ((op_result = d_dyn_array_append(new_dyn_array, raw_buffer->data, raw_buffer->size)) != D_OK)
 	{
 		d_dyn_array_destroy(new_dyn_array);
 		return op_result;
@@ -154,17 +112,6 @@ static void destroy_elements(DDynArray *dyn_array)
 	}
 }
 
-void d_dyn_array_destroy(DDynArray **dyn_array)
-{
-	if (dyn_array == NULL || *dyn_array == NULL)
-		return;
-	DDynArray *d_array = *dyn_array;
-	destroy_elements(d_array);
-	raw_buffer_free(&d_array->array);
-	free(d_array);
-	*dyn_array = NULL;
-}
-
 DDynArray *d_dyn_array_clear_array(DDynArray *dyn_array)
 {
 	if (dyn_array == NULL)
@@ -172,4 +119,13 @@ DDynArray *d_dyn_array_clear_array(DDynArray *dyn_array)
 	destroy_elements(dyn_array);
 	dyn_array->array.size = 0;
 	return dyn_array;
+}
+
+void d_dyn_array_destroy(DDynArray *dyn_array)
+{
+	if (dyn_array == NULL)
+		return;
+	destroy_elements(dyn_array);
+	raw_buffer_free((RawBuffer *)dyn_array);
+	memset(dyn_array, 0, sizeof(DDynArray));
 }

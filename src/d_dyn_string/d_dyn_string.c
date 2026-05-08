@@ -7,54 +7,28 @@
 #include "d_general_lib.h"
 #include "d_string_view.h"
 
-struct DDynString
-{
-    RawBuffer str;
-};
-
-static DDynString *d_dyn_string_new_raw()
-{
-    return malloc(sizeof(DDynString));
-}
-
-DResult d_dyn_string_new_with_capacity(DDynString **new_dyn_string, usize reserve)
+DResult d_dyn_string_init_with_capacity(DDynString *new_dyn_string, usize reserve)
 {
     if (new_dyn_string == NULL)
         return D_ERR_INVALID_ARG;
-    else if ((*new_dyn_string = d_dyn_string_new_raw()) == NULL)
-        return D_ERR_ALLOC;
-    DResult op_result;
-    if ((op_result = raw_buffer_init((RawBuffer *)*new_dyn_string, sizeof(char), reserve, RAW_BUF_OPT_ZERO_SENTINEL)) != D_OK)
-    {
-        d_dyn_string_destroy(new_dyn_string);
-        return op_result;
-    }
-    return D_OK;
+    return raw_buffer_init((RawBuffer *)new_dyn_string, sizeof(char), reserve, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
-DResult d_dyn_string_new(DDynString **dyn_string)
+DResult d_dyn_string_init(DDynString *dyn_string)
 {
-    return d_dyn_string_new_with_capacity(dyn_string, DEFAULT_CAPACITY);
+    return d_dyn_string_init_with_capacity(dyn_string, DEFAULT_CAPACITY);
 }
 
-DResult d_dyn_string_new_from_c_string(DDynString **dyn_string, const char *str)
+DResult d_dyn_string_init_from_c_string(DDynString *dyn_string, const char *str)
 {
     if (dyn_string == NULL || str == NULL)
         return D_ERR_INVALID_ARG;
 
     usize size = strlen(str);
-    if ((*dyn_string = d_dyn_string_new_raw()) == NULL)
-        return D_ERR_ALLOC;
-    DResult op_result;
-    if ((op_result = raw_buffer_init_with_data((RawBuffer *)*dyn_string, sizeof(char), str, size, RAW_BUF_OPT_ZERO_SENTINEL)) != D_OK)
-    {
-        d_dyn_string_destroy(dyn_string);
-        return op_result;
-    }
-    return D_OK;
+    return raw_buffer_init_with_data((RawBuffer *)dyn_string, sizeof(char), str, size, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
-DResult d_dyn_string_new_with_sub_string(DDynString **dyn_string, const char *str, usize pos, usize size)
+DResult d_dyn_string_init_with_sub_string(DDynString *dyn_string, const char *str, usize pos, usize size)
 {
     if (dyn_string == NULL || str == NULL)
         return D_ERR_INVALID_ARG;
@@ -62,27 +36,15 @@ DResult d_dyn_string_new_with_sub_string(DDynString **dyn_string, const char *st
     usize str_len = strlen(str);
     if (pos > str_len)
         return D_ERR_INVALID_ARG;
-
     size = (pos + size > str_len) ? (str_len - pos) : size;
-
-    if ((*dyn_string = d_dyn_string_new_raw()) == NULL)
-        return D_ERR_ALLOC;
-
-    DResult op_result;
-
-    if ((op_result = raw_buffer_init_with_data((RawBuffer *)*dyn_string, sizeof(char), str + pos, size, RAW_BUF_OPT_ZERO_SENTINEL)) != D_OK)
-    {
-        d_dyn_string_destroy(dyn_string);
-        return op_result;
-    }
-    return D_OK;
+    return raw_buffer_init_with_data((RawBuffer *)dyn_string, sizeof(char), str + pos, size, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
-DResult d_dyn_string_new_from_dstring(DDynString **new_dyn_string, DDynString *dstring)
+DResult d_dyn_string_init_from_dstring(DDynString *new_dyn_string, DDynString *dstring)
 {
     if (dstring == NULL)
         return D_ERR_INVALID_ARG;
-    return d_dyn_string_new_with_sub_string(new_dyn_string, dstring->str.data, 0, dstring->str.size);
+    return d_dyn_string_init_with_sub_string(new_dyn_string, dstring->str.data, 0, dstring->str.size);
 }
 
 DCompareResult d_dyn_string_compare(DDynString *d1, DDynString *d2)
@@ -167,12 +129,10 @@ DResult d_dyn_string_replace_from_dstring(DDynString *dstring, const DDynString 
     return raw_buffer_replace_with((RawBuffer *)dstring, (RawBuffer *)to_copy, 0);
 }
 
-void d_dyn_string_destroy(DDynString **dstring)
+void d_dyn_string_destroy(DDynString *dstring)
 {
-    if (dstring == NULL || *dstring == NULL)
+    if (dstring == NULL)
         return;
-    DDynString *dstr = *dstring;
-    raw_buffer_free((RawBuffer *)dstr);
-    free(dstr);
-    *dstring = NULL;
+    raw_buffer_free((RawBuffer *)dstring);
+    memset(dstring, 0, sizeof(DDynString));
 }

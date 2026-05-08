@@ -18,8 +18,8 @@ static inline void _free_str(void *elem)
     free(*(char **)elem);
 }
 
-DResult d_split_string_by_char_of_str(DDynArray **new_dyn_array, const char *string, char *delims, BufferOpts opts);
-DResult d_split_string_by_char(DDynArray **new_dyn_array, const char *string, char c, BufferOpts opts);
+DResult d_split_string_by_char_of_str(DDynArray *new_dyn_array, const char *string, char *delims, BufferOpts opts);
+DResult d_split_string_by_char(DDynArray *new_dyn_array, const char *string, char c, BufferOpts opts);
 
 /**
  * @brief Extracts a substring from a given string.

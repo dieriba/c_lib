@@ -89,9 +89,9 @@ DStringView d_string_view_trim_right_by_char(DStringView view, char c);
 DStringView d_string_view_trim_left_by_predicate(DStringView view, match fn);
 DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn);
 
-DResult d_string_view_split_by_char(DDynArray **new_dyn_array, DStringView view, BufferOpts opts, char c);
-DResult d_string_view_split_by_char_of_str(DDynArray **new_dyn_array, DStringView view, BufferOpts opts, char *str);
+DResult d_string_view_split_by_char(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char c);
+DResult d_string_view_split_by_char_of_str(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char *str);
 
-DResult d_dyn_string_new_from_string_view(DDynString **new_dyn_string, DStringView view);
+DResult d_dyn_string_init_from_string_view(DDynString *new_dyn_string, DStringView view);
 
 #endif

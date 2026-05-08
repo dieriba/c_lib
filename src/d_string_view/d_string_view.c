@@ -421,21 +421,20 @@ DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn)
     return d_string_view_subview(view, 0, i == MAX_SIZE_T_VALUE ? 0 : i + 1);
 }
 
-DResult d_dyn_string_new_from_string_view(DDynString **new_dyn_string, DStringView view)
+DResult d_dyn_string_init_from_string_view(DDynString *new_dyn_string, DStringView view)
 {
-    return d_dyn_string_new_with_sub_string(new_dyn_string, view.data, 0, view.size);
+    return d_dyn_string_init_with_sub_string(new_dyn_string, view.data, 0, view.size);
 }
 
-DResult d_string_view_split_by_char_of_str(DDynArray **new_dyn_array, DStringView view, BufferOpts opts, char *str)
+DResult d_string_view_split_by_char_of_str(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char *str)
 {
     if (new_dyn_array == NULL || str == NULL)
         return D_ERR_INVALID_ARG;
     DResult op_result;
     usize size = view.size;
-    if ((op_result = d_dyn_array_new_ptr_arr(new_dyn_array, size, _free_str, opts)) != D_OK)
+    if ((op_result = d_dyn_array_init_ptr_arr(new_dyn_array, size, _free_str, opts)) != D_OK)
         return op_result;
     const char *string = view.data;
-    DDynArray *dyn_array = *new_dyn_array;
     usize str_len = strlen(str);
     for (usize i = 0; i < size;)
     {
@@ -445,7 +444,7 @@ DResult d_string_view_split_by_char_of_str(DDynArray **new_dyn_array, DStringVie
         {
             usize j = d_string_view_find_first_char_in_set_from_index(view, str, i);
             char *str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
-            if ((op_result = d_dyn_array_push_back_ptr(dyn_array, str)) != D_OK)
+            if ((op_result = d_dyn_array_push_back_ptr(new_dyn_array, str)) != D_OK)
             {
                 d_dyn_array_destroy(new_dyn_array);
                 return op_result;
@@ -458,16 +457,15 @@ DResult d_string_view_split_by_char_of_str(DDynArray **new_dyn_array, DStringVie
     return D_OK;
 }
 
-DResult d_string_view_split_by_char(DDynArray **new_dyn_array, DStringView view, BufferOpts opts, char c)
+DResult d_string_view_split_by_char(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char c)
 {
     if (new_dyn_array == NULL)
         return D_ERR_INVALID_ARG;
     DResult op_result;
     usize size = view.size;
-    if ((op_result = d_dyn_array_new_ptr_arr(new_dyn_array, size, _free_str, opts)) != D_OK)
+    if ((op_result = d_dyn_array_init_ptr_arr(new_dyn_array, size, _free_str, opts)) != D_OK)
         return op_result;
     const char *str = view.data;
-    DDynArray *dyn_array = *new_dyn_array;
     for (usize i = 0; i < size;)
     {
         while (i < size && str[i] == c)
@@ -476,7 +474,7 @@ DResult d_string_view_split_by_char(DDynArray **new_dyn_array, DStringView view,
         {
             usize j = d_string_view_find_first_matching_char_from_index(view, c, i);
             char *str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
-            if ((op_result = d_dyn_array_push_back_ptr(dyn_array, str)) != D_OK)
+            if ((op_result = d_dyn_array_push_back_ptr(new_dyn_array, str)) != D_OK)
             {
                 d_dyn_array_destroy(new_dyn_array);
                 return op_result;
