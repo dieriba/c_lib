@@ -3,7 +3,7 @@
 
 #define VALUE_SIZE 0UL
 #define D_HASH_SET_DEFINE_TYPED_CTOR(KEY_TYPE, KEY_NAME)                                                                   \
-    DResult d_hash_set_new_##KEY_NAME##_key(DHashSet **d_hash_set, usize capacity, FnPtrFreeHashMap free_fn)                     \
+    DResult d_hash_set_new_##KEY_NAME##_key(DHashSet **d_hash_set, usize capacity, FnPtrFreeHashMap free_fn)               \
     {                                                                                                                      \
         return d_hash_set_new(d_hash_set, sizeof(KEY_TYPE), capacity, hash_##KEY_NAME##_key, compare_##KEY_NAME, free_fn); \
     }

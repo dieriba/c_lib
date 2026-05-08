@@ -36,6 +36,8 @@
 #define compute_index_from_group_offset(group_number, offset) (group_number * RAW_MAP_GROUP_SIZE) + offset
 #define d_index_least_least_significant_bits_zero_based(value) d_bits_get_index_least_significant_bit_set_int(value) - 1
 
+typedef DResult (*HandleSlot)(RawMap *raw_map, void *key, void *value);
+
 typedef enum RawMapCtrl
 {
     kEmpty = -128, // 0b10000000
@@ -192,7 +194,7 @@ static void make_insert(RawMap *raw_map, usize position, void *key, void *value)
     memcpy(slot_value, value, raw_map->value_size);
 }
 
-static void iterate_on_map_occupied_slot(RawMap *raw_map, void *map, usize map_group_number, usize map_total_occupied_slot, DResult (*handle_slot)(RawMap *raw_map, void *key, void *value))
+static void iterate_on_map_occupied_slot(RawMap *raw_map, void *map, usize map_group_number, usize map_total_occupied_slot, HandleSlot handle_slot)
 {
     usize occupied_slot_handled = 0;
     usize group_number = 0;
@@ -319,7 +321,8 @@ DResult raw_map_delete(RawMap *raw_map, void *key)
     {
         *ctrl = kDeleted;
         raw_map->size--;
-        free_slot_at(raw_map, position);
+        if (raw_map->free_fn)
+            free_slot_at(raw_map, position);
         return D_OK;
     }
     return D_ERR_NOT_EXIST;
