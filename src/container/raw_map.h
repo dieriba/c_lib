@@ -49,7 +49,7 @@ static inline bool compare_str(void *s1, void *s2)
 
 static inline bool compare_d_string_view(void *view1, void *view2)
 {
-    return view1 && view2 && d_string_view_compare(*(DStringView *)view1, *(DStringView *)view2) == D_COMPARE_EQUAL;
+    return view1 && view2 && d_string_view_compare(*(DStringView *)view1, *(DStringView *)view2);
 }
 
 static inline bool compare_d_dyn_string(void *d_dyn_str_1, void *d_dyn_str_2)
@@ -97,9 +97,7 @@ static inline u64 hash_d_string_view_key(void *data)
 static inline u64 hash_d_dyn_string_key(void *data)
 {
     DDynString *s = *((DDynString **)data);
-    usize size;
-    d_dyn_string_get_size(s, &size);
-    return wyhash(d_dyn_string_get_string(s), size, 0, _wyp);
+    return wyhash(d_dyn_string_get_string(s), s->str.size, 0, _wyp);
 }
 
 #define GENERATE_HASH_X_TYPE(KEY_TYPE_NAME, KEY_TYPE)        \
