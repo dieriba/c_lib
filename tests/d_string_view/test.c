@@ -32,12 +32,12 @@ static bool is_lower_like(char c)
 static void expect_view(DStringView view, const char *data, usize size)
 {
     D_TEST_EXPR(d_string_view_len(view) == size);
+    D_TEST_NOT_NULL(view.data);
     if (size == 0)
     {
         D_TEST_EXPR(view.size == 0);
         return;
     }
-    D_TEST_NOT_NULL(view.data);
     D_TEST_MEM_EQ(view.data, data, size);
 }
 
@@ -70,18 +70,18 @@ static void test_from_parts_keeps_pointer_and_size_for_valid_buffer(void)
     D_TEST_EXPR(view.size == sizeof(buf));
 }
 
-static void test_from_parts_null_normalizes_to_empty_null_view(void)
+static void test_from_parts_null_normalizes_to_empty_view(void)
 {
     DStringView view = d_string_view_from_parts(NULL, 1234);
-    D_TEST_NULL(view.data);
+    D_TEST_NOT_NULL(view.data);
     D_TEST_EXPR(view.size == 0);
     D_TEST_EXPR(d_string_view_is_empty(view));
 }
 
-static void test_from_c_string_null_returns_empty_null_view(void)
+static void test_from_c_string_null_returns_empty_view(void)
 {
     DStringView view = d_string_view_from_c_string(NULL);
-    D_TEST_NULL(view.data);
+    D_TEST_NOT_NULL(view.data);
     D_TEST_EXPR(view.size == 0);
 }
 
@@ -96,7 +96,7 @@ static void test_from_c_string_stops_at_first_nul(void)
 static void test_from_dyn_string_null_returns_empty_view(void)
 {
     DStringView view = d_string_view_from_dyn_string(NULL);
-    D_TEST_NULL(view.data);
+    D_TEST_NOT_NULL(view.data);
     D_TEST_EXPR(view.size == 0);
 }
 
@@ -133,9 +133,14 @@ static void test_get_char_at_reads_embedded_nul_and_edges(void)
 {
     const char buf[] = {'A', '\0', 'B'};
     DStringView view = d_string_view_from_parts(buf, sizeof(buf));
-    D_TEST_EXPR(d_string_view_get_char_at(view, 0) == 'A');
-    D_TEST_EXPR(d_string_view_get_char_at(view, 1) == '\0');
-    D_TEST_EXPR(d_string_view_get_char_at(view, 2) == 'B');
+    char out;
+    D_TEST_EXPR(d_string_view_get_char_at(view, 0, &out) == D_OK);
+    D_TEST_EXPR(out == 'A');
+    D_TEST_EXPR(d_string_view_get_char_at(view, 1, &out) == D_OK);
+    D_TEST_EXPR(out == '\0');
+    D_TEST_EXPR(d_string_view_get_char_at(view, 2, &out) == D_OK);
+    D_TEST_EXPR(out == 'B');
+    D_TEST_EXPR(d_string_view_get_char_at(view, 3, &out) == D_ERR_INVALID_ARG);
 }
 
 static void test_subview_middle_does_not_allocate_and_points_inside_original(void)
@@ -162,19 +167,19 @@ static void test_subview_pos_equal_len_returns_valid_empty_string_pointer(void)
     D_TEST_STR_EQ(sub.data, "");
 }
 
-static void test_subview_pos_greater_than_len_returns_null_empty_view(void)
+static void test_subview_pos_greater_than_len_returns_empty_view(void)
 {
     DStringView view = d_string_view_from_c_string("abc");
     DStringView sub = d_string_view_subview(view, 4, 1);
-    D_TEST_NULL(sub.data);
+    D_TEST_NOT_NULL(sub.data);
     D_TEST_EXPR(sub.size == 0);
 }
 
-static void test_subview_null_view_returns_null_empty_view(void)
+static void test_subview_empty_view_at_pos_zero_returns_empty_view(void)
 {
     DStringView view = d_string_view_from_parts(NULL, 0);
     DStringView sub = d_string_view_subview(view, 0, 1);
-    D_TEST_NULL(sub.data);
+    D_TEST_NOT_NULL(sub.data);
     D_TEST_EXPR(sub.size == 0);
 }
 
@@ -213,11 +218,13 @@ static void test_substr_pos_past_len_returns_null(void)
     D_TEST_NULL(sub);
 }
 
-static void test_substr_null_view_returns_null_not_empty_string(void)
+static void test_substr_empty_view_at_pos_zero_returns_allocated_empty_string(void)
 {
     DStringView view = d_string_view_from_parts(NULL, 0);
     char *sub = d_string_view_substr(view, 0, 1);
-    D_TEST_NULL(sub);
+    D_TEST_NOT_NULL(sub);
+    D_TEST_STR_EQ(sub, "");
+    free(sub);
 }
 
 static void test_substr_zero_len_allocates_empty_string(void)
@@ -258,53 +265,53 @@ static void test_substr_should_copy_embedded_nul_inside_result(void)
 }
 
 /* compare / equality */
-static void test_compare_equal_views_returns_zero(void)
+static void test_compare_equal_views_returns_true(void)
 {
-    D_TEST_EXPR(d_string_view_compare(d_string_view_from_c_string("abc"), d_string_view_from_c_string("abc")) == 0);
+    D_TEST_EXPR(d_string_view_compare(d_string_view_from_c_string("abc"), d_string_view_from_c_string("abc")) == true);
 }
 
-static void test_compare_same_prefix_different_lengths_returns_nonzero(void)
+static void test_compare_same_prefix_different_lengths_returns_false(void)
 {
-    D_TEST_EXPR(d_string_view_compare(d_string_view_from_c_string("abc"), d_string_view_from_c_string("abcd")) != 0);
+    D_TEST_EXPR(d_string_view_compare(d_string_view_from_c_string("abc"), d_string_view_from_c_string("abcd")) == false);
 }
 
-static void test_compare_different_same_length_views_return_not_equal(void)
+static void test_compare_different_same_length_views_return_false(void)
 {
-    D_TEST_EXPR(d_string_view_compare(d_string_view_from_c_string("abc"), d_string_view_from_c_string("abd")) == D_COMPARE_NOT_EQUAL);
-    D_TEST_EXPR(d_string_view_compare(d_string_view_from_c_string("abd"), d_string_view_from_c_string("abc")) == D_COMPARE_NOT_EQUAL);
+    D_TEST_EXPR(d_string_view_compare(d_string_view_from_c_string("abc"), d_string_view_from_c_string("abd")) == false);
+    D_TEST_EXPR(d_string_view_compare(d_string_view_from_c_string("abd"), d_string_view_from_c_string("abc")) == false);
 }
 
 static void test_compare_handles_embedded_nul_by_size(void)
 {
     const char a[] = {'a', '\0', 'b'};
     const char b[] = {'a', '\0', 'c'};
-    D_TEST_EXPR(d_string_view_compare(d_string_view_from_parts(a, 3), d_string_view_from_parts(b, 3)) == D_COMPARE_NOT_EQUAL);
+    D_TEST_EXPR(d_string_view_compare(d_string_view_from_parts(a, 3), d_string_view_from_parts(b, 3)) == false);
 }
 
 static void test_compare_against_c_string_equal_and_not_equal(void)
 {
     DStringView view = d_string_view_from_c_string("hello");
-    D_TEST_EXPR(d_string_view_compare_against_c_string(view, "hello") == D_COMPARE_EQUAL);
-    D_TEST_EXPR(d_string_view_compare_against_c_string(view, "world") == D_COMPARE_NOT_EQUAL);
-    D_TEST_EXPR(d_string_view_compare_against_c_string(view, "hell") == D_COMPARE_NOT_EQUAL);
+    D_TEST_EXPR(d_string_view_compare_against_c_string(view, "hello") == true);
+    D_TEST_EXPR(d_string_view_compare_against_c_string(view, "world") == false);
+    D_TEST_EXPR(d_string_view_compare_against_c_string(view, "hell")  == false);
 }
 
 static void test_equals_views_with_embedded_nul(void)
 {
     const char a[] = {'x', '\0', 'y'};
     const char b[] = {'x', '\0', 'y'};
-    D_TEST_EXPR(d_string_view_equals(d_string_view_from_parts(a, 3), d_string_view_from_parts(b, 3)));
+    D_TEST_EXPR(d_string_view_compare(d_string_view_from_parts(a, 3), d_string_view_from_parts(b, 3)) == true);
 }
 
 static void test_equals_c_string_rejects_view_with_extra_embedded_data(void)
 {
     const char a[] = {'a', 'b', '\0', 'c'};
-    D_TEST_EXPR(!d_string_view_equals_c_string(d_string_view_from_parts(a, 4), "ab"));
+    D_TEST_EXPR(d_string_view_compare_against_c_string(d_string_view_from_parts(a, 4), "ab") == false);
 }
 
-static void test_empty_null_view_equals_empty_c_string(void)
+static void test_empty_view_equals_empty_c_string(void)
 {
-    D_TEST_EXPR(d_string_view_equals_c_string(d_string_view_from_parts(NULL, 0), ""));
+    D_TEST_EXPR(d_string_view_compare_against_c_string(d_string_view_from_parts(NULL, 0), "") == true);
 }
 
 /* starts/ends */
@@ -392,7 +399,7 @@ static void test_find_char_handles_embedded_nul(void)
     D_TEST_EXPR(d_string_view_find_last_matching_char_from_end(view, '\0') == 3);
 }
 
-static void test_find_char_on_null_and_empty_views_returns_not_found(void)
+static void test_find_char_on_empty_views_returns_not_found(void)
 {
     D_TEST_EXPR(d_string_view_find_first_matching_char_from_start(d_string_view_from_parts(NULL, 0), 'x') == MAX_SIZE_T_VALUE);
     D_TEST_EXPR(d_string_view_find_last_matching_char_from_end(d_string_view_from_parts(NULL, 0), 'x') == MAX_SIZE_T_VALUE);
@@ -400,20 +407,20 @@ static void test_find_char_on_null_and_empty_views_returns_not_found(void)
     D_TEST_EXPR(d_string_view_find_last_matching_char_from_end(d_string_view_from_c_string(""), 'x') == MAX_SIZE_T_VALUE);
 }
 
-/* view/c-string find */
+/* view find */
 static void test_find_first_matching_view_basic_and_overlapping(void)
 {
     DStringView view = d_string_view_from_c_string("aaaa");
-    D_TEST_EXPR(d_string_view_find_first_matching_c_string_from_start(view, "aa") == 0);
-    D_TEST_EXPR(d_string_view_find_first_matching_c_string_from_index(view, "aa", 1) == 1);
-    D_TEST_EXPR(d_string_view_find_first_matching_c_string_from_index(view, "aa", 3) == MAX_SIZE_T_VALUE);
+    D_TEST_EXPR(d_string_view_find_first_matching_view_from_start(view, D_STRING_VIEW_FROM_LITERAL("aa")) == 0);
+    D_TEST_EXPR(d_string_view_find_first_matching_view_from_index(view, D_STRING_VIEW_FROM_LITERAL("aa"), 1) == 1);
+    D_TEST_EXPR(d_string_view_find_first_matching_view_from_index(view, D_STRING_VIEW_FROM_LITERAL("aa"), 3) == MAX_SIZE_T_VALUE);
 }
 
 static void test_find_last_matching_view_basic_and_overlapping(void)
 {
     DStringView view = d_string_view_from_c_string("aaaa");
-    D_TEST_EXPR(d_string_view_find_last_matching_c_string_from_end(view, "aa") == 2);
-    D_TEST_EXPR(d_string_view_find_last_matching_c_string_from_index(view, "aa", 1) == 1);
+    D_TEST_EXPR(d_string_view_find_last_matching_view_from_end(view, D_STRING_VIEW_FROM_LITERAL("aa")) == 2);
+    D_TEST_EXPR(d_string_view_find_last_matching_view_from_index(view, D_STRING_VIEW_FROM_LITERAL("aa"), 1) == 1);
 }
 
 static void test_find_matching_view_with_embedded_nul_needle(void)
@@ -430,52 +437,52 @@ static void test_find_matching_view_with_embedded_nul_needle(void)
 static void test_find_first_empty_needle_at_start_and_middle(void)
 {
     DStringView view = d_string_view_from_c_string("abc");
-    D_TEST_EXPR(d_string_view_find_first_matching_c_string_from_index(view, "", 0) == 0);
-    D_TEST_EXPR(d_string_view_find_first_matching_c_string_from_index(view, "", 2) == 2);
+    D_TEST_EXPR(d_string_view_find_first_matching_view_from_index(view, D_STRING_VIEW_FROM_LITERAL(""), 0) == 0);
+    D_TEST_EXPR(d_string_view_find_first_matching_view_from_index(view, D_STRING_VIEW_FROM_LITERAL(""), 2) == 2);
 }
 
 static void test_find_last_empty_needle_clamps_to_len(void)
 {
     DStringView view = d_string_view_from_c_string("abc");
-    D_TEST_EXPR(d_string_view_find_last_matching_c_string_from_index(view, "", 0) == 0);
-    D_TEST_EXPR(d_string_view_find_last_matching_c_string_from_index(view, "", 2) == 2);
-    D_TEST_EXPR(d_string_view_find_last_matching_c_string_from_index(view, "", 999) == 3);
+    D_TEST_EXPR(d_string_view_find_last_matching_view_from_index(view, D_STRING_VIEW_FROM_LITERAL(""), 0) == 0);
+    D_TEST_EXPR(d_string_view_find_last_matching_view_from_index(view, D_STRING_VIEW_FROM_LITERAL(""), 2) == 2);
+    D_TEST_EXPR(d_string_view_find_last_matching_view_from_index(view, D_STRING_VIEW_FROM_LITERAL(""), 999) == 3);
 }
 
 static void test_find_view_on_empty_haystack(void)
 {
     DStringView empty = d_string_view_from_c_string("");
-    D_TEST_EXPR(d_string_view_find_first_matching_c_string_from_start(empty, "a") == MAX_SIZE_T_VALUE);
-    D_TEST_EXPR(d_string_view_find_last_matching_c_string_from_end(empty, "a") == MAX_SIZE_T_VALUE);
+    D_TEST_EXPR(d_string_view_find_first_matching_view_from_start(empty, D_STRING_VIEW_FROM_LITERAL("a")) == MAX_SIZE_T_VALUE);
+    D_TEST_EXPR(d_string_view_find_last_matching_view_from_end(empty, D_STRING_VIEW_FROM_LITERAL("a")) == MAX_SIZE_T_VALUE);
 }
 
 /* set find */
 static void test_find_first_char_in_set_and_not_in_set(void)
 {
     DStringView view = d_string_view_from_c_string("abc123");
-    D_TEST_EXPR(d_string_view_find_first_char_in_set_from_start(view, "0123456789") == 3);
-    D_TEST_EXPR(d_string_view_find_first_char_not_in_set_from_start(view, "abc") == 3);
+    D_TEST_EXPR(d_string_view_find_first_char_in_set_from_start(view, D_STRING_VIEW_FROM_LITERAL("0123456789")) == 3);
+    D_TEST_EXPR(d_string_view_find_first_char_not_in_set_from_start(view, D_STRING_VIEW_FROM_LITERAL("abc")) == 3);
 }
 
 static void test_find_last_char_in_set_and_not_in_set(void)
 {
     DStringView view = d_string_view_from_c_string("abc123abc");
-    D_TEST_EXPR(d_string_view_find_last_char_in_set_from_end(view, "0123456789") == 5);
-    D_TEST_EXPR(d_string_view_find_last_char_not_in_set_from_end(view, "abc") == 5);
+    D_TEST_EXPR(d_string_view_find_last_char_in_set_from_end(view, D_STRING_VIEW_FROM_LITERAL("0123456789")) == 5);
+    D_TEST_EXPR(d_string_view_find_last_char_not_in_set_from_end(view, D_STRING_VIEW_FROM_LITERAL("abc")) == 5);
 }
 
 static void test_find_char_in_empty_set_returns_not_found(void)
 {
     DStringView view = d_string_view_from_c_string("abc");
-    D_TEST_EXPR(d_string_view_find_first_char_in_set_from_start(view, "") == MAX_SIZE_T_VALUE);
-    D_TEST_EXPR(d_string_view_find_last_char_in_set_from_end(view, "") == MAX_SIZE_T_VALUE);
+    D_TEST_EXPR(d_string_view_find_first_char_in_set_from_start(view, D_STRING_VIEW_FROM_LITERAL("")) == MAX_SIZE_T_VALUE);
+    D_TEST_EXPR(d_string_view_find_last_char_in_set_from_end(view, D_STRING_VIEW_FROM_LITERAL("")) == MAX_SIZE_T_VALUE);
 }
 
 static void test_find_char_not_in_empty_set_returns_edges(void)
 {
     DStringView view = d_string_view_from_c_string("abc");
-    D_TEST_EXPR(d_string_view_find_first_char_not_in_set_from_start(view, "") == 0);
-    D_TEST_EXPR(d_string_view_find_last_char_not_in_set_from_end(view, "") == 2);
+    D_TEST_EXPR(d_string_view_find_first_char_not_in_set_from_start(view, D_STRING_VIEW_FROM_LITERAL("")) == 0);
+    D_TEST_EXPR(d_string_view_find_last_char_not_in_set_from_end(view, D_STRING_VIEW_FROM_LITERAL("")) == 2);
 }
 
 /* predicate find */
@@ -561,7 +568,6 @@ static void test_trim_empty_and_null_views_are_safe(void)
     D_TEST_EXPR(d_string_view_trim_right_by_char(nullv, 'x').size == 0);
 }
 
-
 static void test_split_by_char_basic_skips_empty_tokens(void)
 {
     DDynArray arr;
@@ -616,7 +622,7 @@ static void test_split_by_char_rejects_null_output_pointer(void)
 static void test_split_by_char_of_str_basic_multiple_separators(void)
 {
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char_of_str(&arr, d_string_view_from_c_string("a,b;c::d"), ARRAY_DEFAULT_OPTS, ",;:") == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_of_str(&arr, d_string_view_from_c_string("a,b;c::d"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",;:")) == D_OK);
     expect_split_size(&arr, 4);
     expect_split_elem(&arr, 0, "a");
     expect_split_elem(&arr, 1, "b");
@@ -628,7 +634,7 @@ static void test_split_by_char_of_str_basic_multiple_separators(void)
 static void test_split_by_char_of_str_collapses_consecutive_separators(void)
 {
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char_of_str(&arr, d_string_view_from_c_string(";;a,,b::"), ARRAY_DEFAULT_OPTS, ",;:") == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_of_str(&arr, d_string_view_from_c_string(";;a,,b::"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",;:")) == D_OK);
     expect_split_size(&arr, 2);
     expect_split_elem(&arr, 0, "a");
     expect_split_elem(&arr, 1, "b");
@@ -638,17 +644,15 @@ static void test_split_by_char_of_str_collapses_consecutive_separators(void)
 static void test_split_by_char_of_str_empty_separator_set_returns_whole_string(void)
 {
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char_of_str(&arr, d_string_view_from_c_string("abc"), ARRAY_DEFAULT_OPTS, "") == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_of_str(&arr, d_string_view_from_c_string("abc"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL("")) == D_OK);
     expect_split_size(&arr, 1);
     expect_split_elem(&arr, 0, "abc");
     d_dyn_array_destroy(&arr);
 }
 
-static void test_split_by_char_of_str_rejects_null_args(void)
+static void test_split_by_char_of_str_rejects_null_output_pointer(void)
 {
-    DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char_of_str(NULL, d_string_view_from_c_string("a"), ARRAY_DEFAULT_OPTS, ",") == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(d_string_view_split_by_char_of_str(&arr, d_string_view_from_c_string("a"), ARRAY_DEFAULT_OPTS, NULL) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_string_view_split_by_char_of_str(NULL, d_string_view_from_c_string("a"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",")) == D_ERR_INVALID_ARG);
 }
 
 static void test_split_by_char_should_respect_embedded_nul_in_view(void)
@@ -699,10 +703,12 @@ static void test_dyn_string_init_from_string_view_rejects_null_dstring(void)
     D_TEST_EXPR(d_dyn_string_init_from_string_view(NULL, d_string_view_from_c_string("abc")) == D_ERR_INVALID_ARG);
 }
 
-static void test_dyn_string_init_from_string_view_rejects_null_data(void)
+static void test_dyn_string_init_from_string_view_from_null_parts_succeeds(void)
 {
     DDynString s;
-    D_TEST_EXPR(d_dyn_string_init_from_string_view(&s, d_string_view_from_parts(NULL, 0)) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_dyn_string_init_from_string_view(&s, d_string_view_from_parts(NULL, 0)) == D_OK);
+    D_TEST_STR_EQ(d_dyn_string_get_string(&s), "");
+    d_dyn_string_destroy(&s);
 }
 
 static void test_dyn_string_init_from_string_view_preserves_embedded_nul(void)
@@ -771,10 +777,10 @@ static void test_search_every_character_matches_memchr_expectations(void)
 static void test_find_substring_many_overlapping_positions(void)
 {
     DStringView view = d_string_view_from_c_string("abababababab");
-    D_TEST_EXPR(d_string_view_find_first_matching_c_string_from_start(view, "abab") == 0);
-    D_TEST_EXPR(d_string_view_find_first_matching_c_string_from_index(view, "abab", 1) == 2);
-    D_TEST_EXPR(d_string_view_find_first_matching_c_string_from_index(view, "abab", 3) == 4);
-    D_TEST_EXPR(d_string_view_find_last_matching_c_string_from_end(view, "abab") == 8);
+    D_TEST_EXPR(d_string_view_find_first_matching_view_from_start(view, D_STRING_VIEW_FROM_LITERAL("abab")) == 0);
+    D_TEST_EXPR(d_string_view_find_first_matching_view_from_index(view, D_STRING_VIEW_FROM_LITERAL("abab"), 1) == 2);
+    D_TEST_EXPR(d_string_view_find_first_matching_view_from_index(view, D_STRING_VIEW_FROM_LITERAL("abab"), 3) == 4);
+    D_TEST_EXPR(d_string_view_find_last_matching_view_from_end(view, D_STRING_VIEW_FROM_LITERAL("abab")) == 8);
 }
 
 static void test_split_long_string_many_tokens(void)
@@ -814,8 +820,8 @@ int main(void)
 {
     DTest tests[] = {
         D_TEST_GENERATE_TEST(test_from_parts_keeps_pointer_and_size_for_valid_buffer),
-        D_TEST_GENERATE_TEST(test_from_parts_null_normalizes_to_empty_null_view),
-        D_TEST_GENERATE_TEST(test_from_c_string_null_returns_empty_null_view),
+        D_TEST_GENERATE_TEST(test_from_parts_null_normalizes_to_empty_view),
+        D_TEST_GENERATE_TEST(test_from_c_string_null_returns_empty_view),
         D_TEST_GENERATE_TEST(test_from_c_string_stops_at_first_nul),
         D_TEST_GENERATE_TEST(test_from_dyn_string_null_returns_empty_view),
         D_TEST_GENERATE_TEST(test_from_dyn_string_points_to_dyn_string_storage),
@@ -825,24 +831,24 @@ int main(void)
         D_TEST_GENERATE_TEST(test_subview_middle_does_not_allocate_and_points_inside_original),
         D_TEST_GENERATE_TEST(test_subview_clamps_size_past_end),
         D_TEST_GENERATE_TEST(test_subview_pos_equal_len_returns_valid_empty_string_pointer),
-        D_TEST_GENERATE_TEST(test_subview_pos_greater_than_len_returns_null_empty_view),
-        D_TEST_GENERATE_TEST(test_subview_null_view_returns_null_empty_view),
+        D_TEST_GENERATE_TEST(test_subview_pos_greater_than_len_returns_empty_view),
+        D_TEST_GENERATE_TEST(test_subview_empty_view_at_pos_zero_returns_empty_view),
         D_TEST_GENERATE_TEST(test_subview_zero_size_in_middle_keeps_position_pointer),
         D_TEST_GENERATE_TEST(test_substr_allocates_copy_and_terminates),
         D_TEST_GENERATE_TEST(test_substr_pos_at_len_returns_allocated_empty_string),
         D_TEST_GENERATE_TEST(test_substr_pos_past_len_returns_null),
-        D_TEST_GENERATE_TEST(test_substr_null_view_returns_null_not_empty_string),
+        D_TEST_GENERATE_TEST(test_substr_empty_view_at_pos_zero_returns_allocated_empty_string),
         D_TEST_GENERATE_TEST(test_substr_zero_len_allocates_empty_string),
         D_TEST_GENERATE_TEST(test_substr_should_respect_view_size_with_embedded_nul_before_pos),
         D_TEST_GENERATE_TEST(test_substr_should_copy_embedded_nul_inside_result),
-        D_TEST_GENERATE_TEST(test_compare_equal_views_returns_zero),
-        D_TEST_GENERATE_TEST(test_compare_same_prefix_different_lengths_returns_nonzero),
-        D_TEST_GENERATE_TEST(test_compare_different_same_length_views_return_not_equal),
+        D_TEST_GENERATE_TEST(test_compare_equal_views_returns_true),
+        D_TEST_GENERATE_TEST(test_compare_same_prefix_different_lengths_returns_false),
+        D_TEST_GENERATE_TEST(test_compare_different_same_length_views_return_false),
         D_TEST_GENERATE_TEST(test_compare_handles_embedded_nul_by_size),
         D_TEST_GENERATE_TEST(test_compare_against_c_string_equal_and_not_equal),
         D_TEST_GENERATE_TEST(test_equals_views_with_embedded_nul),
         D_TEST_GENERATE_TEST(test_equals_c_string_rejects_view_with_extra_embedded_data),
-        D_TEST_GENERATE_TEST(test_empty_null_view_equals_empty_c_string),
+        D_TEST_GENERATE_TEST(test_empty_view_equals_empty_c_string),
         D_TEST_GENERATE_TEST(test_starts_and_ends_with_char_basic_edges),
         D_TEST_GENERATE_TEST(test_starts_and_ends_with_embedded_nul_views),
         D_TEST_GENERATE_TEST(test_starts_ends_empty_prefix_suffix_are_true),
@@ -853,7 +859,7 @@ int main(void)
         D_TEST_GENERATE_TEST(test_find_last_matching_char_clamps_large_pos_to_end),
         D_TEST_GENERATE_TEST(test_find_last_not_matching_char),
         D_TEST_GENERATE_TEST(test_find_char_handles_embedded_nul),
-        D_TEST_GENERATE_TEST(test_find_char_on_null_and_empty_views_returns_not_found),
+        D_TEST_GENERATE_TEST(test_find_char_on_empty_views_returns_not_found),
         D_TEST_GENERATE_TEST(test_find_first_matching_view_basic_and_overlapping),
         D_TEST_GENERATE_TEST(test_find_last_matching_view_basic_and_overlapping),
         D_TEST_GENERATE_TEST(test_find_matching_view_with_embedded_nul_needle),
@@ -883,13 +889,13 @@ int main(void)
         D_TEST_GENERATE_TEST(test_split_by_char_of_str_basic_multiple_separators),
         D_TEST_GENERATE_TEST(test_split_by_char_of_str_collapses_consecutive_separators),
         D_TEST_GENERATE_TEST(test_split_by_char_of_str_empty_separator_set_returns_whole_string),
-        D_TEST_GENERATE_TEST(test_split_by_char_of_str_rejects_null_args),
+        D_TEST_GENERATE_TEST(test_split_by_char_of_str_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_split_by_char_should_respect_embedded_nul_in_view),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_basic),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_subview),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_empty_view),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_rejects_null_dstring),
-        D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_rejects_null_data),
+        D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_from_null_parts_succeeds),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_preserves_embedded_nul),
         D_TEST_GENERATE_TEST(test_repeated_subviews_across_every_position_and_length),
         D_TEST_GENERATE_TEST(test_search_every_character_matches_memchr_expectations),

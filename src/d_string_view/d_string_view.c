@@ -21,7 +21,8 @@ static bool not_match_char(char c1, const void *c2)
 
 static bool char_in_set(char c, const void *set)
 {
-    return strchr((const char *)set, c) != NULL;
+    const DStringView *set_view = set;
+    return memchr(set_view->data, c, set_view->size) != NULL;
 }
 
 static bool not_char_in_set(char c, const void *set)
@@ -42,7 +43,7 @@ static bool not_match_predicate(char c, const void *ctx)
 
 static usize find_first_from_index(DStringView view, usize pos, char_match_fn matches, const void *ctx)
 {
-    if (view.data == NULL || pos >= view.size)
+    if (pos >= view.size || ctx == NULL)
         return MAX_SIZE_T_VALUE;
 
     for (usize i = pos; i < view.size; ++i)
@@ -55,7 +56,7 @@ static usize find_first_from_index(DStringView view, usize pos, char_match_fn ma
 
 static usize find_last_from_index(DStringView view, usize pos, char_match_fn matches, const void *ctx)
 {
-    if (view.data == NULL || view.size == 0)
+    if (view.size == 0 || ctx == NULL)
         return MAX_SIZE_T_VALUE;
 
     pos = pos >= view.size ? view.size - 1 : pos;
@@ -82,29 +83,24 @@ char *d_string_view_substr(DStringView view, usize pos, usize size)
 
 DStringView d_string_view_from_parts(const char *data, usize size)
 {
-    DStringView view = {
-        .data = data,
-        .size = (data == NULL) ? 0 : size};
-
-    return view;
+    return (DStringView){
+        .data = data == NULL ? "" : data,
+        .size = data == NULL ? 0 : size,
+    };
 }
 
 DStringView d_string_view_from_c_string(const char *c_str)
 {
-    DStringView view = {
-        .data = c_str,
-        .size = (c_str == NULL) ? 0 : strlen(c_str)};
-
-    return view;
+    if (c_str == NULL)
+        return (DStringView){.data = "", .size = 0};
+    return (DStringView){.data = c_str, .size = strlen(c_str)};
 }
 
 DStringView d_string_view_from_dyn_string(const DDynString *dstring)
 {
     if (dstring == NULL)
-        return d_string_view_from_parts(NULL, 0);
-    usize size;
-    d_dyn_string_get_size(dstring, &size);
-    return d_string_view_from_parts(d_dyn_string_get_string(dstring), size);
+        return (DStringView){.data = "", .size = 0};
+    return d_string_view_from_parts(d_dyn_string_get_string(dstring), dstring->str.size);
 }
 
 bool d_string_view_is_empty(DStringView view)
@@ -122,49 +118,34 @@ const char *d_string_view_data(DStringView view)
     return view.data;
 }
 
-char d_string_view_get_char_at(DStringView view, usize index)
+DResult d_string_view_get_char_at(DStringView view, usize index, char *out)
 {
-#ifdef BOUNDARY_CHECK
-    if (index >= view.size)
-    {
-        /* stop program execution */
-    }
-#endif
-    return view.data[index];
+    if (index >= view.size || out == NULL)
+        return D_ERR_INVALID_ARG;
+    *out = view.data[index];
+    return D_OK;
 }
 
 DStringView d_string_view_subview(DStringView view, usize pos, usize size)
 {
-    if (view.data == NULL || pos > view.size)
-        return d_string_view_from_parts(NULL, 0);
-    else if (pos == view.size)
-        return d_string_view_from_parts("", 0);
+    if (pos >= view.size)
+        return (DStringView){.data = "", .size = 0};
 
     usize chr_viewable = view.size - pos;
     size = chr_viewable < size ? chr_viewable : size;
     return d_string_view_from_parts(view.data + pos, size);
 }
 
-DCompareResult d_string_view_compare(DStringView view1, DStringView view2)
+bool d_string_view_compare(DStringView view1, DStringView view2)
 {
     if (view1.size != view2.size)
-        return D_COMPARE_NOT_EQUAL;
-    return memcmp(view1.data, view2.data, view1.size) == 0 ? D_COMPARE_EQUAL : D_COMPARE_NOT_EQUAL;
+        return false;
+    return memcmp(view1.data, view2.data, view1.size) == 0;
 }
 
-int d_string_view_compare_against_c_string(DStringView view, const char *c_str)
+bool d_string_view_compare_against_c_string(DStringView view, const char *c_str)
 {
     return d_string_view_compare(view, d_string_view_from_c_string(c_str));
-}
-
-bool d_string_view_equals(DStringView view1, DStringView view2)
-{
-    return d_string_view_compare(view1, view2) == 0;
-}
-
-bool d_string_view_equals_c_string(DStringView view, const char *c_str)
-{
-    return d_string_view_compare_against_c_string(view, c_str) == 0;
 }
 
 bool d_string_view_starts_with_char(DStringView view, char c)
@@ -247,14 +228,12 @@ usize d_string_view_find_first_matching_view_from_index(DStringView view, DStrin
         return MAX_SIZE_T_VALUE;
     if (to_find.size == 0)
         return pos;
-    if (to_find.size > view.size - pos)
+    if (view.size - pos < to_find.size)
         return MAX_SIZE_T_VALUE;
-
-    for (usize i = pos; i < view.size; ++i)
+    usize stop = view.size - to_find.size;
+    for (usize i = pos; i <= stop; ++i)
     {
-        if (view.data[i] == to_find.data[0] &&
-            view.size - i >= to_find.size &&
-            memcmp(view.data + i, to_find.data, to_find.size) == 0)
+        if (view.data[i] == to_find.data[0] && memcmp(view.data + i, to_find.data, to_find.size) == 0)
             return i;
     }
     return MAX_SIZE_T_VALUE;
@@ -265,30 +244,21 @@ usize d_string_view_find_first_matching_view_from_start(DStringView view, DStrin
     return d_string_view_find_first_matching_view_from_index(view, to_find, 0);
 }
 
-usize d_string_view_find_first_matching_c_string_from_index(DStringView view, const char *str, usize pos)
-{
-    return d_string_view_find_first_matching_view_from_index(view, d_string_view_from_c_string(str), pos);
-}
-
-usize d_string_view_find_first_matching_c_string_from_start(DStringView view, const char *str)
-{
-    return d_string_view_find_first_matching_c_string_from_index(view, str, 0);
-}
-
 usize d_string_view_find_last_matching_view_from_index(DStringView view, DStringView to_find, usize pos)
 {
-    if (view.size == 0)
+    if (view.size == 0 || view.size < to_find.size)
         return MAX_SIZE_T_VALUE;
+
     if (to_find.size == 0)
         return pos > view.size ? view.size : pos;
 
     pos = pos >= view.size ? view.size - 1 : pos;
-
-    while (1)
+    usize minimal_start_pos = view.size - to_find.size;
+    if (pos > minimal_start_pos)
+        pos = minimal_start_pos;
+    while (true)
     {
-        if (view.data[pos] == to_find.data[0] &&
-            view.size - pos >= to_find.size &&
-            memcmp(view.data + pos, to_find.data, to_find.size) == 0)
+        if (view.data[pos] == to_find.data[0] && memcmp(view.data + pos, to_find.data, to_find.size) == 0)
             return pos;
 
         if (pos == 0)
@@ -303,52 +273,42 @@ usize d_string_view_find_last_matching_view_from_end(DStringView view, DStringVi
     return d_string_view_find_last_matching_view_from_index(view, to_find, view.size);
 }
 
-usize d_string_view_find_last_matching_c_string_from_index(DStringView view, const char *str, usize pos)
+usize d_string_view_find_first_char_in_set_from_index(DStringView view, DStringView set, usize pos)
 {
-    return d_string_view_find_last_matching_view_from_index(view, d_string_view_from_c_string(str), pos);
+    return find_first_from_index(view, pos, char_in_set, &set);
 }
 
-usize d_string_view_find_last_matching_c_string_from_end(DStringView view, const char *str)
-{
-    return d_string_view_find_last_matching_c_string_from_index(view, str, view.size);
-}
-
-usize d_string_view_find_first_char_in_set_from_index(DStringView view, const char *set, usize pos)
-{
-    return find_first_from_index(view, pos, char_in_set, set);
-}
-
-usize d_string_view_find_first_char_in_set_from_start(DStringView view, const char *set)
+usize d_string_view_find_first_char_in_set_from_start(DStringView view, DStringView set)
 {
     return d_string_view_find_first_char_in_set_from_index(view, set, 0);
 }
 
-usize d_string_view_find_first_char_not_in_set_from_index(DStringView view, const char *set, usize pos)
+usize d_string_view_find_first_char_not_in_set_from_index(DStringView view, DStringView set, usize pos)
 {
-    return find_first_from_index(view, pos, not_char_in_set, set);
+    return find_first_from_index(view, pos, not_char_in_set, &set);
 }
 
-usize d_string_view_find_first_char_not_in_set_from_start(DStringView view, const char *set)
+usize d_string_view_find_first_char_not_in_set_from_start(DStringView view, DStringView set)
 {
     return d_string_view_find_first_char_not_in_set_from_index(view, set, 0);
 }
 
-usize d_string_view_find_last_char_in_set_from_index(DStringView view, const char *set, usize pos)
+usize d_string_view_find_last_char_in_set_from_index(DStringView view, DStringView set, usize pos)
 {
-    return find_last_from_index(view, pos, char_in_set, set);
+    return find_last_from_index(view, pos, char_in_set, &set);
 }
 
-usize d_string_view_find_last_char_in_set_from_end(DStringView view, const char *set)
+usize d_string_view_find_last_char_in_set_from_end(DStringView view, DStringView set)
 {
     return d_string_view_find_last_char_in_set_from_index(view, set, view.size);
 }
 
-usize d_string_view_find_last_char_not_in_set_from_index(DStringView view, const char *set, usize pos)
+usize d_string_view_find_last_char_not_in_set_from_index(DStringView view, DStringView set, usize pos)
 {
-    return find_last_from_index(view, pos, not_char_in_set, set);
+    return find_last_from_index(view, pos, not_char_in_set, &set);
 }
 
-usize d_string_view_find_last_char_not_in_set_from_end(DStringView view, const char *set)
+usize d_string_view_find_last_char_not_in_set_from_end(DStringView view, DStringView set)
 {
     return d_string_view_find_last_char_not_in_set_from_index(view, set, view.size);
 }
@@ -423,31 +383,31 @@ DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn)
 
 DResult d_dyn_string_init_from_string_view(DDynString *new_dyn_string, DStringView view)
 {
-    if (new_dyn_string == NULL || view.data == NULL)
+    if (new_dyn_string == NULL)
         return D_ERR_INVALID_ARG;
     return raw_buffer_init_with_data((RawBuffer *)new_dyn_string, sizeof(char), view.data, view.size, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
-DResult d_string_view_split_by_char_of_str(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char *str)
+DResult d_string_view_split_by_char_of_str(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, DStringView set)
 {
-    if (new_dyn_array == NULL || str == NULL)
+    if (new_dyn_array == NULL)
         return D_ERR_INVALID_ARG;
     DResult op_result;
     usize size = view.size;
     if ((op_result = d_dyn_array_init_ptr_arr(new_dyn_array, size, _free_str, opts)) != D_OK)
         return op_result;
     const char *string = view.data;
-    usize str_len = strlen(str);
     for (usize i = 0; i < size;)
     {
-        while (i < size && memchr(str, (int)string[i], str_len) != NULL)
+        while (i < size && memchr(set.data, (int)string[i], set.size) != NULL)
             ++i;
         if (i != size)
         {
-            usize j = d_string_view_find_first_char_in_set_from_index(view, str, i);
-            char *str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
-            if ((op_result = d_dyn_array_push_back_ptr(new_dyn_array, str)) != D_OK)
+            usize j = d_string_view_find_first_char_in_set_from_index(view, set, i);
+            char *part_str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
+            if ((op_result = d_dyn_array_push_back_ptr(new_dyn_array, part_str)) != D_OK)
             {
+                free(part_str);
                 d_dyn_array_destroy(new_dyn_array);
                 return op_result;
             }
@@ -475,9 +435,10 @@ DResult d_string_view_split_by_char(DDynArray *new_dyn_array, DStringView view, 
         if (i != size)
         {
             usize j = d_string_view_find_first_matching_char_from_index(view, c, i);
-            char *str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
-            if ((op_result = d_dyn_array_push_back_ptr(new_dyn_array, str)) != D_OK)
+            char *part_str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
+            if ((op_result = d_dyn_array_push_back_ptr(new_dyn_array, part_str)) != D_OK)
             {
+                free(part_str);
                 d_dyn_array_destroy(new_dyn_array);
                 return op_result;
             }

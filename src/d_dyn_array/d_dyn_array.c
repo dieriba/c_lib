@@ -98,10 +98,8 @@ static void destroy_elements(DDynArray *dyn_array)
 	DestroyElemFunc free_func = dyn_array->free_func;
 	if (!free_func)
 		return;
-	usize elem_size;
-	usize arr_size;
-	raw_buffer_get_size((RawBuffer *)dyn_array, &arr_size);
-	raw_buffer_get_elem_size((RawBuffer *)dyn_array, &elem_size);
+	usize elem_size = dyn_array->array.elem_size;
+	usize arr_size = dyn_array->array.size;
 
 	void *elem;
 	for (size_t i = 0; i < arr_size; i++)

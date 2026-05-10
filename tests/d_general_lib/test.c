@@ -349,7 +349,7 @@ static void test_split_string_by_char_basic(void)
 {
     DDynArray arr;
 
-    D_TEST_EXPR(d_split_string_by_char(&arr, "a,b,c", ',', ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char(&arr, D_STRING_VIEW_FROM_LITERAL("a,b,c"), ',', ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(arr_size(&arr) == 3);
     D_TEST_STR_EQ(arr_get_str(&arr, 0), "a");
     D_TEST_STR_EQ(arr_get_str(&arr, 1), "b");
@@ -361,7 +361,7 @@ static void test_split_string_by_char_skips_empty_tokens(void)
 {
     DDynArray arr;
 
-    D_TEST_EXPR(d_split_string_by_char(&arr, ",,a,,b,,", ',', ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char(&arr, D_STRING_VIEW_FROM_LITERAL(",,a,,b,,"), ',', ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(arr_size(&arr) == 2);
     D_TEST_STR_EQ(arr_get_str(&arr, 0), "a");
     D_TEST_STR_EQ(arr_get_str(&arr, 1), "b");
@@ -372,7 +372,7 @@ static void test_split_string_by_char_no_delimiter_returns_whole_string(void)
 {
     DDynArray arr;
 
-    D_TEST_EXPR(d_split_string_by_char(&arr, "abc", ',', ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char(&arr, D_STRING_VIEW_FROM_LITERAL("abc"), ',', ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(arr_size(&arr) == 1);
     D_TEST_STR_EQ(arr_get_str(&arr, 0), "abc");
     d_dyn_array_destroy(&arr);
@@ -382,7 +382,7 @@ static void test_split_string_by_char_empty_string_returns_empty_array(void)
 {
     DDynArray arr;
 
-    D_TEST_EXPR(d_split_string_by_char(&arr, "", ',', ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char(&arr, D_STRING_VIEW_FROM_LITERAL(""), ',', ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(arr_size(&arr) == 0);
     d_dyn_array_destroy(&arr);
 }
@@ -391,28 +391,21 @@ static void test_split_string_by_char_only_delimiters_returns_empty_array(void)
 {
     DDynArray arr;
 
-    D_TEST_EXPR(d_split_string_by_char(&arr, ",,,,,", ',', ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char(&arr, D_STRING_VIEW_FROM_LITERAL(",,,,,"), ',', ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(arr_size(&arr) == 0);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_split_string_by_char_rejects_null_output(void)
 {
-    D_TEST_EXPR(d_split_string_by_char(NULL, "a,b", ',', ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
-}
-
-static void test_split_string_by_char_null_string_should_reject_not_crash(void)
-{
-    DDynArray arr;
-
-    D_TEST_EXPR(d_split_string_by_char(&arr, NULL, ',', ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_split_string_by_char(NULL, D_STRING_VIEW_FROM_LITERAL("a,b"), ',', ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
 }
 
 static void test_split_string_by_char_consecutive_and_edge_delims_stress(void)
 {
     DDynArray arr;
 
-    D_TEST_EXPR(d_split_string_by_char(&arr, ",alpha,,beta,gamma,,,delta,", ',', ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char(&arr, D_STRING_VIEW_FROM_LITERAL(",alpha,,beta,gamma,,,delta,"), ',', ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(arr_size(&arr) == 4);
     D_TEST_STR_EQ(arr_get_str(&arr, 0), "alpha");
     D_TEST_STR_EQ(arr_get_str(&arr, 1), "beta");
@@ -433,7 +426,7 @@ static void test_split_string_by_char_many_tokens_growth(void)
         input[pos++] = ',';
     }
     input[pos] = '\0';
-    D_TEST_EXPR(d_split_string_by_char(&arr, input, ',', ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char(&arr, d_string_view_from_c_string(input), ',', ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(arr_size(&arr) == 80);
     for (usize i = 0; i < 80; ++i)
         D_TEST_STR_EQ(arr_get_str(&arr, i), "x");
@@ -444,7 +437,7 @@ static void test_split_string_by_char_of_str_basic_multiple_delims(void)
 {
     DDynArray arr;
 
-    D_TEST_EXPR(d_split_string_by_char_of_str(&arr, "a,b;c|d", ",;|", ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char_of_str(&arr, D_STRING_VIEW_FROM_LITERAL("a,b;c|d"), D_STRING_VIEW_FROM_LITERAL(",;|"), ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(arr_size(&arr) == 4);
     D_TEST_STR_EQ(arr_get_str(&arr, 0), "a");
     D_TEST_STR_EQ(arr_get_str(&arr, 1), "b");
@@ -457,7 +450,7 @@ static void test_split_string_by_char_of_str_skips_empty_tokens(void)
 {
     DDynArray arr;
 
-    D_TEST_EXPR(d_split_string_by_char_of_str(&arr, ",;a;;b,,", ",;", ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char_of_str(&arr, D_STRING_VIEW_FROM_LITERAL(",;a;;b,,"), D_STRING_VIEW_FROM_LITERAL(",;"), ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(arr_size(&arr) == 2);
     D_TEST_STR_EQ(arr_get_str(&arr, 0), "a");
     D_TEST_STR_EQ(arr_get_str(&arr, 1), "b");
@@ -468,7 +461,7 @@ static void test_split_string_by_char_of_str_empty_delims_returns_whole_string(v
 {
     DDynArray arr;
 
-    D_TEST_EXPR(d_split_string_by_char_of_str(&arr, "abc", "", ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char_of_str(&arr, D_STRING_VIEW_FROM_LITERAL("abc"), D_STRING_VIEW_FROM_LITERAL(""), ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(arr_size(&arr) == 1);
     D_TEST_STR_EQ(arr_get_str(&arr, 0), "abc");
     d_dyn_array_destroy(&arr);
@@ -478,28 +471,14 @@ static void test_split_string_by_char_of_str_all_delims_returns_empty_array(void
 {
     DDynArray arr;
 
-    D_TEST_EXPR(d_split_string_by_char_of_str(&arr, ";,;,", ",;", ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char_of_str(&arr, D_STRING_VIEW_FROM_LITERAL(";,;,"), D_STRING_VIEW_FROM_LITERAL(",;"), ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(arr_size(&arr) == 0);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_split_string_by_char_of_str_rejects_null_output(void)
 {
-    D_TEST_EXPR(d_split_string_by_char_of_str(NULL, "a,b", ",", ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
-}
-
-static void test_split_string_by_char_of_str_rejects_null_delims(void)
-{
-    DDynArray arr;
-
-    D_TEST_EXPR(d_split_string_by_char_of_str(&arr, "a,b", NULL, ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
-}
-
-static void test_split_string_by_char_of_str_null_string_should_reject_not_crash(void)
-{
-    DDynArray arr;
-
-    D_TEST_EXPR(d_split_string_by_char_of_str(&arr, NULL, ",", ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_split_string_by_char_of_str(NULL, D_STRING_VIEW_FROM_LITERAL("a,b"), D_STRING_VIEW_FROM_LITERAL(","), ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
 }
 
 static void test_split_string_results_are_independent_allocations(void)
@@ -509,7 +488,7 @@ static void test_split_string_results_are_independent_allocations(void)
     char *first = NULL;
     char *second = NULL;
 
-    D_TEST_EXPR(d_split_string_by_char(&arr, input, ',', ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_split_string_by_char(&arr, d_string_view_from_c_string(input), ',', ARRAY_DEFAULT_OPTS) == D_OK);
     first = arr_get_str(&arr, 0);
     second = arr_get_str(&arr, 1);
     input[0] = 'X';
@@ -573,7 +552,6 @@ int main(void)
         D_TEST_GENERATE_TEST(test_split_string_by_char_empty_string_returns_empty_array),
         D_TEST_GENERATE_TEST(test_split_string_by_char_only_delimiters_returns_empty_array),
         D_TEST_GENERATE_TEST(test_split_string_by_char_rejects_null_output),
-        D_TEST_GENERATE_TEST(test_split_string_by_char_null_string_should_reject_not_crash),
         D_TEST_GENERATE_TEST(test_split_string_by_char_consecutive_and_edge_delims_stress),
         D_TEST_GENERATE_TEST(test_split_string_by_char_many_tokens_growth),
         D_TEST_GENERATE_TEST(test_split_string_by_char_of_str_basic_multiple_delims),
@@ -581,8 +559,6 @@ int main(void)
         D_TEST_GENERATE_TEST(test_split_string_by_char_of_str_empty_delims_returns_whole_string),
         D_TEST_GENERATE_TEST(test_split_string_by_char_of_str_all_delims_returns_empty_array),
         D_TEST_GENERATE_TEST(test_split_string_by_char_of_str_rejects_null_output),
-        D_TEST_GENERATE_TEST(test_split_string_by_char_of_str_rejects_null_delims),
-        D_TEST_GENERATE_TEST(test_split_string_by_char_of_str_null_string_should_reject_not_crash),
         D_TEST_GENERATE_TEST(test_split_string_results_are_independent_allocations),
     };
 

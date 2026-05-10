@@ -162,8 +162,10 @@ static void pop_back(RawRingBuffer *raw_ring_buffer, void *out_elem)
 
 static DResult pop(RawRingBuffer *raw_ring_buffer, void *out_elem, PopFn pop_fn)
 {
-    if (raw_ring_buffer == NULL || raw_ring_buffer->size == 0 || out_elem == NULL)
+    if (raw_ring_buffer == NULL || out_elem == NULL)
         return D_ERR_INVALID_ARG;
+    if (raw_ring_buffer->size == 0)
+        return D_ERR_EMPTY;
     pop_fn(raw_ring_buffer, out_elem);
     raw_ring_buffer->size--;
     return D_OK;

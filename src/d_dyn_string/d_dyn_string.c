@@ -51,7 +51,8 @@ DCompareResult d_dyn_string_compare(DDynString *d1, DDynString *d2)
 {
     if (d1 == NULL || d2 == NULL)
         return D_COMPARE_ERROR;
-    return d_string_view_compare(d_string_view_from_dyn_string(d1), d_string_view_from_dyn_string(d2));
+    return d_string_view_compare(d_string_view_from_dyn_string(d1), d_string_view_from_dyn_string(d2))
+               ? D_COMPARE_EQUAL : D_COMPARE_NOT_EQUAL;
 }
 
 const char *d_dyn_string_get_string(const DDynString *dstring)
@@ -71,10 +72,9 @@ DResult d_dyn_string_get_capacity(const DDynString *dstring, usize *capacity)
 
 DResult d_dyn_string_sub_string_in_place(DDynString *dstring, usize pos, usize size)
 {
-    DResult op_result;
-    usize cnt_size;
-    if ((op_result = raw_buffer_get_size((RawBuffer *)dstring, &cnt_size)) != D_OK)
-        return op_result;
+    if (dstring == NULL)
+        return D_ERR_INVALID_ARG;
+    usize cnt_size = dstring->str.size;
     if (pos >= cnt_size)
         return D_ERR_INVALID_ARG;
     size = pos + size > cnt_size ? cnt_size - pos : size;
@@ -82,7 +82,7 @@ DResult d_dyn_string_sub_string_in_place(DDynString *dstring, usize pos, usize s
     return raw_buffer_replace_data_at(&dstring->str, 0, s + pos, size);
 }
 
-DResult d_dyn_string_get_char_at(const DDynString *dstring, usize i, void *out_elem)
+DResult d_dyn_string_get_char_at(const DDynString *dstring, usize i, char *out_elem)
 {
     return raw_buffer_get_elem_at((RawBuffer *)dstring, i, out_elem);
 }
