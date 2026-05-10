@@ -733,7 +733,7 @@ static void test_int32_wrapper_basic_usage(void)
 {
     DHashSet set;
     int32 key = 12345;
-    D_TEST_EXPR(d_hash_set_new_not_owned_int32_key(&set, 0, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init_not_owned_int32_key(&set, 0, NULL) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &key) == D_OK);
     D_TEST_EXPR(d_hash_set_key_exists(&set, &key) == true);
     assert_size(&set, 1);
@@ -746,7 +746,7 @@ static void test_usize_wrapper_large_values(void)
     usize a = (usize)0;
     usize b = (usize)SIZE_MAX;
     usize c = ((usize)1 << ((sizeof(usize) * 8) - 1));
-    D_TEST_EXPR(d_hash_set_new_not_owned_usize_key(&set, 0, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init_not_owned_usize_key(&set, 0, NULL) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &a) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &b) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &c) == D_OK);
@@ -762,7 +762,7 @@ static void test_bool_wrapper_keeps_only_two_values(void)
     DHashSet set;
     bool t = true;
     bool f = false;
-    D_TEST_EXPR(d_hash_set_new_not_owned_bool_key(&set, 0, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init_not_owned_bool_key(&set, 0, NULL) == D_OK);
     for (int i = 0; i < 10; ++i)
     {
         D_TEST_EXPR(d_hash_set_insert(&set, &t) == D_OK);
@@ -777,7 +777,7 @@ static void test_bool_wrapper_keeps_only_two_values(void)
 static void test_char_wrapper_all_byte_like_chars(void)
 {
     DHashSet set;
-    D_TEST_EXPR(d_hash_set_new_not_owned_char_key(&set, 0, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init_not_owned_char_key(&set, 0, NULL) == D_OK);
     for (int i = -64; i < 64; ++i)
     {
         char c = (char)i;
@@ -795,7 +795,7 @@ static void test_char_wrapper_all_byte_like_chars(void)
 static void test_u64_wrapper_rehash_many_values(void)
 {
     DHashSet set;
-    D_TEST_EXPR(d_hash_set_new_not_owned_u64_key(&set, 1, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init_not_owned_u64_key(&set, 1, NULL) == D_OK);
     for (u64 i = 0; i < 500; ++i)
     {
         u64 key = i * 0x9E3779B97F4A7C15ull;
@@ -1194,7 +1194,7 @@ static void test_wrapper_remove_returns_key_for_u32(void)
     DHashSet set;
     u32 key = 0xDEADBEEFu;
     u32 out = 0;
-    D_TEST_EXPR(d_hash_set_new_not_owned_u32_key(&set, 0, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init_not_owned_u32_key(&set, 0, NULL) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &key) == D_OK);
     D_TEST_EXPR(d_hash_set_remove(&set, &key, &out) == D_OK);
     D_TEST_EXPR(out == key);
@@ -1207,7 +1207,7 @@ static void test_wrapper_delete_for_int64_min_max(void)
     DHashSet set;
     int64 a = (int64)INT64_MIN;
     int64 b = (int64)INT64_MAX;
-    D_TEST_EXPR(d_hash_set_new_not_owned_int64_key(&set, 0, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init_not_owned_int64_key(&set, 0, NULL) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &a) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &b) == D_OK);
     D_TEST_EXPR(d_hash_set_delete(&set, &a) == D_OK);

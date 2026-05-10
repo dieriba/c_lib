@@ -9,13 +9,13 @@ typedef struct DHashSet
 } DHashSet;
 
 #define D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(KEY_NAME, KEY_TYPE)                                                                                \
-    static inline DResult d_hash_set_new_not_owned_##KEY_NAME##_key(DHashSet *d_hash_set, usize capacity, FnPtrFreeElem value_destructor_fn)  \
+    static inline DResult d_hash_set_init_not_owned_##KEY_NAME##_key(DHashSet *d_hash_set, usize capacity, FnPtrFreeElem value_destructor_fn) \
     {                                                                                                                                         \
         return d_hash_set_init(d_hash_set, sizeof(KEY_TYPE), capacity, hash_##KEY_NAME##_key, compare_##KEY_NAME, NULL, value_destructor_fn); \
     }
 
 #define D_HASH_SET_INIT_WITH_OWNED_KEY(KEY_NAME, KEY_TYPE, KEY_DESTRUCTOR)                                                                              \
-    static inline DResult d_hash_set_new_owned_##KEY_NAME##_key(DHashSet *d_hash_set, usize capacity, FnPtrFreeElem value_destructor_fn)                \
+    static inline DResult d_hash_set_init_owned_##KEY_NAME##_key(DHashSet *d_hash_set, usize capacity, FnPtrFreeElem value_destructor_fn)               \
     {                                                                                                                                                   \
         return d_hash_set_init(d_hash_set, sizeof(KEY_TYPE), capacity, hash_##KEY_NAME##_key, compare_##KEY_NAME, KEY_DESTRUCTOR, value_destructor_fn); \
     }
