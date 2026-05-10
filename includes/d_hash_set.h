@@ -1,7 +1,6 @@
 #ifndef D_HASH_SET
 #define D_HASH_SET
 #include "d_types.h"
-#include "container.h"
 #include "d_general_lib.h"
 
 typedef struct DHashSet
