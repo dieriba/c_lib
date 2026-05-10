@@ -11,10 +11,10 @@ typedef int16_t int16;
 typedef int32_t int32;
 typedef int64_t int64;
 
-typedef u_int8_t u8;
-typedef u_int16_t u16;
-typedef u_int32_t u32;
-typedef u_int64_t u64;
+typedef uint8_t u8;
+typedef uint16_t u16;
+typedef uint32_t u32;
+typedef uint64_t u64;
 typedef size_t usize;
 
 typedef enum DResult
@@ -24,7 +24,8 @@ typedef enum DResult
     D_ERR_INVALID_ARG,
     D_ERR_NOT_FOUND,
     D_ERR_NOT_EXIST,
-    D_ERR_OVERFLOW
+    D_ERR_OVERFLOW,
+    D_ERR_EMPTY
 } DResult;
 
 typedef enum

@@ -18,18 +18,18 @@ static bool raw_buffer_has_zero_sentinel(const RawBuffer *raw_buffer)
     return d_bits_8_check_bits_set(raw_buffer->opts, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
-static bool raw_buffer_compute_new_alloc_size(const RawBuffer *raw_buffer,
-                                              usize capacity, usize *alloc_size)
+static DResult raw_buffer_compute_new_alloc_size(const RawBuffer *raw_buffer,
+                                                 usize capacity, usize *alloc_size)
 {
     usize extra;
     usize total_elems;
 
     extra = raw_buffer_has_zero_sentinel(raw_buffer) ? 1 : 0;
     if (d_math_overflow_check_add_usize(capacity, extra, &total_elems))
-        return false;
+        return D_ERR_OVERFLOW;
     if (d_math_overflow_check_mul_usize(total_elems, raw_buffer->elem_size, alloc_size))
-        return false;
-    return true;
+        return D_ERR_OVERFLOW;
+    return D_OK;
 }
 
 static void raw_buffer_write_sentinel(RawBuffer *raw_buffer)
@@ -37,11 +37,6 @@ static void raw_buffer_write_sentinel(RawBuffer *raw_buffer)
     if (raw_buffer->data == NULL || !raw_buffer_has_zero_sentinel(raw_buffer))
         return;
     memset(raw_buffer_elt_pos(raw_buffer, raw_buffer->size), 0, raw_buffer_elt_size(raw_buffer, 1));
-}
-
-static RawBuffer *raw_buffer_new_raw()
-{
-    return malloc(sizeof(RawBuffer));
 }
 
 static DResult increase_raw_buffer_capacity_if_needed(RawBuffer *raw_buffer, usize pos_start_cpy, usize nb_elem_to_copy)
@@ -56,7 +51,7 @@ static DResult increase_raw_buffer_capacity_if_needed(RawBuffer *raw_buffer, usi
         return D_ERR_OVERFLOW;
     if (d_math_overflow_check_mul_usize(new_capacity, GROWTH_POLICY, &new_capacity))
         return D_ERR_OVERFLOW;
-    if (!raw_buffer_compute_new_alloc_size(raw_buffer, new_capacity, &alloc_size))
+    if (raw_buffer_compute_new_alloc_size(raw_buffer, new_capacity, &alloc_size) != D_OK)
         return D_ERR_OVERFLOW;
     tmp = realloc(raw_buffer->data, alloc_size);
     if (tmp == NULL)
@@ -78,7 +73,7 @@ DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, 
     raw_buffer->data = NULL;
 
     usize alloc_size;
-    if (!raw_buffer_compute_new_alloc_size(raw_buffer, raw_buffer->capacity, &alloc_size) != D_OK)
+    if (raw_buffer_compute_new_alloc_size(raw_buffer, raw_buffer->capacity, &alloc_size) != D_OK)
         return D_ERR_OVERFLOW;
     if ((raw_buffer->data = malloc(alloc_size)) == NULL)
         return D_ERR_ALLOC;
@@ -92,44 +87,7 @@ DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const 
     DResult op_result = raw_buffer_init(raw_buffer, elem_size, capacity, opts);
     if (op_result != D_OK)
         return op_result;
-    op_result = raw_buffer_append_data(raw_buffer, data, size);
-    if (op_result != D_OK)
-        return op_result;
-    return D_OK;
-}
-
-RawBuffer *raw_buffer_new(usize elem_size, usize capacity, DBits8 opts)
-{
-    RawBuffer *raw_buffer;
-
-    raw_buffer = raw_buffer_new_raw();
-    if (raw_buffer == NULL)
-        return NULL;
-    if (raw_buffer_init(raw_buffer, elem_size, capacity, opts) != D_OK)
-    {
-        free(raw_buffer);
-        return NULL;
-    }
-    return raw_buffer;
-}
-
-RawBuffer *raw_buffer_new_from(const RawBuffer *src)
-{
-    RawBuffer *new_buffer;
-
-    if (src == NULL)
-        return NULL;
-
-    new_buffer = raw_buffer_new_raw();
-    if (new_buffer == NULL)
-        return NULL;
-
-    if (raw_buffer_init_with_data(new_buffer, src->elem_size, src->data, src->size, src->opts) != D_OK)
-    {
-        raw_buffer_destroy(&new_buffer);
-        return NULL;
-    }
-    return new_buffer;
+    return raw_buffer_append_data(raw_buffer, data, size);
 }
 
 void raw_buffer_free(RawBuffer *raw_buffer)
@@ -151,7 +109,7 @@ void raw_buffer_destroy(RawBuffer **raw_buffer)
     *raw_buffer = NULL;
 }
 
-void *raw_buffer_get_data(RawBuffer *raw_buffer)
+void *raw_buffer_get_data(const RawBuffer *raw_buffer)
 {
     if (raw_buffer == NULL)
         return NULL;
@@ -322,7 +280,7 @@ DResult raw_buffer_pop(RawBuffer *raw_buffer, void *out_elem)
     if (raw_buffer == NULL)
         return D_ERR_INVALID_ARG;
     if (raw_buffer->size == 0)
-        return D_OK;
+        return D_ERR_EMPTY;
     raw_buffer->size--;
     if (out_elem != NULL)
         memcpy(out_elem, raw_buffer_elt_pos(raw_buffer, raw_buffer->size), raw_buffer_elt_size(raw_buffer, 1));

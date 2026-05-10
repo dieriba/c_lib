@@ -22,12 +22,10 @@ typedef struct _Buffer
 
 DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, DBits8 opts);
 DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const void *data, usize size, DBits8 opts);
-RawBuffer *raw_buffer_new(usize elem_size, usize capacity, DBits8 opts);
-RawBuffer *raw_buffer_new_from(const RawBuffer *src);
 void raw_buffer_free(RawBuffer *raw_buffer);
 void raw_buffer_destroy(RawBuffer **raw_buffer);
 
-void *raw_buffer_get_data(RawBuffer *raw_buffer);
+void *raw_buffer_get_data(const RawBuffer *raw_buffer);
 DResult raw_buffer_get_elem_at(RawBuffer *raw_buffer, usize index, void *out_elem);
 DResult raw_buffer_get_elem_addr(RawBuffer *raw_buffer, usize index, void **out_elem);
 DResult raw_buffer_get_last_elem(RawBuffer *raw_buffer, void *out_elem);

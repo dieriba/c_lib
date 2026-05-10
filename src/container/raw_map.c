@@ -1,6 +1,5 @@
 #include <immintrin.h>
 #include <string.h>
-#include <assert.h>
 #include "d_types.h"
 #include "d_math.h"
 #include "raw_map.h"
@@ -70,7 +69,6 @@ static DResult compute_alloc_size_and_capacity(RawMap *raw_map, usize slot_size,
     if (d_math_overflow_check_add_usize(new_capacity, RAW_MAP_GROUP_SIZE, &new_capacity))
         return D_ERR_OVERFLOW;
     new_capacity = d_math_align_round_down(new_capacity, RAW_MAP_GROUP_SIZE);
-    assert(new_capacity % RAW_MAP_GROUP_SIZE == 0);
     *capacity = new_capacity;
 
     usize total_group_size;
@@ -100,7 +98,6 @@ DResult raw_map_init(RawMap *raw_map, usize key_size, usize value_size, usize ca
     raw_map->key_size = key_size;
     raw_map->cmp_fn = cmp_fn;
     raw_map->hash_fn = hash_fn;
-    raw_map->cmp_fn = cmp_fn;
     raw_map->key_destructor_fn = key_destructor_fn;
     raw_map->value_destructor_fn = value_destructor_fn;
     return D_OK;
@@ -266,7 +263,6 @@ void *raw_map_get(RawMap *raw_map, void *key)
     if (compute_hash(raw_map, key, &hash_info) != D_OK)
         return NULL;
     usize position = find_from_hash(raw_map, key, hash_info);
-    assert(position != SIZE_MAX);
     char *ctrl = raw_map_get_control_byte_addr(raw_map, position);
     return d_bits_8_check_bits_set(*ctrl, MASK_CTRL_BYTE) ? NULL : raw_map_get_slot_value(raw_map, position);
 }
@@ -282,7 +278,6 @@ DResult raw_map_insert(RawMap *raw_map, void *new_key, void *new_value)
         return op_result;
 
     usize insert_position = find_from_hash(raw_map, new_key, hash_info);
-    assert(insert_position != SIZE_MAX);
 
     if (raw_map->size >= raw_map->max_load_factor)
     {
@@ -319,7 +314,6 @@ DResult raw_map_delete(RawMap *raw_map, void *key)
     if (compute_hash(raw_map, key, &hash_info) != D_OK)
         return D_ERR_INVALID_ARG;
     usize position = find_from_hash(raw_map, key, hash_info);
-    assert(position != SIZE_MAX);
     char *ctrl = raw_map_get_control_byte_addr(raw_map, position);
     if (*ctrl != kEmpty)
     {
@@ -338,7 +332,6 @@ DResult raw_map_remove(RawMap *raw_map, void *key, void *slot_key, void *slot_va
     if (compute_hash(raw_map, key, &hash_info) != D_OK)
         return D_ERR_INVALID_ARG;
     usize position = find_from_hash(raw_map, key, hash_info);
-    assert(position != SIZE_MAX);
     char *ctrl = raw_map_get_control_byte_addr(raw_map, position);
     if (*ctrl != kEmpty)
     {

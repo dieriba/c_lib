@@ -135,7 +135,7 @@ static inline int d_bits_get_index_least_significant_bit_set_ll(long long int va
 #if USE_BUILTIN_FFSLL
     return __builtin_ffsll(value);
 #else
-    unsigned usize x = value & -value;
+    usize x = value & -value;
 
     if (x <= 0xffffffff)
         return d_bits_get_index_least_significant_bit_set_int(value);
@@ -144,15 +144,26 @@ static inline int d_bits_get_index_least_significant_bit_set_ll(long long int va
 #endif
 }
 
-static inline int d_bits_get_index_most_significant_bit_set_int(int value)
+static inline int d_bits_get_index_most_significant_bit_set_int(long long int value)
 {
-    value = d_bits_clear_most_significant_bit_set_int(value);
-    return d_bits_get_index_least_significant_bit_set_int(value);
+    value |= value >> 1;
+    value |= value >> 2;
+    value |= value >> 4;
+    value |= value >> 8;
+    value |= value >> 16;
+
+    return value ^ (value >> 1);
 }
 
 static inline int d_bits_get_index_most_significant_bit_set_ll(long long int value)
 {
-    value = d_bits_clear_most_significant_bit_set_ll(value);
-    return d_bits_get_index_least_significant_bit_set_ll(value);
+    value |= value >> 1;
+    value |= value >> 2;
+    value |= value >> 4;
+    value |= value >> 8;
+    value |= value >> 16;
+    value |= value >> 32;
+
+    return value ^ (value >> 1);
 }
 #endif

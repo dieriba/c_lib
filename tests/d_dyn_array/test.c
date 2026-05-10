@@ -23,13 +23,9 @@ static void expect_capacity_at_least(DDynArray *arr, usize min_capacity)
     D_TEST_EXPR(capacity >= min_capacity);
 }
 
-static DDynArray *make_int_array(usize reserved)
+static void make_int_array(DDynArray *arr, usize reserved)
 {
-    DDynArray *arr = NULL;
-
-    D_TEST_EXPR(d_dyn_array_new(&arr, sizeof(int), reserved, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_NOT_NULL(arr);
-    return arr;
+    D_TEST_EXPR(d_dyn_array_init(arr, sizeof(int), reserved, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
 }
 
 static int get_int_at(DDynArray *arr, usize index)
@@ -85,9 +81,8 @@ static void int_destroy_counter(void *elem_slot)
 }
 
 /*
- * This destructor intentionally checks the documented contract from
- * d_dyn_array.c: for elem_size == sizeof(char *), free_func receives char **,
- * i.e. the address of the element slot inside the array.
+ * Checks the documented contract: for elem_size == sizeof(char *),
+ * free_func receives char **, i.e. the address of the element slot.
  */
 static void tracked_string_ptr_destroy(void *elem_slot)
 {
@@ -113,88 +108,82 @@ static void tracked_string_ptr_destroy(void *elem_slot)
     *slot = NULL;
 }
 
-static void test_new_creates_empty_array(void)
+static void test_init_creates_empty_array(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
 
-    D_TEST_EXPR(d_dyn_array_new(&arr, sizeof(int), 0, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_NOT_NULL(arr);
-    expect_size(arr, 0);
-
+    D_TEST_EXPR(d_dyn_array_init(&arr, sizeof(int), 0, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
+    expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
-static void test_new_with_reserved_capacity_sets_capacity(void)
+static void test_init_with_reserved_capacity_sets_capacity(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
 
-    D_TEST_EXPR(d_dyn_array_new(&arr, sizeof(int), 32, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
-    expect_size(arr, 0);
-    expect_capacity_at_least(arr, 32);
-
+    D_TEST_EXPR(d_dyn_array_init(&arr, sizeof(int), 32, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
+    expect_size(&arr, 0);
+    expect_capacity_at_least(&arr, 32);
     d_dyn_array_destroy(&arr);
 }
 
-static void test_new_rejects_null_output_pointer(void)
+static void test_init_rejects_null_array_pointer(void)
 {
-    D_TEST_EXPR(d_dyn_array_new(NULL, sizeof(int), 0, NULL, ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_dyn_array_init(NULL, sizeof(int), 0, NULL, ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
 }
 
-static void test_new_rejects_zero_elem_size(void)
+static void test_init_rejects_zero_elem_size(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
 
-    D_TEST_EXPR(d_dyn_array_new(&arr, 0, 0, NULL, ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
-    D_TEST_NULL(arr);
+    D_TEST_EXPR(d_dyn_array_init(&arr, 0, 0, NULL, ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
 }
 
-static void test_new_ptr_arr_creates_empty_pointer_array(void)
+static void test_init_ptr_arr_creates_empty_pointer_array(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
 
-    D_TEST_EXPR(d_dyn_array_new_ptr_arr(&arr, 4, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
-    expect_size(arr, 0);
-    expect_capacity_at_least(arr, 4);
-
+    D_TEST_EXPR(d_dyn_array_init_ptr_arr(&arr, 4, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
+    expect_size(&arr, 0);
+    expect_capacity_at_least(&arr, 4);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_push_back_appends_single_int(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int value = 42;
 
-    D_TEST_EXPR(d_dyn_array_push_back(arr, &value) == D_OK);
-    expect_size(arr, 1);
-    expect_int_at(arr, 0, 42);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_push_back(&arr, &value) == D_OK);
+    expect_size(&arr, 1);
+    expect_int_at(&arr, 0, 42);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_push_back_copies_value_not_alias_source(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int value = 10;
 
-    D_TEST_EXPR(d_dyn_array_push_back(arr, &value) == D_OK);
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_push_back(&arr, &value) == D_OK);
     value = 99;
-    expect_int_at(arr, 0, 10);
-
+    expect_int_at(&arr, 0, 10);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_push_back_grows_capacity_and_preserves_values(void)
 {
-    DDynArray *arr = make_int_array(1);
+    DDynArray arr;
 
+    make_int_array(&arr, 1);
     for (int i = 0; i < 128; i++)
-        push_int(arr, i * 3);
-
-    expect_size(arr, 128);
-    expect_capacity_at_least(arr, 128);
+        push_int(&arr, i * 3);
+    expect_size(&arr, 128);
+    expect_capacity_at_least(&arr, 128);
     for (int i = 0; i < 128; i++)
-        expect_int_at(arr, (usize)i, i * 3);
-
+        expect_int_at(&arr, (usize)i, i * 3);
     d_dyn_array_destroy(&arr);
 }
 
@@ -207,42 +196,41 @@ static void test_push_back_rejects_null_array(void)
 
 static void test_push_back_rejects_null_data(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
 
-    D_TEST_EXPR(d_dyn_array_push_back(arr, NULL) == D_ERR_INVALID_ARG);
-    expect_size(arr, 0);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_push_back(&arr, NULL) == D_ERR_INVALID_ARG);
+    expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_append_multiple_ints(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int values[] = {1, 2, 3, 4, 5};
 
-    D_TEST_EXPR(d_dyn_array_append(arr, values, 5) == D_OK);
-    expect_size(arr, 5);
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 5) == D_OK);
+    expect_size(&arr, 5);
     for (int i = 0; i < 5; i++)
-        expect_int_at(arr, (usize)i, values[i]);
-
+        expect_int_at(&arr, (usize)i, values[i]);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_append_after_push_preserves_order(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int first = 7;
     int rest[] = {8, 9, 10};
 
-    D_TEST_EXPR(d_dyn_array_push_back(arr, &first) == D_OK);
-    D_TEST_EXPR(d_dyn_array_append(arr, rest, 3) == D_OK);
-
-    expect_size(arr, 4);
-    expect_int_at(arr, 0, 7);
-    expect_int_at(arr, 1, 8);
-    expect_int_at(arr, 2, 9);
-    expect_int_at(arr, 3, 10);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_push_back(&arr, &first) == D_OK);
+    D_TEST_EXPR(d_dyn_array_append(&arr, rest, 3) == D_OK);
+    expect_size(&arr, 4);
+    expect_int_at(&arr, 0, 7);
+    expect_int_at(&arr, 1, 8);
+    expect_int_at(&arr, 2, 9);
+    expect_int_at(&arr, 3, 10);
     d_dyn_array_destroy(&arr);
 }
 
@@ -255,35 +243,35 @@ static void test_append_rejects_null_array(void)
 
 static void test_append_rejects_null_data_even_when_count_is_zero(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
 
-    D_TEST_EXPR(d_dyn_array_append(arr, NULL, 0) == D_ERR_INVALID_ARG);
-    expect_size(arr, 0);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_append(&arr, NULL, 0) == D_ERR_INVALID_ARG);
+    expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_append_zero_count_keeps_array_unchanged(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int values[] = {11, 22};
 
-    D_TEST_EXPR(d_dyn_array_append(arr, values, 0) == D_OK);
-    expect_size(arr, 0);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 0) == D_OK);
+    expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_get_elem_at_reads_first_middle_last(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int values[] = {5, 10, 15, 20, 25};
 
-    D_TEST_EXPR(d_dyn_array_append(arr, values, 5) == D_OK);
-    expect_int_at(arr, 0, 5);
-    expect_int_at(arr, 2, 15);
-    expect_int_at(arr, 4, 25);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 5) == D_OK);
+    expect_int_at(&arr, 0, 5);
+    expect_int_at(&arr, 2, 15);
+    expect_int_at(&arr, 4, 25);
     d_dyn_array_destroy(&arr);
 }
 
@@ -297,36 +285,36 @@ static void test_get_elem_at_rejects_null_array(void)
 
 static void test_get_elem_at_rejects_null_output_pointer(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int value = 77;
 
-    D_TEST_EXPR(d_dyn_array_push_back(arr, &value) == D_OK);
-    D_TEST_EXPR(d_dyn_array_get_elem_at(arr, 0, NULL) == D_ERR_INVALID_ARG);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_push_back(&arr, &value) == D_OK);
+    D_TEST_EXPR(d_dyn_array_get_elem_at(&arr, 0, NULL) == D_ERR_INVALID_ARG);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_get_elem_at_rejects_index_equal_size(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int value = 1;
     int out = 123;
 
-    D_TEST_EXPR(d_dyn_array_push_back(arr, &value) == D_OK);
-    D_TEST_EXPR(d_dyn_array_get_elem_at(arr, 1, &out) != D_OK);
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_push_back(&arr, &value) == D_OK);
+    D_TEST_EXPR(d_dyn_array_get_elem_at(&arr, 1, &out) != D_OK);
     D_TEST_EXPR(out == 123);
-
     d_dyn_array_destroy(&arr);
 }
 
 static void test_get_elem_at_rejects_index_from_empty_array(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int out = 123;
 
-    D_TEST_EXPR(d_dyn_array_get_elem_at(arr, 0, &out) != D_OK);
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_get_elem_at(&arr, 0, &out) != D_OK);
     D_TEST_EXPR(out == 123);
-
     d_dyn_array_destroy(&arr);
 }
 
@@ -340,10 +328,10 @@ static void test_get_size_rejects_null_array(void)
 
 static void test_get_size_rejects_null_output_pointer(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
 
-    D_TEST_EXPR(d_dyn_array_get_size(arr, NULL) == D_ERR_INVALID_ARG);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_get_size(&arr, NULL) == D_ERR_INVALID_ARG);
     d_dyn_array_destroy(&arr);
 }
 
@@ -357,93 +345,88 @@ static void test_get_capacity_rejects_null_array(void)
 
 static void test_get_capacity_rejects_null_output_pointer(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
 
-    D_TEST_EXPR(d_dyn_array_get_capacity(arr, NULL) == D_ERR_INVALID_ARG);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_get_capacity(&arr, NULL) == D_ERR_INVALID_ARG);
     d_dyn_array_destroy(&arr);
 }
 
-static void test_new_from_copies_size_capacity_and_values(void)
+static void test_init_from_copies_size_capacity_and_values(void)
 {
-    DDynArray *src = make_int_array(2);
-    DDynArray *copy = NULL;
+    DDynArray src;
+    DDynArray copy;
 
+    make_int_array(&src, 2);
     for (int i = 0; i < 10; i++)
-        push_int(src, i + 100);
-
-    D_TEST_EXPR(d_dyn_array_new_from(&copy, src) == D_OK);
-    expect_size(copy, 10);
-    expect_capacity_at_least(copy, 10);
+        push_int(&src, i + 100);
+    D_TEST_EXPR(d_dyn_array_init_from(&copy, &src) == D_OK);
+    expect_size(&copy, 10);
+    expect_capacity_at_least(&copy, 10);
     for (int i = 0; i < 10; i++)
-        expect_int_at(copy, (usize)i, i + 100);
-
+        expect_int_at(&copy, (usize)i, i + 100);
     d_dyn_array_destroy(&copy);
     d_dyn_array_destroy(&src);
 }
 
-static void test_new_from_does_not_alias_source_storage(void)
+static void test_init_from_does_not_alias_source_storage(void)
 {
-    DDynArray *src = make_int_array(0);
-    DDynArray *copy = NULL;
+    DDynArray src;
+    DDynArray copy;
     int value = 1;
     int replacement = 99;
 
-    D_TEST_EXPR(d_dyn_array_push_back(src, &value) == D_OK);
-    D_TEST_EXPR(d_dyn_array_new_from(&copy, src) == D_OK);
-    D_TEST_EXPR(d_dyn_array_remove_last_element(src, NULL) == D_OK);
-    D_TEST_EXPR(d_dyn_array_push_back(src, &replacement) == D_OK);
-
-    expect_int_at(copy, 0, 1);
-    expect_int_at(src, 0, 99);
-
+    make_int_array(&src, 0);
+    D_TEST_EXPR(d_dyn_array_push_back(&src, &value) == D_OK);
+    D_TEST_EXPR(d_dyn_array_init_from(&copy, &src) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_last_element(&src, NULL) == D_OK);
+    D_TEST_EXPR(d_dyn_array_push_back(&src, &replacement) == D_OK);
+    expect_int_at(&copy, 0, 1);
+    expect_int_at(&src, 0, 99);
     d_dyn_array_destroy(&copy);
     d_dyn_array_destroy(&src);
 }
 
-static void test_new_from_rejects_null_output_pointer(void)
+static void test_init_from_rejects_null_destination(void)
 {
-    DDynArray *src = make_int_array(0);
+    DDynArray src;
 
-    D_TEST_EXPR(d_dyn_array_new_from(NULL, src) == D_ERR_INVALID_ARG);
-
+    make_int_array(&src, 0);
+    D_TEST_EXPR(d_dyn_array_init_from(NULL, &src) == D_ERR_INVALID_ARG);
     d_dyn_array_destroy(&src);
 }
 
-static void test_new_from_rejects_null_source(void)
+static void test_init_from_rejects_null_source(void)
 {
-    DDynArray *copy = NULL;
+    DDynArray copy;
 
-    D_TEST_EXPR(d_dyn_array_new_from(&copy, NULL) == D_ERR_INVALID_ARG);
-    D_TEST_NULL(copy);
+    D_TEST_EXPR(d_dyn_array_init_from(&copy, NULL) == D_ERR_INVALID_ARG);
 }
 
 static void test_push_back_ptr_stores_pointer_value(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
     int x = 123;
     int *out = NULL;
 
-    D_TEST_EXPR(d_dyn_array_new_ptr_arr(&arr, 0, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_EXPR(d_dyn_array_push_back_ptr(arr, &x) == D_OK);
-    expect_size(arr, 1);
-    D_TEST_EXPR(d_dyn_array_get_elem_at(arr, 0, &out) == D_OK);
+    D_TEST_EXPR(d_dyn_array_init_ptr_arr(&arr, 0, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_dyn_array_push_back_ptr(&arr, &x) == D_OK);
+    expect_size(&arr, 1);
+    D_TEST_EXPR(d_dyn_array_get_elem_at(&arr, 0, &out) == D_OK);
     D_TEST_EXPR(out == &x);
     D_TEST_EXPR(*out == 123);
-
     d_dyn_array_destroy(&arr);
 }
 
 static void test_push_back_ptr_accepts_null_pointer_value(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
     void *out = (void *)0x1;
 
-    D_TEST_EXPR(d_dyn_array_new_ptr_arr(&arr, 0, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_EXPR(d_dyn_array_push_back_ptr(arr, NULL) == D_OK);
-    D_TEST_EXPR(d_dyn_array_get_elem_at(arr, 0, &out) == D_OK);
+    D_TEST_EXPR(d_dyn_array_init_ptr_arr(&arr, 0, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_dyn_array_push_back_ptr(&arr, NULL) == D_OK);
+    D_TEST_EXPR(d_dyn_array_get_elem_at(&arr, 0, &out) == D_OK);
     D_TEST_NULL(out);
-
     d_dyn_array_destroy(&arr);
 }
 
@@ -456,43 +439,43 @@ static void test_push_back_ptr_rejects_null_array(void)
 
 static void test_remove_last_on_empty_array_is_noop_ok(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int out = 123;
 
-    D_TEST_EXPR(d_dyn_array_remove_last_element(arr, &out) == D_OK);
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_remove_last_element(&arr, &out) == D_OK);
     D_TEST_EXPR(out == 123);
-    expect_size(arr, 0);
-
+    expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_remove_last_returns_removed_value(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int values[] = {1, 2, 3};
     int out = 0;
 
-    D_TEST_EXPR(d_dyn_array_append(arr, values, 3) == D_OK);
-    D_TEST_EXPR(d_dyn_array_remove_last_element(arr, &out) == D_OK);
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 3) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_last_element(&arr, &out) == D_OK);
     D_TEST_EXPR(out == 3);
-    expect_size(arr, 2);
-    expect_int_at(arr, 0, 1);
-    expect_int_at(arr, 1, 2);
-
+    expect_size(&arr, 2);
+    expect_int_at(&arr, 0, 1);
+    expect_int_at(&arr, 1, 2);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_remove_last_without_out_discards_value(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int values[] = {1, 2, 3};
 
-    D_TEST_EXPR(d_dyn_array_append(arr, values, 3) == D_OK);
-    D_TEST_EXPR(d_dyn_array_remove_last_element(arr, NULL) == D_OK);
-    expect_size(arr, 2);
-    expect_int_at(arr, 0, 1);
-    expect_int_at(arr, 1, 2);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 3) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_last_element(&arr, NULL) == D_OK);
+    expect_size(&arr, 2);
+    expect_int_at(&arr, 0, 1);
+    expect_int_at(&arr, 1, 2);
     d_dyn_array_destroy(&arr);
 }
 
@@ -505,33 +488,32 @@ static void test_remove_last_rejects_null_array(void)
 
 static void test_remove_elem_fast_from_middle_swaps_last_into_removed_slot(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int values[] = {10, 20, 30, 40};
     int out = 0;
 
-    D_TEST_EXPR(d_dyn_array_append(arr, values, 4) == D_OK);
-    D_TEST_EXPR(d_dyn_array_remove_elem_fast(arr, 1, &out) == D_OK);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 4) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_elem_fast(&arr, 1, &out) == D_OK);
     D_TEST_EXPR(out == 20);
-    expect_size(arr, 3);
-    expect_int_at(arr, 0, 10);
-    expect_int_at(arr, 1, 40);
-    expect_int_at(arr, 2, 30);
-
+    expect_size(&arr, 3);
+    expect_int_at(&arr, 0, 10);
+    expect_int_at(&arr, 1, 40);
+    expect_int_at(&arr, 2, 30);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_remove_elem_fast_first_from_single_element_array(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int value = 555;
     int out = 0;
 
-    D_TEST_EXPR(d_dyn_array_push_back(arr, &value) == D_OK);
-    D_TEST_EXPR(d_dyn_array_remove_elem_fast(arr, 0, &out) == D_OK);
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_push_back(&arr, &value) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_elem_fast(&arr, 0, &out) == D_OK);
     D_TEST_EXPR(out == 555);
-    expect_size(arr, 0);
-
+    expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
@@ -544,87 +526,85 @@ static void test_remove_elem_fast_rejects_null_array(void)
 
 static void test_remove_elem_fast_rejects_index_equal_size(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int value = 1;
     int out = 123;
 
-    D_TEST_EXPR(d_dyn_array_push_back(arr, &value) == D_OK);
-    D_TEST_EXPR(d_dyn_array_remove_elem_fast(arr, 1, &out) != D_OK);
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_push_back(&arr, &value) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_elem_fast(&arr, 1, &out) != D_OK);
     D_TEST_EXPR(out == 123);
-    expect_size(arr, 1);
-    expect_int_at(arr, 0, 1);
-
+    expect_size(&arr, 1);
+    expect_int_at(&arr, 0, 1);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_remove_elem_fast_rejects_remove_from_empty_array(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int out = 123;
 
-    D_TEST_EXPR(d_dyn_array_remove_elem_fast(arr, 0, &out) != D_OK);
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_remove_elem_fast(&arr, 0, &out) != D_OK);
     D_TEST_EXPR(out == 123);
-    expect_size(arr, 0);
-
+    expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_remove_elem_fast_with_out_does_not_call_destructor(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
     int values[] = {1, 2, 3};
     int out = 0;
 
     reset_destroy_tracking();
-    D_TEST_EXPR(d_dyn_array_new(&arr, sizeof(int), 0, int_destroy_counter, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_EXPR(d_dyn_array_append(arr, values, 3) == D_OK);
-    D_TEST_EXPR(d_dyn_array_remove_elem_fast(arr, 1, &out) == D_OK);
+    D_TEST_EXPR(d_dyn_array_init(&arr, sizeof(int), 0, int_destroy_counter, ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 3) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_elem_fast(&arr, 1, &out) == D_OK);
     D_TEST_EXPR(out == 2);
     D_TEST_EXPR(g_destroy_count == 0);
-
     d_dyn_array_destroy(&arr);
 }
 
 static void test_remove_elem_fast_without_out_calls_destructor_once(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
     int values[] = {4, 5, 6};
 
     reset_destroy_tracking();
-    D_TEST_EXPR(d_dyn_array_new(&arr, sizeof(int), 0, int_destroy_counter, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_EXPR(d_dyn_array_append(arr, values, 3) == D_OK);
-    D_TEST_EXPR(d_dyn_array_remove_elem_fast(arr, 1, NULL) == D_OK);
+    D_TEST_EXPR(d_dyn_array_init(&arr, sizeof(int), 0, int_destroy_counter, ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 3) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_elem_fast(&arr, 1, NULL) == D_OK);
     D_TEST_EXPR(g_destroy_count == 1);
     D_TEST_EXPR(g_destroy_sum == 5);
-    expect_size(arr, 2);
-
+    expect_size(&arr, 2);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_clear_empty_array_is_ok(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
 
-    D_TEST_EXPR(d_dyn_array_clear_array(arr) == arr);
-    expect_size(arr, 0);
-
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_clear_array(&arr) == &arr);
+    expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_clear_removes_all_elements_but_keeps_capacity(void)
 {
-    DDynArray *arr = make_int_array(16);
+    DDynArray arr;
     int values[] = {1, 2, 3, 4};
     usize before_capacity = 0;
     usize after_capacity = 0;
 
-    D_TEST_EXPR(d_dyn_array_append(arr, values, 4) == D_OK);
-    D_TEST_EXPR(d_dyn_array_get_capacity(arr, &before_capacity) == D_OK);
-    D_TEST_EXPR(d_dyn_array_clear_array(arr) == arr);
-    expect_size(arr, 0);
-    D_TEST_EXPR(d_dyn_array_get_capacity(arr, &after_capacity) == D_OK);
+    make_int_array(&arr, 16);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 4) == D_OK);
+    D_TEST_EXPR(d_dyn_array_get_capacity(&arr, &before_capacity) == D_OK);
+    D_TEST_EXPR(d_dyn_array_clear_array(&arr) == &arr);
+    expect_size(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_get_capacity(&arr, &after_capacity) == D_OK);
     D_TEST_EXPR(after_capacity == before_capacity);
-
     d_dyn_array_destroy(&arr);
 }
 
@@ -635,59 +615,50 @@ static void test_clear_null_returns_null(void)
 
 static void test_clear_calls_destructor_for_each_element(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
     int values[] = {1, 2, 3, 4};
 
     reset_destroy_tracking();
-    D_TEST_EXPR(d_dyn_array_new(&arr, sizeof(int), 0, int_destroy_counter, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_EXPR(d_dyn_array_append(arr, values, 4) == D_OK);
-    D_TEST_EXPR(d_dyn_array_clear_array(arr) == arr);
+    D_TEST_EXPR(d_dyn_array_init(&arr, sizeof(int), 0, int_destroy_counter, ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 4) == D_OK);
+    D_TEST_EXPR(d_dyn_array_clear_array(&arr) == &arr);
     D_TEST_EXPR(g_destroy_count == 4);
     D_TEST_EXPR(g_destroy_sum == 10);
-    expect_size(arr, 0);
-
+    expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_destroy_null_pointer_is_safe(void)
 {
     d_dyn_array_destroy(NULL);
+    D_TEST_EXPR(true);
 }
 
-static void test_destroy_null_array_is_safe_and_keeps_null(void)
+static void test_destroy_empty_array_is_safe(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
 
+    make_int_array(&arr, 0);
     d_dyn_array_destroy(&arr);
-    D_TEST_NULL(arr);
-}
-
-static void test_destroy_sets_pointer_to_null(void)
-{
-    DDynArray *arr = make_int_array(0);
-
-    d_dyn_array_destroy(&arr);
-    D_TEST_NULL(arr);
+    D_TEST_EXPR(true);
 }
 
 static void test_destroy_calls_destructor_for_each_remaining_element(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
     int values[] = {9, 8, 7};
 
     reset_destroy_tracking();
-    D_TEST_EXPR(d_dyn_array_new(&arr, sizeof(int), 0, int_destroy_counter, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_EXPR(d_dyn_array_append(arr, values, 3) == D_OK);
+    D_TEST_EXPR(d_dyn_array_init(&arr, sizeof(int), 0, int_destroy_counter, ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 3) == D_OK);
     d_dyn_array_destroy(&arr);
-
-    D_TEST_NULL(arr);
     D_TEST_EXPR(g_destroy_count == 3);
     D_TEST_EXPR(g_destroy_sum == 24);
 }
 
 static void test_destructor_not_called_for_removed_owned_element_with_out(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
     char *a = owned_string("a");
     char *b = owned_string("b");
     char *out = NULL;
@@ -697,10 +668,10 @@ static void test_destructor_not_called_for_removed_owned_element_with_out(void)
     g_expected_ptrs[1] = b;
     g_expected_ptr_count = 2;
 
-    D_TEST_EXPR(d_dyn_array_new_ptr_arr(&arr, 0, tracked_string_ptr_destroy, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_EXPR(d_dyn_array_push_back_ptr(arr, a) == D_OK);
-    D_TEST_EXPR(d_dyn_array_push_back_ptr(arr, b) == D_OK);
-    D_TEST_EXPR(d_dyn_array_remove_elem_fast(arr, 0, &out) == D_OK);
+    D_TEST_EXPR(d_dyn_array_init_ptr_arr(&arr, 0, tracked_string_ptr_destroy, ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_dyn_array_push_back_ptr(&arr, a) == D_OK);
+    D_TEST_EXPR(d_dyn_array_push_back_ptr(&arr, b) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_elem_fast(&arr, 0, &out) == D_OK);
     D_TEST_EXPR(out == a);
     D_TEST_EXPR(g_destroy_count == 0);
 
@@ -713,7 +684,7 @@ static void test_destructor_not_called_for_removed_owned_element_with_out(void)
 
 static void test_pointer_array_destructor_receives_element_slot_on_destroy(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
     char *a = owned_string("alpha");
     char *b = owned_string("beta");
 
@@ -722,19 +693,17 @@ static void test_pointer_array_destructor_receives_element_slot_on_destroy(void)
     g_expected_ptrs[1] = b;
     g_expected_ptr_count = 2;
 
-    D_TEST_EXPR(d_dyn_array_new_ptr_arr(&arr, 0, tracked_string_ptr_destroy, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_EXPR(d_dyn_array_push_back_ptr(arr, a) == D_OK);
-    D_TEST_EXPR(d_dyn_array_push_back_ptr(arr, b) == D_OK);
+    D_TEST_EXPR(d_dyn_array_init_ptr_arr(&arr, 0, tracked_string_ptr_destroy, ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_dyn_array_push_back_ptr(&arr, a) == D_OK);
+    D_TEST_EXPR(d_dyn_array_push_back_ptr(&arr, b) == D_OK);
     d_dyn_array_destroy(&arr);
-
-    D_TEST_NULL(arr);
     D_TEST_EXPR(g_destroy_count == 2);
     D_TEST_EXPR(g_destroy_bad_slot_count == 0);
 }
 
 static void test_pointer_array_destructor_receives_element_slot_on_clear(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
     char *a = owned_string("clear-a");
     char *b = owned_string("clear-b");
 
@@ -743,20 +712,19 @@ static void test_pointer_array_destructor_receives_element_slot_on_clear(void)
     g_expected_ptrs[1] = b;
     g_expected_ptr_count = 2;
 
-    D_TEST_EXPR(d_dyn_array_new_ptr_arr(&arr, 0, tracked_string_ptr_destroy, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_EXPR(d_dyn_array_push_back_ptr(arr, a) == D_OK);
-    D_TEST_EXPR(d_dyn_array_push_back_ptr(arr, b) == D_OK);
-    D_TEST_EXPR(d_dyn_array_clear_array(arr) == arr);
+    D_TEST_EXPR(d_dyn_array_init_ptr_arr(&arr, 0, tracked_string_ptr_destroy, ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_dyn_array_push_back_ptr(&arr, a) == D_OK);
+    D_TEST_EXPR(d_dyn_array_push_back_ptr(&arr, b) == D_OK);
+    D_TEST_EXPR(d_dyn_array_clear_array(&arr) == &arr);
     D_TEST_EXPR(g_destroy_count == 2);
     D_TEST_EXPR(g_destroy_bad_slot_count == 0);
-    expect_size(arr, 0);
-
+    expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
 static void test_pointer_array_destructor_receives_element_slot_on_remove_without_out(void)
 {
-    DDynArray *arr = NULL;
+    DDynArray arr;
     char *a = owned_string("remove-a");
     char *b = owned_string("remove-b");
 
@@ -765,14 +733,13 @@ static void test_pointer_array_destructor_receives_element_slot_on_remove_withou
     g_expected_ptrs[1] = b;
     g_expected_ptr_count = 2;
 
-    D_TEST_EXPR(d_dyn_array_new_ptr_arr(&arr, 0, tracked_string_ptr_destroy, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_EXPR(d_dyn_array_push_back_ptr(arr, a) == D_OK);
-    D_TEST_EXPR(d_dyn_array_push_back_ptr(arr, b) == D_OK);
-    D_TEST_EXPR(d_dyn_array_remove_elem_fast(arr, 0, NULL) == D_OK);
+    D_TEST_EXPR(d_dyn_array_init_ptr_arr(&arr, 0, tracked_string_ptr_destroy, ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_dyn_array_push_back_ptr(&arr, a) == D_OK);
+    D_TEST_EXPR(d_dyn_array_push_back_ptr(&arr, b) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_elem_fast(&arr, 0, NULL) == D_OK);
     D_TEST_EXPR(g_destroy_count == 1);
     D_TEST_EXPR(g_destroy_bad_slot_count == 0);
-    expect_size(arr, 1);
-
+    expect_size(&arr, 1);
     d_dyn_array_destroy(&arr);
     D_TEST_EXPR(g_destroy_count == 2);
     D_TEST_EXPR(g_destroy_bad_slot_count == 0);
@@ -787,7 +754,7 @@ static void test_large_struct_elements_are_copied_exactly(void)
         unsigned char bytes[37];
     } BigElem;
 
-    DDynArray *arr = NULL;
+    DDynArray arr;
     BigElem elems[3];
     BigElem out;
 
@@ -800,45 +767,127 @@ static void test_large_struct_elements_are_copied_exactly(void)
             elems[i].bytes[j] = (unsigned char)(i * 10 + j);
     }
 
-    D_TEST_EXPR(d_dyn_array_new(&arr, sizeof(BigElem), 0, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
-    D_TEST_EXPR(d_dyn_array_append(arr, elems, 3) == D_OK);
+    D_TEST_EXPR(d_dyn_array_init(&arr, sizeof(BigElem), 0, NULL, ARRAY_DEFAULT_OPTS) == D_OK);
+    D_TEST_EXPR(d_dyn_array_append(&arr, elems, 3) == D_OK);
     memset(&out, 0, sizeof(out));
-    D_TEST_EXPR(d_dyn_array_get_elem_at(arr, 2, &out) == D_OK);
+    D_TEST_EXPR(d_dyn_array_get_elem_at(&arr, 2, &out) == D_OK);
     D_TEST_MEM_EQ(&out, &elems[2], sizeof(BigElem));
-
     d_dyn_array_destroy(&arr);
 }
 
 static void test_many_mutations_preserve_valid_state(void)
 {
-    DDynArray *arr = make_int_array(0);
+    DDynArray arr;
     int out = 0;
 
+    make_int_array(&arr, 0);
     for (int i = 0; i < 100; i++)
-        push_int(arr, i);
+        push_int(&arr, i);
     for (int i = 0; i < 50; i++)
-        D_TEST_EXPR(d_dyn_array_remove_last_element(arr, &out) == D_OK);
+        D_TEST_EXPR(d_dyn_array_remove_last_element(&arr, &out) == D_OK);
     for (int i = 100; i < 175; i++)
-        push_int(arr, i);
+        push_int(&arr, i);
 
-    expect_size(arr, 125);
-    expect_capacity_at_least(arr, 125);
+    expect_size(&arr, 125);
+    expect_capacity_at_least(&arr, 125);
     for (int i = 0; i < 50; i++)
-        expect_int_at(arr, (usize)i, i);
+        expect_int_at(&arr, (usize)i, i);
     for (int i = 0; i < 75; i++)
-        expect_int_at(arr, (usize)(50 + i), 100 + i);
-
+        expect_int_at(&arr, (usize)(50 + i), 100 + i);
     d_dyn_array_destroy(&arr);
+}
+
+static void test_push_to_exact_power_of_two_then_one_more(void)
+{
+    DDynArray arr;
+
+    make_int_array(&arr, 8);
+    for (int i = 0; i < 8; i++)
+        push_int(&arr, i);
+    expect_size(&arr, 8);
+    push_int(&arr, 8); /* triggers growth */
+    expect_size(&arr, 9);
+    expect_capacity_at_least(&arr, 9);
+    for (int i = 0; i <= 8; i++)
+        expect_int_at(&arr, (usize)i, i);
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_append_then_clear_then_push_again(void)
+{
+    DDynArray arr;
+    int first[] = {1, 2, 3, 4, 5};
+    int second[] = {10, 20, 30};
+
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_append(&arr, first, 5) == D_OK);
+    D_TEST_EXPR(d_dyn_array_clear_array(&arr) == &arr);
+    expect_size(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_append(&arr, second, 3) == D_OK);
+    expect_size(&arr, 3);
+    expect_int_at(&arr, 0, 10);
+    expect_int_at(&arr, 1, 20);
+    expect_int_at(&arr, 2, 30);
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_remove_elem_fast_last_element_is_swap_with_self(void)
+{
+    DDynArray arr;
+    int values[] = {1, 2, 3};
+    int out = 0;
+
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 3) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_elem_fast(&arr, 2, &out) == D_OK);
+    D_TEST_EXPR(out == 3);
+    expect_size(&arr, 2);
+    expect_int_at(&arr, 0, 1);
+    expect_int_at(&arr, 1, 2);
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_get_elem_at_does_not_alias_internal_storage(void)
+{
+    DDynArray arr;
+    int values[] = {100, 200, 300};
+    int out = 0;
+
+    make_int_array(&arr, 0);
+    D_TEST_EXPR(d_dyn_array_append(&arr, values, 3) == D_OK);
+    D_TEST_EXPR(d_dyn_array_get_elem_at(&arr, 0, &out) == D_OK);
+    out = 999;
+    expect_int_at(&arr, 0, 100); /* internal value must be unaffected */
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_init_from_is_independent_after_source_clear(void)
+{
+    DDynArray src;
+    DDynArray copy;
+    int values[] = {7, 8, 9};
+
+    make_int_array(&src, 0);
+    D_TEST_EXPR(d_dyn_array_append(&src, values, 3) == D_OK);
+    D_TEST_EXPR(d_dyn_array_init_from(&copy, &src) == D_OK);
+    D_TEST_EXPR(d_dyn_array_clear_array(&src) == &src);
+    expect_size(&src, 0);
+    expect_size(&copy, 3);
+    expect_int_at(&copy, 0, 7);
+    expect_int_at(&copy, 1, 8);
+    expect_int_at(&copy, 2, 9);
+    d_dyn_array_destroy(&copy);
+    d_dyn_array_destroy(&src);
 }
 
 int main(void)
 {
     DTest tests[] = {
-        D_TEST_GENERATE_TEST(test_new_creates_empty_array),
-        D_TEST_GENERATE_TEST(test_new_with_reserved_capacity_sets_capacity),
-        D_TEST_GENERATE_TEST(test_new_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_new_rejects_zero_elem_size),
-        D_TEST_GENERATE_TEST(test_new_ptr_arr_creates_empty_pointer_array),
+        D_TEST_GENERATE_TEST(test_init_creates_empty_array),
+        D_TEST_GENERATE_TEST(test_init_with_reserved_capacity_sets_capacity),
+        D_TEST_GENERATE_TEST(test_init_rejects_null_array_pointer),
+        D_TEST_GENERATE_TEST(test_init_rejects_zero_elem_size),
+        D_TEST_GENERATE_TEST(test_init_ptr_arr_creates_empty_pointer_array),
         D_TEST_GENERATE_TEST(test_push_back_appends_single_int),
         D_TEST_GENERATE_TEST(test_push_back_copies_value_not_alias_source),
         D_TEST_GENERATE_TEST(test_push_back_grows_capacity_and_preserves_values),
@@ -858,10 +907,10 @@ int main(void)
         D_TEST_GENERATE_TEST(test_get_size_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_get_capacity_rejects_null_array),
         D_TEST_GENERATE_TEST(test_get_capacity_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_new_from_copies_size_capacity_and_values),
-        D_TEST_GENERATE_TEST(test_new_from_does_not_alias_source_storage),
-        D_TEST_GENERATE_TEST(test_new_from_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_new_from_rejects_null_source),
+        D_TEST_GENERATE_TEST(test_init_from_copies_size_capacity_and_values),
+        D_TEST_GENERATE_TEST(test_init_from_does_not_alias_source_storage),
+        D_TEST_GENERATE_TEST(test_init_from_rejects_null_destination),
+        D_TEST_GENERATE_TEST(test_init_from_rejects_null_source),
         D_TEST_GENERATE_TEST(test_push_back_ptr_stores_pointer_value),
         D_TEST_GENERATE_TEST(test_push_back_ptr_accepts_null_pointer_value),
         D_TEST_GENERATE_TEST(test_push_back_ptr_rejects_null_array),
@@ -881,8 +930,7 @@ int main(void)
         D_TEST_GENERATE_TEST(test_clear_null_returns_null),
         D_TEST_GENERATE_TEST(test_clear_calls_destructor_for_each_element),
         D_TEST_GENERATE_TEST(test_destroy_null_pointer_is_safe),
-        D_TEST_GENERATE_TEST(test_destroy_null_array_is_safe_and_keeps_null),
-        D_TEST_GENERATE_TEST(test_destroy_sets_pointer_to_null),
+        D_TEST_GENERATE_TEST(test_destroy_empty_array_is_safe),
         D_TEST_GENERATE_TEST(test_destroy_calls_destructor_for_each_remaining_element),
         D_TEST_GENERATE_TEST(test_destructor_not_called_for_removed_owned_element_with_out),
         D_TEST_GENERATE_TEST(test_pointer_array_destructor_receives_element_slot_on_destroy),
@@ -890,6 +938,11 @@ int main(void)
         D_TEST_GENERATE_TEST(test_pointer_array_destructor_receives_element_slot_on_remove_without_out),
         D_TEST_GENERATE_TEST(test_large_struct_elements_are_copied_exactly),
         D_TEST_GENERATE_TEST(test_many_mutations_preserve_valid_state),
+        D_TEST_GENERATE_TEST(test_push_to_exact_power_of_two_then_one_more),
+        D_TEST_GENERATE_TEST(test_append_then_clear_then_push_again),
+        D_TEST_GENERATE_TEST(test_remove_elem_fast_last_element_is_swap_with_self),
+        D_TEST_GENERATE_TEST(test_get_elem_at_does_not_alias_internal_storage),
+        D_TEST_GENERATE_TEST(test_init_from_is_independent_after_source_clear),
     };
 
     D_TEST_RUN_TESTS(tests);

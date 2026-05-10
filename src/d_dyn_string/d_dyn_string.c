@@ -56,17 +56,17 @@ DCompareResult d_dyn_string_compare(DDynString *d1, DDynString *d2)
 
 const char *d_dyn_string_get_string(const DDynString *dstring)
 {
-    return raw_buffer_get_data((RawBuffer *)dstring);
+    return raw_buffer_get_data((const RawBuffer *)dstring);
 }
 
 DResult d_dyn_string_get_size(const DDynString *dstring, usize *size)
 {
-    return raw_buffer_get_size((RawBuffer *)dstring, size);
+    return raw_buffer_get_size((const RawBuffer *)dstring, size);
 }
 
 DResult d_dyn_string_get_capacity(const DDynString *dstring, usize *capacity)
 {
-    return raw_buffer_get_capacity((RawBuffer *)dstring, capacity);
+    return raw_buffer_get_capacity((const RawBuffer *)dstring, capacity);
 }
 
 DResult d_dyn_string_sub_string_in_place(DDynString *dstring, usize pos, usize size)
