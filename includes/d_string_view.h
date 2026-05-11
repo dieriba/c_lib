@@ -28,7 +28,7 @@
  *   }
  * @endcode
  */
-
+#include "d_result.h"
 #include "d_types.h"
 #include "d_dyn_string.h"
 #include "d_dyn_array.h"
@@ -576,6 +576,9 @@ DResult d_string_view_split_by_char_of_str(DDynArray *new_dyn_array, DStringView
  */
 DResult d_dyn_string_init_from_string_view(DDynString *new_dyn_string, DStringView view);
 
+void d_string_view_dbg_print(DStringView *d_string_view);
+
 /** @} */ /* end of d_string_view group */
+
 
 #endif

@@ -27,6 +27,7 @@ create_file $includes_directory/$header_filename  "$(cat <<EOF
 #ifndef $header_guard
 #define $header_guard
 #include "d_types.h"
+#include "d_result.h"
    
 #endif
 EOF

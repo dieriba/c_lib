@@ -1,5 +1,5 @@
-#ifndef GENERAL_LIB__H
-#define GENERAL_LIB__H
+#ifndef GENERAL_LIB_H
+#define GENERAL_LIB_H
 
 /**
  * @defgroup d_general_lib General Utilities

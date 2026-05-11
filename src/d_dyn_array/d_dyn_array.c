@@ -1,7 +1,7 @@
 #include "d_dyn_array.h"
-#include "d_bits.h"
-#include "raw_buffer.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define d_dyn_array_elt_len(arr, i) ((arr)->array.elem_size * (i))
@@ -126,4 +126,24 @@ void d_dyn_array_destroy(DDynArray *dyn_array)
 	destroy_elements(dyn_array);
 	raw_buffer_free((RawBuffer *)dyn_array);
 	memset(dyn_array, 0, sizeof(DDynArray));
+}
+
+void d_dyn_array_dbg_print(DDynArray *dyn_array, FnElemRepr elem_repr)
+{
+	if (dyn_array == NULL)
+	{
+		printf("DDynArray: NULL\n");
+		return;
+	}
+	usize size = dyn_array->array.size;
+	printf("DDynArray { size: %zu, capacity: %zu, elems: [", size, dyn_array->array.capacity);
+	for (usize i = 0; i < size; i++)
+	{
+		char *repr = elem_repr(d_dyn_array_elt_pos(dyn_array, i));
+		if (i > 0)
+			printf(", ");
+		printf("%s", repr);
+		free(repr);
+	}
+	printf("] }\n");
 }

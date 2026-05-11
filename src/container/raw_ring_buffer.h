@@ -1,5 +1,6 @@
 #ifndef RAW_RING_BUFFER_H
 #define RAW_RING_BUFFER_H
+#include "d_result.h"
 #include "d_types.h"
 #include "d_bits.h"
 #include <stdlib.h>

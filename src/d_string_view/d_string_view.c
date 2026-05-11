@@ -1,8 +1,5 @@
-#include <string.h>
-#include <stdlib.h>
+#include <stdio.h>
 #include "d_string_view.h"
-#include "d_dyn_array.h"
-#include "raw_buffer.h"
 #include "d_general_lib.h"
 
 #define dstring_view_get_char_at(view, pos) ((view).data[(pos)])
@@ -417,6 +414,17 @@ DResult d_string_view_split_by_char_of_str(DDynArray *new_dyn_array, DStringView
             break;
     }
     return D_OK;
+}
+
+void d_string_view_dbg_print(DStringView *view)
+{
+    if (view == NULL)
+    {
+        printf("DStringView: NULL\n");
+        return;
+    }
+    printf("DStringView { data: \"%.*s\", size: %zu }\n",
+           (int)view->size, view->data, view->size);
 }
 
 DResult d_string_view_split_by_char(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char c)

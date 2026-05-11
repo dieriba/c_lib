@@ -1,9 +1,7 @@
-#include <stdlib.h>
 #include <string.h>
 
 #include "raw_ring_buffer.h"
 #include "container.h"
-#include "d_bits.h"
 #include "d_math.h"
 
 #define raw_ring_buffer_get_head(raw_ring_buffer) ((char *)raw_ring_buffer->data + (raw_ring_buffer->head * raw_ring_buffer->elem_size))

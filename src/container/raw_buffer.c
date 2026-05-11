@@ -1,4 +1,3 @@
-#include <stdlib.h>
 #include <string.h>
 #include "container.h"
 #include "raw_buffer.h"

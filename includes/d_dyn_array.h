@@ -1,5 +1,5 @@
-#ifndef D_ARRAY_H
-#define D_ARRAY_H
+#ifndef D_DYN_ARRAY_H
+#define D_DYN_ARRAY_H
 
 /**
  * @defgroup d_dyn_array Dynamic Array
@@ -43,7 +43,7 @@
  *   d_dyn_array_destroy(&arr);
  * @endcode
  */
-
+#include "d_result.h"
 #include "d_types.h"
 #include "raw_buffer.h"
 
@@ -304,6 +304,9 @@ DDynArray *d_dyn_array_clear_array(DDynArray *dyn_array);
  * @param dyn_array The array to destroy. May be NULL.
  */
 void d_dyn_array_destroy(DDynArray *dyn_array);
+
+void d_dyn_array_dbg_print(DDynArray *dyn_array, FnElemRepr elem_repr);
+
 
 /** @} */ /* end of d_dyn_array group */
 

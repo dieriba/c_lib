@@ -1,6 +1,7 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "raw_map.h"
 #include "d_unordered_map.h"
-#include <stdlib.h>
 
 DResult d_unordered_map_init(DUnorderedMap *d_unordered_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem key_destructor_fn, FnPtrFreeElem value_destructor_fn)
 {

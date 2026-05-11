@@ -2,6 +2,7 @@
 #define RAW_BUFFER_H
 
 #include "d_bits.h"
+#include "d_result.h"
 #include "d_types.h"
 #include <stdlib.h>
 

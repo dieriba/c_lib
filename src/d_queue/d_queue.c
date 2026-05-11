@@ -1,5 +1,4 @@
 #include "d_queue.h"
-#include "raw_ring_buffer.h"
 #include <string.h>
 
 DResult d_queue_init(DQueue *d_queue, usize capacity, usize elem_size)

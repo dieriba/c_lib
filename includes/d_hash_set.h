@@ -69,7 +69,7 @@
  *   d_hash_set_destroy(&set); // frees "hello" via _free_str
  * @endcode
  */
-
+#include "d_result.h"
 #include "d_types.h"
 #include "d_general_lib.h"
 
@@ -155,22 +155,22 @@ typedef struct DHashSet
 DResult d_hash_set_init(DHashSet *d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem key_destructor_fn, FnPtrFreeElem value_destructor_fn);
 
 /* Pre-instantiated not-owned constructors */
-D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(int8,         int8)
-D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(int16,        int16)
-D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(int32,        int32)
-D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(int64,        int64)
-D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(u8,           u8)
-D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(u16,          u16)
-D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(u32,          u32)
-D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(u64,          u64)
-D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(usize,        usize)
-D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(bool,         bool)
-D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(char,         char)
+D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(int8, int8)
+D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(int16, int16)
+D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(int32, int32)
+D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(int64, int64)
+D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(u8, u8)
+D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(u16, u16)
+D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(u32, u32)
+D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(u64, u64)
+D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(usize, usize)
+D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(bool, bool)
+D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(char, char)
 D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(d_string_view, DStringView)
 D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(d_dyn_string, DDynString *)
 
 /* Pre-instantiated owned constructors */
-D_HASH_SET_INIT_WITH_OWNED_KEY(str,          char *,       _free_str)
+D_HASH_SET_INIT_WITH_OWNED_KEY(str, char *, _free_str)
 D_HASH_SET_INIT_WITH_OWNED_KEY(d_dyn_string, DDynString *, (FnPtrFreeElem)d_dyn_string_destroy)
 
 /* -----------------------------------------------------------------------

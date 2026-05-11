@@ -1,6 +1,4 @@
 #include "d_stack.h"
-#include "raw_ring_buffer.h"
-#include <stdlib.h>
 #include <string.h>
 
 DResult d_stack_init(DStack *d_stack, usize capacity, usize elem_size)

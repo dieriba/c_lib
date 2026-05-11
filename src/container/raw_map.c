@@ -1,6 +1,4 @@
 #include <immintrin.h>
-#include <string.h>
-#include "d_types.h"
 #include "d_math.h"
 #include "raw_map.h"
 #include "d_bits.h"
@@ -35,7 +33,7 @@
 #define compute_index_from_group_offset(group_number, offset) (group_number * RAW_MAP_GROUP_SIZE) + offset
 #define d_index_least_least_significant_bits_zero_based(value) d_bits_get_index_least_significant_bit_set_int(value) - 1
 
-typedef DResult (*HandleSlot)(RawMap *raw_map, void *key, void *value);
+typedef DResult (*RawMapIterFn)(RawMap *raw_map, void *key, void *value);
 
 typedef enum RawMapCtrl
 {
@@ -192,7 +190,7 @@ static void make_insert(RawMap *raw_map, usize position, void *key, void *value)
     memcpy(slot_value, value, raw_map->value_size);
 }
 
-static void iterate_on_map_occupied_slot(RawMap *raw_map, void *map, usize map_group_number, usize map_total_occupied_slot, HandleSlot handle_slot)
+static void raw_map_for_each(RawMap *raw_map, void *map, usize map_group_number, usize map_total_occupied_slot, RawMapIterFn handle_slot)
 {
     usize occupied_slot_handled = 0;
     usize group_number = 0;
@@ -235,7 +233,7 @@ static DResult rehash(RawMap *raw_map, void *new_key, void *new_value)
     usize old_group_number = raw_map->nb_groups;
     if ((op_result = init_raw_map_map(raw_map, new_capacity, alloc_size)) != D_OK)
         return op_result;
-    iterate_on_map_occupied_slot(raw_map, old_map, old_group_number, total_occupied_slot, raw_map_insert);
+    raw_map_for_each(raw_map, old_map, old_group_number, total_occupied_slot, raw_map_insert);
     raw_map_insert(raw_map, new_key, new_value);
     free(old_map);
     return D_OK;
@@ -351,7 +349,7 @@ void raw_map_free(RawMap *raw_map)
     if (raw_map == NULL)
         return;
     if (raw_map->key_destructor_fn || raw_map->value_destructor_fn)
-        iterate_on_map_occupied_slot(raw_map, raw_map->map, raw_map->nb_groups, raw_map->size, free_slot);
+        raw_map_for_each(raw_map, raw_map->map, raw_map->nb_groups, raw_map->size, free_slot);
     free(raw_map->map);
     memset(raw_map, 0, sizeof(RawMap));
 }

@@ -1,10 +1,7 @@
+#include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
-#include "d_types.h"
 #include "container.h"
 #include "d_dyn_string.h"
-#include "raw_buffer.h"
-#include "d_general_lib.h"
 #include "d_string_view.h"
 
 DResult d_dyn_string_init_with_capacity(DDynString *new_dyn_string, usize reserve)
@@ -135,4 +132,17 @@ void d_dyn_string_destroy(DDynString *dstring)
         return;
     raw_buffer_free((RawBuffer *)dstring);
     memset(dstring, 0, sizeof(DDynString));
+}
+
+void d_dyn_string_dbg_print(DDynString *dstring)
+{
+    if (dstring == NULL)
+    {
+        printf("DDynString: NULL\n");
+        return;
+    }
+    printf("DDynString { data: \"%s\", size: %zu, capacity: %zu }\n",
+           d_dyn_string_get_string(dstring),
+           dstring->str.size,
+           dstring->str.capacity);
 }
