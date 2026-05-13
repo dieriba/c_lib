@@ -25,6 +25,7 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CPPFLAGS := $(INC_FLAGS) -MMD -MP -Wall -Werror -Wextra
 
+all: $(BUILD_LIB)
 
 $(BUILD_LIB): $(OBJS)
 	mkdir -p $(dir $@)
