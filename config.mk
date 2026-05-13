@@ -1,4 +1,3 @@
-TARGET_DIR := target
-BUILD_DIR := $(TARGET_DIR)/build
-LIB_NAME := libd_lib.a
-LIB_PATH := $(BUILD_DIR)/lib/$(LIB_NAME)
+D_LIB_DIR     ?= .
+D_LIB_PATH    := $(D_LIB_DIR)/target/build/lib/libd_lib.a
+D_LIB_INCLUDE := $(D_LIB_DIR)/includes
