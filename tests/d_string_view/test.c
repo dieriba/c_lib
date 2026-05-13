@@ -61,6 +61,14 @@ static void expect_split_size(DDynArray *arr, usize expected)
     D_TEST_EXPR(size == expected);
 }
 
+static void expect_split_view_elem(DDynArray *arr, usize index, const char *expected)
+{
+    DStringView tok = {0};
+    D_TEST_EXPR(d_dyn_array_get_elem_at(arr, index, &tok) == D_OK);
+    D_TEST_EXPR(tok.size == strlen(expected));
+    D_TEST_MEM_EQ(tok.data, expected, tok.size);
+}
+
 /* construction / basic invariants */
 static void test_from_parts_keeps_pointer_and_size_for_valid_buffer(void)
 {
@@ -568,10 +576,10 @@ static void test_trim_empty_and_null_views_are_safe(void)
     D_TEST_EXPR(d_string_view_trim_right_by_char(nullv, 'x').size == 0);
 }
 
-static void test_split_by_char_basic_skips_empty_tokens(void)
+static void test_split_owned_by_char_basic_skips_empty_tokens(void)
 {
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char(&arr, d_string_view_from_c_string("a,b,c"), ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_owned(&arr, d_string_view_from_c_string("a,b,c"), ARRAY_DEFAULT_OPTS, ',') == D_OK);
     expect_split_size(&arr, 3);
     expect_split_elem(&arr, 0, "a");
     expect_split_elem(&arr, 1, "b");
@@ -579,50 +587,50 @@ static void test_split_by_char_basic_skips_empty_tokens(void)
     d_dyn_array_destroy(&arr);
 }
 
-static void test_split_by_char_collapses_consecutive_separators(void)
+static void test_split_owned_by_char_collapses_consecutive_separators(void)
 {
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char(&arr, d_string_view_from_c_string(",,a,,,b,,"), ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_owned(&arr, d_string_view_from_c_string(",,a,,,b,,"), ARRAY_DEFAULT_OPTS, ',') == D_OK);
     expect_split_size(&arr, 2);
     expect_split_elem(&arr, 0, "a");
     expect_split_elem(&arr, 1, "b");
     d_dyn_array_destroy(&arr);
 }
 
-static void test_split_by_char_no_separator_returns_original_copy(void)
+static void test_split_owned_by_char_no_separator_returns_original_copy(void)
 {
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char(&arr, d_string_view_from_c_string("abc"), ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_owned(&arr, d_string_view_from_c_string("abc"), ARRAY_DEFAULT_OPTS, ',') == D_OK);
     expect_split_size(&arr, 1);
     expect_split_elem(&arr, 0, "abc");
     d_dyn_array_destroy(&arr);
 }
 
-static void test_split_by_char_all_separators_returns_empty_array(void)
+static void test_split_owned_by_char_all_separators_returns_empty_array(void)
 {
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char(&arr, d_string_view_from_c_string(",,,,"), ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_owned(&arr, d_string_view_from_c_string(",,,,"), ARRAY_DEFAULT_OPTS, ',') == D_OK);
     expect_split_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
-static void test_split_by_char_empty_view_returns_empty_array(void)
+static void test_split_owned_by_char_empty_view_returns_empty_array(void)
 {
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char(&arr, d_string_view_from_c_string(""), ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_owned(&arr, d_string_view_from_c_string(""), ARRAY_DEFAULT_OPTS, ',') == D_OK);
     expect_split_size(&arr, 0);
     d_dyn_array_destroy(&arr);
 }
 
-static void test_split_by_char_rejects_null_output_pointer(void)
+static void test_split_owned_by_char_rejects_null_output_pointer(void)
 {
-    D_TEST_EXPR(d_string_view_split_by_char(NULL, d_string_view_from_c_string("a,b"), ARRAY_DEFAULT_OPTS, ',') == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_string_view_split_by_char_owned(NULL, d_string_view_from_c_string("a,b"), ARRAY_DEFAULT_OPTS, ',') == D_ERR_INVALID_ARG);
 }
 
-static void test_split_by_char_of_str_basic_multiple_separators(void)
+static void test_split_owned_by_char_of_str_basic_multiple_separators(void)
 {
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char_of_str(&arr, d_string_view_from_c_string("a,b;c::d"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",;:")) == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_of_str_owned(&arr, d_string_view_from_c_string("a,b;c::d"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",;:")) == D_OK);
     expect_split_size(&arr, 4);
     expect_split_elem(&arr, 0, "a");
     expect_split_elem(&arr, 1, "b");
@@ -631,35 +639,35 @@ static void test_split_by_char_of_str_basic_multiple_separators(void)
     d_dyn_array_destroy(&arr);
 }
 
-static void test_split_by_char_of_str_collapses_consecutive_separators(void)
+static void test_split_owned_by_char_of_str_collapses_consecutive_separators(void)
 {
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char_of_str(&arr, d_string_view_from_c_string(";;a,,b::"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",;:")) == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_of_str_owned(&arr, d_string_view_from_c_string(";;a,,b::"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",;:")) == D_OK);
     expect_split_size(&arr, 2);
     expect_split_elem(&arr, 0, "a");
     expect_split_elem(&arr, 1, "b");
     d_dyn_array_destroy(&arr);
 }
 
-static void test_split_by_char_of_str_empty_separator_set_returns_whole_string(void)
+static void test_split_owned_by_char_of_str_empty_separator_set_returns_whole_string(void)
 {
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char_of_str(&arr, d_string_view_from_c_string("abc"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL("")) == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_of_str_owned(&arr, d_string_view_from_c_string("abc"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL("")) == D_OK);
     expect_split_size(&arr, 1);
     expect_split_elem(&arr, 0, "abc");
     d_dyn_array_destroy(&arr);
 }
 
-static void test_split_by_char_of_str_rejects_null_output_pointer(void)
+static void test_split_owned_by_char_of_str_rejects_null_output_pointer(void)
 {
-    D_TEST_EXPR(d_string_view_split_by_char_of_str(NULL, d_string_view_from_c_string("a"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",")) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_string_view_split_by_char_of_str_owned(NULL, d_string_view_from_c_string("a"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",")) == D_ERR_INVALID_ARG);
 }
 
-static void test_split_by_char_should_respect_embedded_nul_in_view(void)
+static void test_split_owned_by_char_should_respect_embedded_nul_in_view(void)
 {
     const char data[] = {'a', ',', 'b', '\0', 'c', ',', 'd'};
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char(&arr, d_string_view_from_parts(data, sizeof(data)), ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_owned(&arr, d_string_view_from_parts(data, sizeof(data)), ARRAY_DEFAULT_OPTS, ',') == D_OK);
     expect_split_size(&arr, 3);
     expect_split_elem(&arr, 0, "a");
     /* token 1 contains b, NUL, c; current char* API cannot show it with strcmp, so validate bytes */
@@ -783,7 +791,7 @@ static void test_find_substring_many_overlapping_positions(void)
     D_TEST_EXPR(d_string_view_find_last_matching_view_from_end(view, D_STRING_VIEW_FROM_LITERAL("abab")) == 8);
 }
 
-static void test_split_long_string_many_tokens(void)
+static void test_split_owned_long_string_many_tokens(void)
 {
     char buffer[512];
     usize pos = 0;
@@ -796,11 +804,165 @@ static void test_split_long_string_many_tokens(void)
     buffer[pos] = '\0';
 
     DDynArray arr;
-    D_TEST_EXPR(d_string_view_split_by_char(&arr, d_string_view_from_c_string(buffer), ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    D_TEST_EXPR(d_string_view_split_by_char_owned(&arr, d_string_view_from_c_string(buffer), ARRAY_DEFAULT_OPTS, ',') == D_OK);
     expect_split_size(&arr, 81);
     for (usize i = 0; i < 80; ++i)
         expect_split_elem(&arr, i, "x");
     expect_split_elem(&arr, 80, "z");
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_split_not_owned_by_char_basic(void)
+{
+    const char *src = "a,b,c";
+    DStringView view = d_string_view_from_c_string(src);
+    DDynArray arr;
+    D_TEST_EXPR(d_string_view_split_by_char_not_owned(&arr, view, ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    expect_split_size(&arr, 3);
+    expect_split_view_elem(&arr, 0, "a");
+    expect_split_view_elem(&arr, 1, "b");
+    expect_split_view_elem(&arr, 2, "c");
+    DStringView t0 = {0}, t1 = {0}, t2 = {0};
+    d_dyn_array_get_elem_at(&arr, 0, &t0);
+    d_dyn_array_get_elem_at(&arr, 1, &t1);
+    d_dyn_array_get_elem_at(&arr, 2, &t2);
+    D_TEST_EXPR(t0.data == src);
+    D_TEST_EXPR(t1.data == src + 2);
+    D_TEST_EXPR(t2.data == src + 4);
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_split_not_owned_by_char_collapses_consecutive_separators(void)
+{
+    DDynArray arr;
+    D_TEST_EXPR(d_string_view_split_by_char_not_owned(&arr, d_string_view_from_c_string(",,a,,,b,,"), ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    expect_split_size(&arr, 2);
+    expect_split_view_elem(&arr, 0, "a");
+    expect_split_view_elem(&arr, 1, "b");
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_split_not_owned_by_char_no_separator_returns_whole(void)
+{
+    const char *src = "abc";
+    DStringView view = d_string_view_from_c_string(src);
+    DDynArray arr;
+    D_TEST_EXPR(d_string_view_split_by_char_not_owned(&arr, view, ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    expect_split_size(&arr, 1);
+    expect_split_view_elem(&arr, 0, "abc");
+    DStringView tok = {0};
+    d_dyn_array_get_elem_at(&arr, 0, &tok);
+    D_TEST_EXPR(tok.data == src);
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_split_not_owned_by_char_all_separators_returns_empty_array(void)
+{
+    DDynArray arr;
+    D_TEST_EXPR(d_string_view_split_by_char_not_owned(&arr, d_string_view_from_c_string(",,,,"), ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    expect_split_size(&arr, 0);
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_split_not_owned_by_char_empty_view_returns_empty_array(void)
+{
+    DDynArray arr;
+    D_TEST_EXPR(d_string_view_split_by_char_not_owned(&arr, d_string_view_from_c_string(""), ARRAY_DEFAULT_OPTS, ',') == D_OK);
+    expect_split_size(&arr, 0);
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_split_not_owned_by_char_rejects_null_output_pointer(void)
+{
+    D_TEST_EXPR(d_string_view_split_by_char_not_owned(NULL, d_string_view_from_c_string("a,b"), ARRAY_DEFAULT_OPTS, ',') == D_ERR_INVALID_ARG);
+}
+
+static void test_split_not_owned_by_char_views_do_not_allocate(void)
+{
+    const char src[] = "hello world foo";
+    DStringView view = d_string_view_from_parts(src, sizeof(src) - 1);
+    DDynArray arr;
+    D_TEST_EXPR(d_string_view_split_by_char_not_owned(&arr, view, ARRAY_DEFAULT_OPTS, ' ') == D_OK);
+    expect_split_size(&arr, 3);
+    usize size = 0;
+    d_dyn_array_get_size(&arr, &size);
+    for (usize i = 0; i < size; ++i)
+    {
+        DStringView tok = {0};
+        d_dyn_array_get_elem_at(&arr, i, &tok);
+        D_TEST_EXPR(tok.data >= src && tok.data < src + sizeof(src));
+    }
+    d_dyn_array_destroy(&arr);
+}
+
+
+static void test_split_not_owned_by_char_of_str_basic(void)
+{
+    const char *src = "a,b;c::d";
+    DDynArray arr;
+    D_TEST_EXPR(d_string_view_split_by_char_of_str_not_owned(&arr, d_string_view_from_c_string(src), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",;:")) == D_OK);
+    expect_split_size(&arr, 4);
+    expect_split_view_elem(&arr, 0, "a");
+    expect_split_view_elem(&arr, 1, "b");
+    expect_split_view_elem(&arr, 2, "c");
+    expect_split_view_elem(&arr, 3, "d");
+    DStringView t0 = {0};
+    d_dyn_array_get_elem_at(&arr, 0, &t0);
+    D_TEST_EXPR(t0.data == src);
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_split_not_owned_by_char_of_str_collapses_consecutive(void)
+{
+    DDynArray arr;
+    D_TEST_EXPR(d_string_view_split_by_char_of_str_not_owned(&arr, d_string_view_from_c_string(";;a,,b::"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",;:")) == D_OK);
+    expect_split_size(&arr, 2);
+    expect_split_view_elem(&arr, 0, "a");
+    expect_split_view_elem(&arr, 1, "b");
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_split_not_owned_by_char_of_str_empty_set_returns_whole(void)
+{
+    const char *src = "abc";
+    DDynArray arr;
+    D_TEST_EXPR(d_string_view_split_by_char_of_str_not_owned(&arr, d_string_view_from_c_string(src), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL("")) == D_OK);
+    expect_split_size(&arr, 1);
+    expect_split_view_elem(&arr, 0, "abc");
+    DStringView tok = {0};
+    d_dyn_array_get_elem_at(&arr, 0, &tok);
+    D_TEST_EXPR(tok.data == src);
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_split_not_owned_by_char_of_str_all_delims_returns_empty_array(void)
+{
+    DDynArray arr;
+    D_TEST_EXPR(d_string_view_split_by_char_of_str_not_owned(&arr, d_string_view_from_c_string(";,;,"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",;")) == D_OK);
+    expect_split_size(&arr, 0);
+    d_dyn_array_destroy(&arr);
+}
+
+static void test_split_not_owned_by_char_of_str_rejects_null_output_pointer(void)
+{
+    D_TEST_EXPR(d_string_view_split_by_char_of_str_not_owned(NULL, d_string_view_from_c_string("a"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",")) == D_ERR_INVALID_ARG);
+}
+
+static void test_split_not_owned_by_char_of_str_views_point_into_source(void)
+{
+    const char src[] = "one two,three";
+    DStringView view = d_string_view_from_parts(src, sizeof(src) - 1);
+    DDynArray arr;
+    D_TEST_EXPR(d_string_view_split_by_char_of_str_not_owned(&arr, view, ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(" ,")) == D_OK);
+    expect_split_size(&arr, 3);
+    usize size = 0;
+    d_dyn_array_get_size(&arr, &size);
+    for (usize i = 0; i < size; ++i)
+    {
+        DStringView tok = {0};
+        d_dyn_array_get_elem_at(&arr, i, &tok);
+        D_TEST_EXPR(tok.data >= src && tok.data < src + sizeof(src));
+    }
     d_dyn_array_destroy(&arr);
 }
 
@@ -880,17 +1042,17 @@ int main(void)
         D_TEST_GENERATE_TEST(test_trim_by_predicate_spaces),
         D_TEST_GENERATE_TEST(test_trim_predicate_all_matching_returns_empty),
         D_TEST_GENERATE_TEST(test_trim_empty_and_null_views_are_safe),
-        D_TEST_GENERATE_TEST(test_split_by_char_basic_skips_empty_tokens),
-        D_TEST_GENERATE_TEST(test_split_by_char_collapses_consecutive_separators),
-        D_TEST_GENERATE_TEST(test_split_by_char_no_separator_returns_original_copy),
-        D_TEST_GENERATE_TEST(test_split_by_char_all_separators_returns_empty_array),
-        D_TEST_GENERATE_TEST(test_split_by_char_empty_view_returns_empty_array),
-        D_TEST_GENERATE_TEST(test_split_by_char_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_split_by_char_of_str_basic_multiple_separators),
-        D_TEST_GENERATE_TEST(test_split_by_char_of_str_collapses_consecutive_separators),
-        D_TEST_GENERATE_TEST(test_split_by_char_of_str_empty_separator_set_returns_whole_string),
-        D_TEST_GENERATE_TEST(test_split_by_char_of_str_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_split_by_char_should_respect_embedded_nul_in_view),
+        D_TEST_GENERATE_TEST(test_split_owned_by_char_basic_skips_empty_tokens),
+        D_TEST_GENERATE_TEST(test_split_owned_by_char_collapses_consecutive_separators),
+        D_TEST_GENERATE_TEST(test_split_owned_by_char_no_separator_returns_original_copy),
+        D_TEST_GENERATE_TEST(test_split_owned_by_char_all_separators_returns_empty_array),
+        D_TEST_GENERATE_TEST(test_split_owned_by_char_empty_view_returns_empty_array),
+        D_TEST_GENERATE_TEST(test_split_owned_by_char_rejects_null_output_pointer),
+        D_TEST_GENERATE_TEST(test_split_owned_by_char_of_str_basic_multiple_separators),
+        D_TEST_GENERATE_TEST(test_split_owned_by_char_of_str_collapses_consecutive_separators),
+        D_TEST_GENERATE_TEST(test_split_owned_by_char_of_str_empty_separator_set_returns_whole_string),
+        D_TEST_GENERATE_TEST(test_split_owned_by_char_of_str_rejects_null_output_pointer),
+        D_TEST_GENERATE_TEST(test_split_owned_by_char_should_respect_embedded_nul_in_view),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_basic),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_subview),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_empty_view),
@@ -900,7 +1062,20 @@ int main(void)
         D_TEST_GENERATE_TEST(test_repeated_subviews_across_every_position_and_length),
         D_TEST_GENERATE_TEST(test_search_every_character_matches_memchr_expectations),
         D_TEST_GENERATE_TEST(test_find_substring_many_overlapping_positions),
-        D_TEST_GENERATE_TEST(test_split_long_string_many_tokens),
+        D_TEST_GENERATE_TEST(test_split_owned_long_string_many_tokens),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_basic),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_collapses_consecutive_separators),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_no_separator_returns_whole),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_all_separators_returns_empty_array),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_empty_view_returns_empty_array),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_rejects_null_output_pointer),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_views_do_not_allocate),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_basic),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_collapses_consecutive),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_empty_set_returns_whole),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_all_delims_returns_empty_array),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_rejects_null_output_pointer),
+        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_views_point_into_source),
         D_TEST_GENERATE_TEST(test_view_remains_non_owning_after_dyn_string_mutation_pointer_may_be_invalid_contract),
     };
 

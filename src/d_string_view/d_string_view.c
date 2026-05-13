@@ -1,10 +1,14 @@
 #include <stdio.h>
+#include "container.h"
 #include "d_string_view.h"
+#include "d_math.h"
 #include "d_general_lib.h"
 
 #define dstring_view_get_char_at(view, pos) ((view).data[(pos)])
 
 typedef bool (*char_match_fn)(char ch, const void *ctx);
+typedef usize (*TokenBoundFn)(DStringView, void *ctx, usize);
+typedef DResult (*PushBackFn)(DDynArray *, DStringView, usize, usize);
 
 static bool match_char(char c1, const void *c2)
 {
@@ -385,35 +389,98 @@ DResult d_dyn_string_init_from_string_view(DDynString *new_dyn_string, DStringVi
     return raw_buffer_init_with_data((RawBuffer *)new_dyn_string, sizeof(char), view.data, view.size, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
-DResult d_string_view_split_by_char_of_str(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, DStringView set)
+static DResult push_back_sub_view_fn(DDynArray *d_dyn_array, DStringView view, usize start_pos, usize size)
 {
-    if (new_dyn_array == NULL)
-        return D_ERR_INVALID_ARG;
-    DResult op_result;
-    usize size = view.size;
-    if ((op_result = d_dyn_array_init_ptr_arr(new_dyn_array, size, _free_str, opts)) != D_OK)
-        return op_result;
-    const char *string = view.data;
-    for (usize i = 0; i < size;)
+    DStringView subview = d_string_view_subview(view, start_pos, size);
+    return d_dyn_array_push_back(d_dyn_array, &subview);
+}
+
+static DResult push_back_owned_sub_view_fn(DDynArray *d_dyn_array, DStringView view, usize start_pos, usize size)
+{
+    char *subview = d_string_view_substr(view, start_pos, size);
+    if (subview == NULL)
+        return D_ERR_ALLOC;
+    DResult op_result = d_dyn_array_push_back_ptr(d_dyn_array, subview);
+    if (op_result != D_OK)
+        free(subview);
+    return op_result;
+}
+
+static usize token_start_char(DStringView view, void *ctx, usize pos)
+{
+    return d_string_view_find_first_not_matching_char_from_index(view, *(char *)ctx, pos);
+}
+
+static usize token_end_char(DStringView view, void *ctx, usize pos)
+{
+    return d_string_view_find_first_matching_char_from_index(view, *(char *)ctx, pos);
+}
+
+static usize token_start_char_set(DStringView view, void *ctx, usize pos)
+{
+    return d_string_view_find_first_char_not_in_set_from_index(view, *(DStringView *)ctx, pos);
+}
+
+static usize token_end_char_set(DStringView view, void *ctx, usize pos)
+{
+    return d_string_view_find_first_char_in_set_from_index(view, *(DStringView *)ctx, pos);
+}
+
+static DResult split_string_view(DDynArray *new_dyn_array, DStringView view, void *ctx, TokenBoundFn token_start_idx_fn, TokenBoundFn token_end_idx_fn, PushBackFn push_back_token)
+{
+    usize i = 0;
+    while (i != MAX_SIZE_T_VALUE)
     {
-        while (i < size && memchr(set.data, (int)string[i], set.size) != NULL)
-            ++i;
-        if (i != size)
+        i = token_start_idx_fn(view, ctx, i);
+        if (i != MAX_SIZE_T_VALUE)
         {
-            usize j = d_string_view_find_first_char_in_set_from_index(view, set, i);
-            char *part_str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
-            if ((op_result = d_dyn_array_push_back_ptr(new_dyn_array, part_str)) != D_OK)
+            usize j = token_end_idx_fn(view, ctx, i);
+            DResult op_result = push_back_token(new_dyn_array, view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
+            if (op_result != D_OK)
             {
-                free(part_str);
                 d_dyn_array_destroy(new_dyn_array);
                 return op_result;
             }
             i = j;
         }
-        else
-            break;
     }
     return D_OK;
+}
+
+static DResult split_string_view_owned(DDynArray *new_dyn_array, DStringView view, void *ctx, TokenBoundFn token_start_idx_fn, TokenBoundFn token_end_idx_fn, BufferOpts opts)
+{
+    DResult op_result = d_dyn_array_init_ptr_arr(new_dyn_array, DEFAULT_CAPACITY, _free_str, opts);
+    if (op_result != D_OK)
+        return op_result;
+    return split_string_view(new_dyn_array, view, ctx, token_start_idx_fn, token_end_idx_fn, push_back_owned_sub_view_fn);
+}
+
+static DResult split_string_view_not_owned(DDynArray *new_dyn_array, DStringView view, void *ctx, TokenBoundFn token_start_idx_fn, TokenBoundFn token_end_idx_fn, BufferOpts opts)
+{
+    DResult op_result = d_dyn_array_init(new_dyn_array, sizeof(DStringView), DEFAULT_CAPACITY, NULL, opts);
+    if (op_result != D_OK)
+        return op_result;
+    return split_string_view(new_dyn_array, view, ctx, token_start_idx_fn, token_end_idx_fn, push_back_sub_view_fn);
+}
+
+DResult d_string_view_split_by_char_of_str_owned(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, DStringView set)
+{
+    return split_string_view_owned(new_dyn_array, view, &set, token_start_char_set, token_end_char_set, opts);
+}
+
+DResult d_string_view_split_by_char_owned(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char c)
+{
+    return split_string_view_owned(new_dyn_array, view, &c, token_start_char, token_end_char, opts);
+}
+
+DResult d_string_view_split_by_char_of_str_not_owned(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, DStringView set)
+{
+    return split_string_view_not_owned(new_dyn_array, view, &set, token_start_char_set, token_end_char_set, opts);
+}
+
+DResult d_string_view_split_by_char_not_owned(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char c)
+{
+    return split_string_view_not_owned(new_dyn_array, view, &c, token_start_char, token_end_char, opts);
 }
 
 void d_string_view_dbg_print(DStringView *view)
@@ -425,35 +492,4 @@ void d_string_view_dbg_print(DStringView *view)
     }
     printf("DStringView { data: \"%.*s\", size: %zu }\n",
            (int)view->size, view->data, view->size);
-}
-
-DResult d_string_view_split_by_char(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char c)
-{
-    if (new_dyn_array == NULL)
-        return D_ERR_INVALID_ARG;
-    DResult op_result;
-    usize size = view.size;
-    if ((op_result = d_dyn_array_init_ptr_arr(new_dyn_array, size, _free_str, opts)) != D_OK)
-        return op_result;
-    const char *str = view.data;
-    for (usize i = 0; i < size;)
-    {
-        while (i < size && str[i] == c)
-            ++i;
-        if (i != size)
-        {
-            usize j = d_string_view_find_first_matching_char_from_index(view, c, i);
-            char *part_str = d_string_view_substr(view, i, j == MAX_SIZE_T_VALUE ? MAX_SIZE_T_VALUE : j - i);
-            if ((op_result = d_dyn_array_push_back_ptr(new_dyn_array, part_str)) != D_OK)
-            {
-                free(part_str);
-                d_dyn_array_destroy(new_dyn_array);
-                return op_result;
-            }
-            i = j;
-        }
-        else
-            break;
-    }
-    return D_OK;
 }

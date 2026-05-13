@@ -16,9 +16,6 @@
 #include <string.h>
 #include <stdbool.h>
 #include "d_types.h"
-#include "d_dyn_array.h"
-#include "d_dyn_string.h"
-#include "d_string_view.h"
 
 /**
  * @brief Predicate over a single @c char, used by string-scanning APIs.
@@ -73,57 +70,6 @@ static inline void _free_str(void *elem)
 {
     free(*(char **)elem);
 }
-
-/**
- * @brief Splits a string view on any character found in @p set.
- *
- * Wraps @c d_string_view_split_by_char_of_str. Initialises @p new_dyn_array
- * with element type ::DStringView; each resulting view points into @p view's
- * underlying buffer and becomes invalid if that buffer is freed or mutated.
- *
- * @param new_dyn_array Receives the array of ::DStringView tokens. Must not be NULL.
- * @param view          The string to split.
- * @param set           View over the set of delimiter characters.
- *                      Use @ref D_STRING_VIEW_FROM_LITERAL for string-literal sets.
- * @param opts          Buffer options for the backing array (pass @c RAW_BUF_OPT_NONE
- *                      for default behaviour).
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
- *
- * @code{.c}
- *   DDynArray parts;
- *   d_split_string_by_char_of_str(&parts, d_string_view_from_c_string("a,b;c"),
- *                                  D_STRING_VIEW_FROM_LITERAL(",;"), RAW_BUF_OPT_NONE);
- *   // parts contains DStringView tokens: "a", "b", "c"
- *   d_dyn_array_destroy(&parts);
- * @endcode
- */
-DResult d_split_string_by_char_of_str(DDynArray *new_dyn_array, DStringView view, DStringView set, BufferOpts opts);
-
-/**
- * @brief Splits a string view on a single delimiter character.
- *
- * Wraps @c d_string_view_split_by_char. Initialises @p new_dyn_array with
- * element type ::DStringView; each resulting view points into @p view's
- * underlying buffer and becomes invalid if that buffer is freed or mutated.
- *
- * @param new_dyn_array Receives the array of ::DStringView tokens. Must not be NULL.
- * @param view          The string to split.
- * @param c             Delimiter character.
- * @param opts          Buffer options for the backing array (pass @c RAW_BUF_OPT_NONE
- *                      for default behaviour).
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
- *
- * @code{.c}
- *   DDynArray parts;
- *   d_split_string_by_char(&parts, d_string_view_from_c_string("one:two:three"),
- *                           ':', RAW_BUF_OPT_NONE);
- *   // parts contains DStringView tokens: "one", "two", "three"
- *   d_dyn_array_destroy(&parts);
- * @endcode
- */
-DResult d_split_string_by_char(DDynArray *new_dyn_array, DStringView view, char c, BufferOpts opts);
 
 /**
  * @brief Extracts a heap-allocated substring from @p str.

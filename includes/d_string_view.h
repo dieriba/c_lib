@@ -94,8 +94,8 @@ DStringView d_string_view_from_parts(const char *data, usize size);
  * The size is set to `strlen(c_str)`. The null terminator is not included
  * in the view.
  *
- * @param c_str Null-terminated source string. Must not be NULL.
- * @return A ::DStringView over the string content.
+ * @param c_str Null-terminated source string. If NULL, an empty view is returned.
+ * @return A ::DStringView over the string content, or an empty view if @p c_str is NULL.
  *
  * @code{.c}
  *   DStringView v = d_string_view_from_c_string("hello");
@@ -172,13 +172,15 @@ DResult d_string_view_get_char_at(DStringView view, usize index, char *out);
 /**
  * @brief Returns a sub-view starting at @p pos covering @p size characters.
  *
- * No allocation occurs. If `pos + size` exceeds the view length only the
- * remaining characters are included.
+ * No allocation occurs. If @p pos is at or past the view length an empty view
+ * is returned. If `pos + size` exceeds the view length only the remaining
+ * characters are included.
  *
  * @param view The source view.
  * @param pos  Starting index within @p view.
  * @param size Maximum number of characters to include.
- * @return A new ::DStringView representing the sub-range.
+ * @return A new ::DStringView representing the sub-range, or an empty view
+ *         if @p pos >= @p view.size.
  *
  * @code{.c}
  *   DStringView full = d_string_view_from_c_string("hello, world");
@@ -508,12 +510,20 @@ DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn);
 
 /**
  * @brief Splits @p view on every occurrence of @p c and stores the resulting
- *        sub-views in @p new_dyn_array.
+ *        substrings in @p new_dyn_array as heap-allocated @c char * strings.
  *
- * Each element in the output array is a ::DStringView. The array must be
- * destroyed by the caller; the individual views do not own their data.
+ * Each element in the output array is a @c char * (stored in a pointer array).
+ * The strings are individually heap-allocated; the array owns them and frees
+ * them when @ref d_dyn_array_destroy is called. Consecutive delimiters are
+ * skipped — no empty tokens are emitted.
  *
- * @param new_dyn_array Uninitialized ::DDynArray that will hold ::DStringView elements.
+ * To iterate over the tokens:
+ * @code{.c}
+ *   char *token;
+ *   d_dyn_array_get_elem_at(&parts, i, &token);
+ * @endcode
+ *
+ * @param new_dyn_array Uninitialized ::DDynArray that will hold @c char * elements.
  * @param  view          The view to split.
  * @param  opts          Buffer option flags for the internal array (pass @c 0).
  * @param  c             Delimiter character.
@@ -523,18 +533,22 @@ DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn);
  * @code{.c}
  *   DDynArray parts;
  *   DStringView csv = d_string_view_from_c_string("a,b,c");
- *   d_string_view_split_by_char(&parts, csv, 0, ',');
- *   // parts contains three DStringView: "a", "b", "c"
- *   d_dyn_array_destroy(&parts);
+ *   d_string_view_split_by_char_owned(&parts, csv, 0, ',');
+ *   // parts contains three heap-allocated char* tokens: "a", "b", "c"
+ *   d_dyn_array_destroy(&parts); // frees each token
  * @endcode
  */
-DResult d_string_view_split_by_char(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char c);
+DResult d_string_view_split_by_char_owned(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char c);
 
 /**
- * @brief Splits @p view on any character present in the null-terminated @p str
- *        and stores the resulting sub-views in @p new_dyn_array.
+ * @brief Splits @p view on any character present in @p set and stores the
+ *        resulting substrings as heap-allocated @c char * strings.
  *
- * @param new_dyn_array Uninitialized ::DDynArray for ::DStringView elements.
+ * Owned variant: each token is a freshly-allocated @c char *; the array takes
+ * ownership and frees every token when @ref d_dyn_array_destroy is called.
+ * Consecutive delimiters are skipped — no empty tokens are emitted.
+ *
+ * @param new_dyn_array Uninitialized ::DDynArray that will hold @c char * elements.
  * @param  view          The view to split.
  * @param  opts          Buffer option flags (pass @c 0).
  * @param  set           View over the set of delimiter characters.
@@ -545,12 +559,67 @@ DResult d_string_view_split_by_char(DDynArray *new_dyn_array, DStringView view, 
  * @code{.c}
  *   DDynArray tokens;
  *   DStringView v = d_string_view_from_c_string("one two,three");
- *   d_string_view_split_by_char_of_str(&tokens, v, 0, D_STRING_VIEW_FROM_LITERAL(" ,"));
- *   // tokens: "one", "two", "three"
- *   d_dyn_array_destroy(&tokens);
+ *   d_string_view_split_by_char_of_str_owned(&tokens, v, 0, D_STRING_VIEW_FROM_LITERAL(" ,"));
+ *   // tokens: heap-allocated "one", "two", "three"
+ *   d_dyn_array_destroy(&tokens); // frees each token
  * @endcode
  */
-DResult d_string_view_split_by_char_of_str(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, DStringView set);
+DResult d_string_view_split_by_char_of_str_owned(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, DStringView set);
+
+/**
+ * @brief Splits @p view on every occurrence of @p c and stores the resulting
+ *        sub-views (non-owning) in @p new_dyn_array.
+ *
+ * Each element in the output array is a ::DStringView that points directly
+ * into @p view's underlying buffer — no allocation per token. The views become
+ * invalid if the source buffer is freed or mutated. The array itself must still
+ * be destroyed by the caller.
+ *
+ * @param new_dyn_array Uninitialized ::DDynArray that will hold ::DStringView elements.
+ * @param  view          The view to split.
+ * @param  opts          Buffer option flags (pass @c 0).
+ * @param  c             Delimiter character.
+ * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL,
+ *         ::D_ERR_ALLOC on allocation failure.
+ *
+ * @code{.c}
+ *   const char *src = "a,b,c";
+ *   DDynArray parts;
+ *   d_string_view_split_by_char_not_owned(&parts, d_string_view_from_c_string(src), 0, ',');
+ *   DStringView tok;
+ *   d_dyn_array_get_elem_at(&parts, 0, &tok); // tok.data == src + 0, tok.size == 1
+ *   d_dyn_array_destroy(&parts);
+ * @endcode
+ */
+DResult d_string_view_split_by_char_not_owned(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, char c);
+
+/**
+ * @brief Splits @p view on any character in @p set and stores the resulting
+ *        sub-views (non-owning) in @p new_dyn_array.
+ *
+ * Each element in the output array is a ::DStringView that points directly
+ * into @p view's underlying buffer — no allocation per token. The views become
+ * invalid if the source buffer is freed or mutated. The array itself must still
+ * be destroyed by the caller. Consecutive delimiters are skipped.
+ *
+ * @param new_dyn_array Uninitialized ::DDynArray that will hold ::DStringView elements.
+ * @param  view          The view to split.
+ * @param  opts          Buffer option flags (pass @c 0).
+ * @param  set           View over the set of delimiter characters.
+ *                       Use @ref D_STRING_VIEW_FROM_LITERAL for string-literal sets.
+ * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL,
+ *         ::D_ERR_ALLOC on allocation failure.
+ *
+ * @code{.c}
+ *   const char *src = "one two,three";
+ *   DDynArray parts;
+ *   d_string_view_split_by_char_of_str_not_owned(&parts, d_string_view_from_c_string(src),
+ *                                                 0, D_STRING_VIEW_FROM_LITERAL(" ,"));
+ *   // parts[0].data == src, parts[1].data == src+4, parts[2].data == src+8
+ *   d_dyn_array_destroy(&parts);
+ * @endcode
+ */
+DResult d_string_view_split_by_char_of_str_not_owned(DDynArray *new_dyn_array, DStringView view, BufferOpts opts, DStringView set);
 
 /* -----------------------------------------------------------------------
  * Conversion to owning string
