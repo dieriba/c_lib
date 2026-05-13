@@ -1,8 +1,6 @@
-TARGET_DIR := target
+include config.mk
 
-BUILD_DIR := $(TARGET_DIR)/build
-LIB_NAME := libd_lib.a
-BUILD_LIB := $(BUILD_DIR)/lib/$(LIB_NAME)
+
 
 SRC_DIRS := src
 SRCS := $(shell find $(SRC_DIRS) -name '*.c')
@@ -14,8 +12,6 @@ SRCS_TEST := $(shell find $(TEST_DIRS) -name '*.c')
 OBJS_TESTS := $(addprefix $(TARGET_DIR)/, $(SRCS_TEST:.c=.o))
 BIN_TESTS := $(OBJS_TESTS:.o=)
 
-
-
 DEPS := $(OBJS:.o=.d) $(OBJS_TESTS:.o=.d)
 
 INC_DIRS := ./includes
@@ -25,8 +21,10 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CPPFLAGS := $(INC_FLAGS) -MMD -MP -Wall -Werror -Wextra
 
+all: $(LIB_PATH)
+.PHONY: all
 
-$(BUILD_LIB): $(OBJS)
+$(LIB_PATH): $(OBJS)
 	mkdir -p $(dir $@)
 	ar rcs $@ $^
 
@@ -37,16 +35,19 @@ $(BUILD_DIR)/%.o: %.c
 tests: $(BIN_TESTS) 
 .PHONY: tests
 
-$(BIN_TESTS): %: %.o $(BUILD_LIB)
+$(BIN_TESTS): %: %.o $(LIB_PATH)
 	mkdir -p $(dir $@)
-	$(CC) $< $(BUILD_LIB) -o $@
+	$(CC) $< $(LIB_PATH) -o $@
 
 $(TARGET_DIR)/%.o: %.c
 	mkdir -p $(dir $@)
 	$(CC) $(INC_FLAGS) -c $< -o $@
 
-.PHONY: clean
 clean:
 	rm -rf $(TARGET_DIR)
+.PHONY: clean
+
+re: clean all
+.PHONY: re
 
 -include $(DEPS)
