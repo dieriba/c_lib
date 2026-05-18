@@ -23,7 +23,7 @@
 
 #include "raw_buffer.h"
 #include "d_types.h"
-#include "d_result.h"
+#include "d_error.h"
 /**
  * @brief Heap-allocated mutable string.
  *

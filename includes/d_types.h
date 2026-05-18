@@ -7,7 +7,7 @@
  * @brief Fundamental integer type aliases shared across the entire library.
  *
  * Provides portable fixed-width integer typedefs. Error and comparison
- * result codes are defined in @ref d_result.
+ * result codes are defined in @ref d_error.
  *
  * Include this header directly or via any module header to access the
  * integer type definitions.

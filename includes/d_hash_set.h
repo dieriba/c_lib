@@ -69,7 +69,7 @@
  *   d_hash_set_destroy(&set); // frees "hello" via _free_str
  * @endcode
  */
-#include "d_result.h"
+#include "d_error.h"
 #include "d_types.h"
 #include "d_general_lib.h"
 

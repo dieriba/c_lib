@@ -32,7 +32,7 @@
  */
 
 #include <stdbool.h>
-#include "d_result.h"
+#include "d_error.h"
 #include "raw_ring_buffer.h"
 
 /**

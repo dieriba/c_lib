@@ -43,7 +43,7 @@
  *   d_dyn_array_destroy(&arr);
  * @endcode
  */
-#include "d_result.h"
+#include "d_error.h"
 #include "d_types.h"
 #include "raw_buffer.h"
 

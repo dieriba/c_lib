@@ -76,7 +76,7 @@
  *   d_unordered_map_destroy(&map); // frees "answer" via _free_str
  * @endcode
  */
-#include "d_result.h"
+#include "d_error.h"
 #include "d_types.h"
 #include "d_general_lib.h"
 

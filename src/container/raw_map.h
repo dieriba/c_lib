@@ -4,7 +4,7 @@
 #include "d_string_view.h"
 #include "d_dyn_string.h"
 #include "d_types.h"
-#include "d_result.h"
+#include "d_error.h"
 #include "container.h"
 #include "d_general_lib.h"
 #include "wyhash.h"
