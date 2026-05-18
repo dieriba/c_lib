@@ -7,7 +7,8 @@
 
 typedef enum DResult
 {
-    D_OK = 0,          /**< Operation completed successfully.                                  */
+    D_OK = 0, /**< Operation completed successfully.                                  */
+    D_ERR,    /**< Generic unspecified error.                                         */
     D_ERR_ALLOC,       /**< Memory allocation failed.                                          */
     D_ERR_INVALID_ARG, /**< One or more arguments are NULL or out-of-range.                    */
     D_ERR_NOT_EXIST,   /**< The target resource (key, slot, …) does not exist in the container.*/
@@ -37,6 +38,8 @@ static inline const char *d_error_print_result_as_str(DResult result)
     {
     case D_OK:
         return "OK";
+    case D_ERR:
+        return "ERR";
     case D_ERR_ALLOC:
         return "ERR_ALLOC";
     case D_ERR_INVALID_ARG:
@@ -54,15 +57,15 @@ static inline const char *d_error_print_result_as_str(DResult result)
 
 typedef struct DError
 {
-    DResult code;    /**< Underlying result code.                               */
-    const char *msg; /**< Optional custom message. NULL falls back to the code. */
+    int code;        /**< ::DResult for library errors, or a user-defined value for app errors. */
+    const char *msg; /**< Optional custom message. NULL falls back to the code's description.   */
 } DError;
 
 /** @brief Returns a success ::DError. */
 static inline DError d_error_ok(void) { return (DError){D_OK, NULL}; }
 
 /** @brief Constructs a ::DError with @p code and a custom @p msg. */
-static inline DError d_error_new(DResult code, const char *msg) { return (DError){code, msg}; }
+static inline DError d_error_new(int code, const char *msg) { return (DError){code, msg}; }
 
 /** @brief Returns true when @p err represents success. */
 static inline bool d_error_is_ok(DError err) { return err.code == D_OK; }
@@ -70,19 +73,13 @@ static inline bool d_error_is_ok(DError err) { return err.code == D_OK; }
 /**
  * @brief Returns the message for @p err.
  *
- * Returns @c err.msg when set, otherwise falls back to
- * @ref d_error_print_result_as_str. Never returns NULL.
+ * Returns @c err.msg when set, otherwise @c "UNKNOWN_ERROR".
+ * Never returns NULL.
  */
-const char *d_error_message(DError err);
+static inline const char *d_error_message(DError err) { return err.msg ? err.msg : "UNKNOWN_ERROR"; }
 
 /** @brief Prints the message of @p err to stderr followed by a newline. */
-static inline void d_error_print(DError err)
-{
-    if (err.msg)
-        fprintf(stderr, "%s\n", d_error_message(err));
-    else
-        printf("No Error\n");
-}
+static inline void d_error_print(DError err) { fprintf(stderr, "%s\n", d_error_message(err)); }
 
 /** @} */
 
