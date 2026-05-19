@@ -77,9 +77,9 @@ typedef struct DDynArray
 #define d_dyn_array_default_init(d_dyn_array, elem_type, free_func, opts) \
     d_dyn_array_init(d_dyn_array, sizeof(elem_type), 0x10, free_func, opts)
 
-#define d_dyn_array_get_data_safe(d_dyn_array) d_dyn_array->array.data
-#define d_dyn_array_get_size_safe(d_dyn_array) d_dyn_array->array.size
-#define d_dyn_array_get_capacity_safe(d_dyn_array) d_dyn_array->array.capacity
+#define d_dyn_array_get_data_safe(d_dyn_array) (d_dyn_array)->array.data
+#define d_dyn_array_get_size_safe(d_dyn_array) (d_dyn_array)->array.size
+#define d_dyn_array_get_capacity_safe(d_dyn_array) (d_dyn_array)->array.capacity
 
 /* -----------------------------------------------------------------------
  * Initialisation
