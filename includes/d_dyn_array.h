@@ -74,6 +74,9 @@ typedef struct DDynArray
     DestroyElemFunc free_func;
 } DDynArray;
 
+#define d_dyn_array_default_init(d_dyn_array, elem_type, free_func, opts) \
+    d_dyn_array_init(d_dyn_array, sizeof(elem_type), 0x10, free_func, opts)
+
 /* -----------------------------------------------------------------------
  * Initialisation
  * -------------------------------------------------------------------- */
@@ -306,7 +309,6 @@ DDynArray *d_dyn_array_clear_array(DDynArray *dyn_array);
 void d_dyn_array_destroy(DDynArray *dyn_array);
 
 void d_dyn_array_dbg_print(DDynArray *dyn_array, FnElemRepr elem_repr);
-
 
 /** @} */ /* end of d_dyn_array group */
 
