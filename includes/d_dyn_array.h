@@ -77,6 +77,7 @@ typedef struct DDynArray
 #define d_dyn_array_default_init(d_dyn_array, elem_type, free_func, opts) \
     d_dyn_array_init(d_dyn_array, sizeof(elem_type), 0x10, free_func, opts)
 
+#define d_dyn_array_get_elem_addr_at_safe(d_dyn_array, index) ((char *)((d_dyn_array)->array.data)) + d_dyn_array->array.elem_size *(index)
 #define d_dyn_array_get_data_safe(d_dyn_array) (d_dyn_array)->array.data
 #define d_dyn_array_get_size_safe(d_dyn_array) (d_dyn_array)->array.size
 #define d_dyn_array_get_capacity_safe(d_dyn_array) (d_dyn_array)->array.capacity
@@ -168,6 +169,8 @@ DResult d_dyn_array_init_from(DDynArray *new_dyn_array, DDynArray *dyn_array);
  * @endcode
  */
 DResult d_dyn_array_get_elem_at(const DDynArray *dyn_array, usize index, void *out_elem);
+
+DResult d_dyn_array_get_elem_addr_at(const DDynArray *dyn_array, usize index, void **out_elem);
 
 /**
  * @brief Writes the current element count into @p size.

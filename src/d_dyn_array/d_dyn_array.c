@@ -57,6 +57,11 @@ DResult d_dyn_array_get_elem_at(const DDynArray *dyn_array, usize index, void *o
 	return raw_buffer_get_elem_at((RawBuffer *)dyn_array, index, out_elem);
 }
 
+DResult d_dyn_array_get_elem_addr_at(const DDynArray *dyn_array, usize index, void **out_elem)
+{
+	return raw_buffer_get_elem_addr((RawBuffer *)dyn_array, index, out_elem);
+}
+
 DResult d_dyn_array_get_size(const DDynArray *dyn_array, usize *size)
 {
 	return raw_buffer_get_size((RawBuffer *)dyn_array, size);
