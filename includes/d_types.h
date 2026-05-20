@@ -43,4 +43,17 @@ typedef size_t usize; /**< Platform-native unsigned size type (alias for size_t)
  *  returned string. */
 typedef char *(*FnElemRepr)(void *elem);
 
+/**
+ * @brief Destructor called when a container element is removed or overwritten.
+ *
+ * The argument is a **pointer to the stored slot**, not the element value
+ * itself. For a container holding @c char *, the slot contains a @c char *,
+ * so the callback receives a @c char ** and must dereference it before freeing:
+ *
+ * @code{.c}
+ *   void my_free_str(void *elem) { free(*(char **)elem); }
+ * @endcode
+ */
+typedef void (*FnPtrFreeElem)(void *elem);
+
 #endif

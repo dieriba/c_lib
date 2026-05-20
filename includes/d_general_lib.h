@@ -18,41 +18,6 @@
 #include "d_types.h"
 
 /**
- * @brief Predicate over a single @c char, used by string-scanning APIs.
- *
- * @return @c true if the character matches the predicate's condition.
- */
-typedef bool (*DCompareFnc)(char);
-
-/**
- * @brief Hash function for a map or set key.
- *
- * @param key Pointer to the key bytes. Never NULL when called by the library.
- * @return An unsigned hash value.
- */
-typedef usize (*FnPtrGenHash)(void *key);
-
-/**
- * @brief Equality predicate for two map or set keys.
- *
- * @return @c true if the two keys are equal, @c false otherwise.
- */
-typedef bool (*FnPtrCmpKey)(void *, void *);
-
-/**
- * @brief Destructor called when a container element is removed or overwritten.
- *
- * The argument is a **pointer to the stored slot**, not the element value
- * itself. For a container holding @c char *, the slot contains a @c char *,
- * so the callback receives a @c char ** and must dereference it before freeing:
- *
- * @code{.c}
- *   void my_free_str(void *elem) { free(*(char **)elem); }
- * @endcode
- */
-typedef void (*FnPtrFreeElem)(void *elem);
-
-/**
  * @brief Default destructor for @c char * elements stored by pointer.
  *
  * Dereferences the slot pointer to obtain the @c char * and calls @c free on it.

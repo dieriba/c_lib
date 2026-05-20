@@ -1,13 +1,11 @@
 #ifndef RAW_MAP_H
 #define RAW_MAP_H
 #include <stdlib.h>
-#include "d_string_view.h"
-#include "d_dyn_string.h"
 #include "d_types.h"
 #include "d_error.h"
 #include "container.h"
-#include "d_general_lib.h"
-#include "wyhash.h"
+#include "d_hash_utils.h"
+
 typedef struct RawMap
 {
     void *map;

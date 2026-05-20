@@ -6,6 +6,22 @@
 #include "d_dyn_string.h"
 #include "d_hash.h"
 #include <string.h>
+
+/**
+ * @brief Hash function for a map or set key.
+ *
+ * @param key Pointer to the key bytes. Never NULL when called by the library.
+ * @return An unsigned hash value.
+ */
+typedef usize (*FnPtrGenHash)(void *key);
+
+/**
+ * @brief Equality predicate for two map or set keys.
+ *
+ * @return @c true if the two keys are equal, @c false otherwise.
+ */
+typedef bool (*FnPtrCmpKey)(void *, void *);
+
 static inline bool compare_str(void *s1, void *s2)
 {
     return s1 && s2 && strcmp(*(char **)s1, *(char **)s2) == 0;
@@ -67,7 +83,7 @@ static inline u64 hash_d_dyn_string_key(void *data)
 #define GENERATE_HASH_X_TYPE(KEY_TYPE_NAME, KEY_TYPE)        \
     static inline u64 hash_##KEY_TYPE_NAME##_key(void *data) \
     {                                                        \
-        return d_hash_raw_hash(data, sizeof(KEY_TYPE), 0);      \
+        return d_hash_raw_hash(data, sizeof(KEY_TYPE), 0);   \
     }
 
 GENERATE_HASH_X_TYPE(int8, int8)
