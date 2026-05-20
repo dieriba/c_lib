@@ -9,8 +9,8 @@
 #define raw_buffer_nb_occupied_elem_slot(raw_buffer) \
     ((raw_buffer)->size)
 
-#define raw_buffer_elt_size(raw_buffer, i) raw_buffer->elem_size *i
-#define raw_buffer_elt_pos(raw_buffer, i) (char *)raw_buffer->data + (raw_buffer_elt_size(raw_buffer, i))
+#define raw_buffer_elt_size(raw_buffer, i) (raw_buffer->elem_size * i)
+#define raw_buffer_elt_pos(raw_buffer, i) (char *)raw_buffer->data + raw_buffer_elt_size(raw_buffer, i)
 
 static bool raw_buffer_has_zero_sentinel(const RawBuffer *raw_buffer)
 {

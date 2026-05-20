@@ -232,7 +232,7 @@ D_BITS_X_API(d_bits_64, u64, 64)
  *   v = d_bits_clear_least_significant_bit_set(v); // v == 0b1000
  * @endcode
  */
-#define d_bits_clear_least_significant_bit_set(value) (value) &((value) - 1)
+#define d_bits_clear_least_significant_bit_set(value) ((value) &((value) - 1))
 
 /* Fills every bit below the MSB with 1 (32-bit range). */
 static inline long long int __d_bits_smear_int(long long int value)

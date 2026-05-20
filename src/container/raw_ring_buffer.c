@@ -6,8 +6,8 @@
 
 #define raw_ring_buffer_get_head(raw_ring_buffer) ((char *)raw_ring_buffer->data + (raw_ring_buffer->head * raw_ring_buffer->elem_size))
 #define raw_ring_buffer_get_tail(raw_ring_buffer) ((char *)raw_ring_buffer->data + (raw_ring_buffer->tail * raw_ring_buffer->elem_size))
-#define raw_ring_buffer_get_elem_at(raw_ring_buffer, index) ((char *)raw_ring_buffer->data + index * raw_ring_buffer->elem_size)
-#define raw_ring_buffer_elt_size(raw_ring_buffer, nb_elem) (raw_ring_buffer->elem_size * nb_elem)
+#define raw_ring_buffer_get_elem_at(raw_ring_buffer, index) ((char *)raw_ring_buffer->data + ((index) * raw_ring_buffer->elem_size))
+#define raw_ring_buffer_elt_size(raw_ring_buffer, nb_elem) (raw_ring_buffer->elem_size * (nb_elem))
 
 typedef void (*PushFn)(RawRingBuffer *, const void *elem);
 typedef void (*PopFn)(RawRingBuffer *, void *out_elem);
