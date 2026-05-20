@@ -9,7 +9,7 @@
 
 static void make_int_deque(DDeQueue *deque, usize capacity)
 {
-    D_TEST_EXPR(d_de_queue_init(deque, capacity, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(deque, capacity, sizeof(int), NULL, NULL) == D_OK);
 }
 
 static void expect_size(DDeQueue *deque, usize expected)
@@ -91,11 +91,58 @@ static void assert_large_struct_eq(const LargeStruct *actual, const LargeStruct 
     D_TEST_EXPR(actual->tail == expected->tail);
 }
 
+static int g_destroy_count = 0;
+static int g_destroy_sum = 0;
+
+static void reset_destroy_tracking(void)
+{
+    g_destroy_count = 0;
+    g_destroy_sum = 0;
+}
+
+static void int_destroy_counter(void *elem_slot)
+{
+    int *value = elem_slot;
+
+    g_destroy_count++;
+    g_destroy_sum += *value;
+}
+
+static char *owned_string(const char *s)
+{
+    size_t len = strlen(s);
+    char *copy = malloc(len + 1);
+    D_TEST_NOT_NULL(copy);
+    if (copy != NULL)
+        memcpy(copy, s, len + 1);
+    return copy;
+}
+
+static void string_ptr_free(void *elem_slot)
+{
+    free(*(char **)elem_slot);
+}
+
+static void *string_ptr_copy(void *elem_slot)
+{
+    char **slot = elem_slot;
+    char **new_slot = malloc(sizeof(char *));
+    if (new_slot == NULL)
+        return NULL;
+    *new_slot = strdup(*slot);
+    if (*new_slot == NULL)
+    {
+        free(new_slot);
+        return NULL;
+    }
+    return new_slot;
+}
+
 static void test_init_creates_empty_deque_with_zero_capacity_request(void)
 {
     DDeQueue deque;
 
-    D_TEST_EXPR(d_de_queue_init(&deque, 0, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 0, sizeof(int), NULL, NULL) == D_OK);
     expect_size(&deque, 0);
     expect_empty(&deque, true);
     d_de_queue_destroy(&deque);
@@ -105,7 +152,7 @@ static void test_init_with_capacity_sets_capacity_and_empty_state(void)
 {
     DDeQueue deque;
 
-    D_TEST_EXPR(d_de_queue_init(&deque, 8, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 8, sizeof(int), NULL, NULL) == D_OK);
     expect_capacity_at_least(&deque, 8);
     expect_size(&deque, 0);
     expect_empty(&deque, true);
@@ -114,14 +161,14 @@ static void test_init_with_capacity_sets_capacity_and_empty_state(void)
 
 static void test_init_rejects_null_deque_pointer(void)
 {
-    D_TEST_EXPR(d_de_queue_init(NULL, 4, sizeof(int)) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_de_queue_init(NULL, 4, sizeof(int), NULL, NULL) == D_ERR_INVALID_ARG);
 }
 
 static void test_init_rejects_zero_elem_size(void)
 {
     DDeQueue deque;
 
-    D_TEST_EXPR(d_de_queue_init(&deque, 4, 0) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_de_queue_init(&deque, 4, 0, NULL, NULL) == D_ERR_INVALID_ARG);
 }
 
 static void test_destroy_empty_deque_is_safe(void)
@@ -399,7 +446,7 @@ static void test_binary_payload_with_zero_bytes_round_trips(void)
         in.bytes[i] = (unsigned char)(i * 17u);
     memset(&out, 0xff, sizeof(out));
 
-    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(BinaryPayload)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(BinaryPayload), NULL, NULL) == D_OK);
     D_TEST_EXPR(d_de_queue_push_back(&deque, &in) == D_OK);
     memset(&in, 0, sizeof(in));
     D_TEST_EXPR(d_de_queue_pop_front(&deque, &out) == D_OK);
@@ -418,7 +465,7 @@ static void test_pointer_values_are_stored_as_values_not_deep_copied(void)
     int *pb = &b;
     int *out = NULL;
 
-    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(int *)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(int *), NULL, NULL) == D_OK);
     D_TEST_EXPR(d_de_queue_push_back(&deque, &pa) == D_OK);
     D_TEST_EXPR(d_de_queue_push_front(&deque, &pb) == D_OK);
 
@@ -438,7 +485,7 @@ static void test_large_struct_round_trips_from_front_without_padding_memcmp(void
     LargeStruct out;
 
     memset(&out, 0xcc, sizeof(out));
-    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(LargeStruct)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(LargeStruct), NULL, NULL) == D_OK);
     D_TEST_EXPR(d_de_queue_push_front(&deque, &in) == D_OK);
     memset(&in, 0, sizeof(in));
     in = make_large_struct(7);
@@ -455,7 +502,7 @@ static void test_large_struct_round_trips_from_back_without_padding_memcmp(void)
     LargeStruct out;
 
     memset(&out, 0xcc, sizeof(out));
-    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(LargeStruct)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 1, sizeof(LargeStruct), NULL, NULL) == D_OK);
     D_TEST_EXPR(d_de_queue_push_back(&deque, &in) == D_OK);
     memset(&in, 0, sizeof(in));
     D_TEST_EXPR(d_de_queue_pop_back(&deque, &out) == D_OK);
@@ -882,7 +929,7 @@ static void test_multiple_data_types_char_values(void)
     DDeQueue deque;
     char c;
 
-    D_TEST_EXPR(d_de_queue_init(&deque, 2, sizeof(char)) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&deque, 2, sizeof(char), NULL, NULL) == D_OK);
     c = 'a';
     D_TEST_EXPR(d_de_queue_push_back(&deque, &c) == D_OK);
     c = '\0';
@@ -961,6 +1008,64 @@ static void test_growth_triggered_while_wrapped_from_both_ends(void)
     d_de_queue_destroy(&deque);
 }
 
+static void test_destroy_calls_destructor_for_each_remaining_element(void)
+{
+    DDeQueue deque;
+    int values[] = {4, 5, 6};
+
+    reset_destroy_tracking();
+    D_TEST_EXPR(d_de_queue_init(&deque, 0, sizeof(int), int_destroy_counter, NULL) == D_OK);
+    for (int i = 0; i < 3; i++)
+        push_back_int(&deque, values[i]);
+    d_de_queue_destroy(&deque);
+    D_TEST_EXPR(g_destroy_count == 3);
+    D_TEST_EXPR(g_destroy_sum == 15);
+}
+
+static void test_copy_with_copy_fn_deep_copies_pointer_elements(void)
+{
+    DDeQueue src, dst;
+    char *s_hello = owned_string("hello");
+    char *s_world = owned_string("world");
+    char *src_first = NULL, *src_second = NULL, *dst_first = NULL, *dst_second = NULL;
+
+    D_TEST_EXPR(d_de_queue_init(&src, 0, sizeof(char *), string_ptr_free, string_ptr_copy) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&dst, 0, sizeof(char *), string_ptr_free, string_ptr_copy) == D_OK);
+    D_TEST_EXPR(d_de_queue_push_back(&src, &s_hello) == D_OK);
+    D_TEST_EXPR(d_de_queue_push_back(&src, &s_world) == D_OK);
+    D_TEST_EXPR(d_de_queue_copy(&dst, &src) == D_OK);
+    D_TEST_EXPR(d_de_queue_pop_front(&src, &src_first) == D_OK);   /* FIFO: "hello" */
+    D_TEST_EXPR(d_de_queue_pop_front(&src, &src_second) == D_OK);  /* "world" */
+    D_TEST_EXPR(d_de_queue_pop_front(&dst, &dst_first) == D_OK);
+    D_TEST_EXPR(d_de_queue_pop_front(&dst, &dst_second) == D_OK);
+    D_TEST_EXPR(strcmp(src_first, dst_first) == 0);
+    D_TEST_EXPR(strcmp(src_second, dst_second) == 0);
+    D_TEST_EXPR(src_first != dst_first);
+    D_TEST_EXPR(src_second != dst_second);
+    free(src_first); free(src_second); free(dst_first); free(dst_second);
+    d_de_queue_destroy(&src);
+    d_de_queue_destroy(&dst);
+}
+
+static void test_copy_without_copy_fn_pointer_array_is_shallow(void)
+{
+    DDeQueue src, dst;
+    char *s = owned_string("shallow");
+    char *src_ptr = NULL, *dst_ptr = NULL;
+
+    D_TEST_EXPR(d_de_queue_init(&src, 0, sizeof(char *), NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_de_queue_init(&dst, 0, sizeof(char *), NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_de_queue_push_back(&src, &s) == D_OK);
+    D_TEST_EXPR(d_de_queue_copy(&dst, &src) == D_OK);
+    D_TEST_EXPR(d_de_queue_pop_front(&src, &src_ptr) == D_OK);
+    D_TEST_EXPR(d_de_queue_pop_front(&dst, &dst_ptr) == D_OK);
+    D_TEST_EXPR(src_ptr == s);
+    D_TEST_EXPR(dst_ptr == s);
+    free(s);
+    d_de_queue_destroy(&src);
+    d_de_queue_destroy(&dst);
+}
+
 int main(void)
 {
     DTest tests[] = {
@@ -1019,6 +1124,9 @@ int main(void)
         D_TEST_GENERATE_TEST(test_push_exactly_at_pow2_boundary_then_one_more),
         D_TEST_GENERATE_TEST(test_head_equals_tail_after_half_drain_then_refill),
         D_TEST_GENERATE_TEST(test_growth_triggered_while_wrapped_from_both_ends),
+        D_TEST_GENERATE_TEST(test_destroy_calls_destructor_for_each_remaining_element),
+        D_TEST_GENERATE_TEST(test_copy_with_copy_fn_deep_copies_pointer_elements),
+        D_TEST_GENERATE_TEST(test_copy_without_copy_fn_pointer_array_is_shallow),
     };
 
     D_TEST_RUN_TESTS(tests);

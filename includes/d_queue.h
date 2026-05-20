@@ -63,7 +63,7 @@ typedef struct DQueue
  *   d_queue_destroy(&q);
  * @endcode
  */
-DResult d_queue_init(DQueue *d_queue, usize capacity, usize elem_size);
+DResult d_queue_init(DQueue *d_queue, usize capacity, usize elem_size, DestroyElemFn free_fn, CopyElemFn copy_fn);
 
 /**
  * @brief Enqueues a copy of the element pointed to by @p elem at the back of the queue.
@@ -82,6 +82,8 @@ DResult d_queue_init(DQueue *d_queue, usize capacity, usize elem_size);
  * @endcode
  */
 DResult d_queue_push(DQueue *d_queue, const void *elem);
+
+DResult d_queue_copy(DQueue *dst, const DQueue *src);
 
 /**
  * @brief Dequeues the front element and copies it into @p out_elem.

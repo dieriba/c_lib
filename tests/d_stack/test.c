@@ -8,7 +8,7 @@
 
 static void make_int_stack(DStack *stack, usize capacity)
 {
-    D_TEST_EXPR(d_stack_init(stack, capacity, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_stack_init(stack, capacity, sizeof(int), NULL, NULL) == D_OK);
 }
 
 static void expect_size(DStack *stack, usize expected)
@@ -54,6 +54,43 @@ static char *owned_string(const char *s)
     return copy;
 }
 
+static void string_ptr_free(void *elem_slot)
+{
+    free(*(char **)elem_slot);
+}
+
+static void *string_ptr_copy(void *elem_slot)
+{
+    char **slot = elem_slot;
+    char **new_slot = malloc(sizeof(char *));
+    if (new_slot == NULL)
+        return NULL;
+    *new_slot = strdup(*slot);
+    if (*new_slot == NULL)
+    {
+        free(new_slot);
+        return NULL;
+    }
+    return new_slot;
+}
+
+static int g_destroy_count = 0;
+static int g_destroy_sum = 0;
+
+static void reset_destroy_tracking(void)
+{
+    g_destroy_count = 0;
+    g_destroy_sum = 0;
+}
+
+static void int_destroy_counter(void *elem_slot)
+{
+    int *value = elem_slot;
+
+    g_destroy_count++;
+    g_destroy_sum += *value;
+}
+
 typedef struct LargeStruct
 {
     uint64_t a;
@@ -76,7 +113,7 @@ static LargeStruct make_large_struct(int seed)
 static void test_init_creates_empty_stack(void)
 {
     DStack stack;
-    D_TEST_EXPR(d_stack_init(&stack, 0, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_stack_init(&stack, 0, sizeof(int), NULL, NULL) == D_OK);
     expect_size(&stack, 0);
     expect_empty(&stack, true);
     d_stack_destroy(&stack);
@@ -85,7 +122,7 @@ static void test_init_creates_empty_stack(void)
 static void test_init_with_capacity_sets_capacity(void)
 {
     DStack stack;
-    D_TEST_EXPR(d_stack_init(&stack, 8, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_stack_init(&stack, 8, sizeof(int), NULL, NULL) == D_OK);
     expect_capacity_at_least(&stack, 8);
     expect_size(&stack, 0);
     d_stack_destroy(&stack);
@@ -93,13 +130,13 @@ static void test_init_with_capacity_sets_capacity(void)
 
 static void test_init_rejects_null_output_pointer(void)
 {
-    D_TEST_EXPR(d_stack_init(NULL, 4, sizeof(int)) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_stack_init(NULL, 4, sizeof(int), NULL, NULL) == D_ERR_INVALID_ARG);
 }
 
 static void test_init_rejects_zero_elem_size(void)
 {
     DStack stack;
-    D_TEST_EXPR(d_stack_init(&stack, 4, 0) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_stack_init(&stack, 4, 0, NULL, NULL) == D_ERR_INVALID_ARG);
 }
 
 static void test_destroy_null_pointer_is_safe(void)
@@ -302,7 +339,7 @@ static void test_stack_stores_pointer_values(void)
     char *a = owned_string("alpha");
     char *b = owned_string("beta");
     char *out = NULL;
-    D_TEST_EXPR(d_stack_init(&stack, 1, sizeof(char *)) == D_OK);
+    D_TEST_EXPR(d_stack_init(&stack, 1, sizeof(char *), NULL, NULL) == D_OK);
     D_TEST_EXPR(d_stack_push(&stack, &a) == D_OK);
     D_TEST_EXPR(d_stack_push(&stack, &b) == D_OK);
     D_TEST_EXPR(d_stack_pop(&stack, &out) == D_OK);
@@ -322,7 +359,7 @@ static void test_stack_can_store_null_pointer_value_when_wrapped_in_slot(void)
     DStack stack;
     char *ptr = NULL;
     char *out = (char *)0x1;
-    D_TEST_EXPR(d_stack_init(&stack, 1, sizeof(char *)) == D_OK);
+    D_TEST_EXPR(d_stack_init(&stack, 1, sizeof(char *), NULL, NULL) == D_OK);
     D_TEST_EXPR(d_stack_push(&stack, &ptr) == D_OK);
     expect_size(&stack, 1);
     D_TEST_EXPR(d_stack_pop(&stack, &out) == D_OK);
@@ -336,7 +373,7 @@ static void test_large_struct_elements_are_copied_exactly(void)
     DStack stack;
     LargeStruct values[16];
     LargeStruct out;
-    D_TEST_EXPR(d_stack_init(&stack, 1, sizeof(LargeStruct)) == D_OK);
+    D_TEST_EXPR(d_stack_init(&stack, 1, sizeof(LargeStruct), NULL, NULL) == D_OK);
     for (int i = 0; i < 16; i++)
     {
         values[i] = make_large_struct(i);
@@ -358,7 +395,7 @@ static void test_binary_data_with_zero_bytes_round_trips(void)
     DStack stack;
     unsigned char data[8] = {0, 1, 2, 0, 4, 5, 0, 7};
     unsigned char out[8] = {0};
-    D_TEST_EXPR(d_stack_init(&stack, 1, sizeof(data)) == D_OK);
+    D_TEST_EXPR(d_stack_init(&stack, 1, sizeof(data), NULL, NULL) == D_OK);
     D_TEST_EXPR(d_stack_push(&stack, data) == D_OK);
     memset(data, 0xff, sizeof(data));
     D_TEST_EXPR(d_stack_pop(&stack, out) == D_OK);
@@ -372,7 +409,7 @@ static void test_binary_data_with_zero_bytes_round_trips(void)
 static void test_capacity_grows_from_zero_capacity(void)
 {
     DStack stack;
-    D_TEST_EXPR(d_stack_init(&stack, 0, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_stack_init(&stack, 0, sizeof(int), NULL, NULL) == D_OK);
     for (int i = 0; i < 32; i++)
         push_int(&stack, i);
     expect_size(&stack, 32);
@@ -486,6 +523,64 @@ static void test_push_pop_alternating_many_times_keeps_lifo(void)
     d_stack_destroy(&stack);
 }
 
+static void test_destroy_calls_destructor_for_each_remaining_element(void)
+{
+    DStack stack;
+    int values[] = {10, 20, 30};
+
+    reset_destroy_tracking();
+    D_TEST_EXPR(d_stack_init(&stack, 0, sizeof(int), int_destroy_counter, NULL) == D_OK);
+    for (int i = 0; i < 3; i++)
+        push_int(&stack, values[i]);
+    d_stack_destroy(&stack);
+    D_TEST_EXPR(g_destroy_count == 3);
+    D_TEST_EXPR(g_destroy_sum == 60);
+}
+
+static void test_copy_with_copy_fn_deep_copies_pointer_elements(void)
+{
+    DStack src, dst;
+    char *s_hello = owned_string("hello");
+    char *s_world = owned_string("world");
+    char *src_top = NULL, *src_bot = NULL, *dst_top = NULL, *dst_bot = NULL;
+
+    D_TEST_EXPR(d_stack_init(&src, 0, sizeof(char *), string_ptr_free, string_ptr_copy) == D_OK);
+    D_TEST_EXPR(d_stack_init(&dst, 0, sizeof(char *), string_ptr_free, string_ptr_copy) == D_OK);
+    D_TEST_EXPR(d_stack_push(&src, &s_hello) == D_OK);
+    D_TEST_EXPR(d_stack_push(&src, &s_world) == D_OK);
+    D_TEST_EXPR(d_stack_copy(&dst, &src) == D_OK);
+    D_TEST_EXPR(d_stack_pop(&src, &src_top) == D_OK);  /* LIFO: "world" */
+    D_TEST_EXPR(d_stack_pop(&src, &src_bot) == D_OK);  /* "hello" */
+    D_TEST_EXPR(d_stack_pop(&dst, &dst_top) == D_OK);
+    D_TEST_EXPR(d_stack_pop(&dst, &dst_bot) == D_OK);
+    D_TEST_EXPR(strcmp(src_top, dst_top) == 0);
+    D_TEST_EXPR(strcmp(src_bot, dst_bot) == 0);
+    D_TEST_EXPR(src_top != dst_top);
+    D_TEST_EXPR(src_bot != dst_bot);
+    free(src_top); free(src_bot); free(dst_top); free(dst_bot);
+    d_stack_destroy(&src);
+    d_stack_destroy(&dst);
+}
+
+static void test_copy_without_copy_fn_pointer_array_is_shallow(void)
+{
+    DStack src, dst;
+    char *s = owned_string("shallow");
+    char *src_ptr = NULL, *dst_ptr = NULL;
+
+    D_TEST_EXPR(d_stack_init(&src, 0, sizeof(char *), NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_stack_init(&dst, 0, sizeof(char *), NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_stack_push(&src, &s) == D_OK);
+    D_TEST_EXPR(d_stack_copy(&dst, &src) == D_OK);
+    D_TEST_EXPR(d_stack_pop(&src, &src_ptr) == D_OK);
+    D_TEST_EXPR(d_stack_pop(&dst, &dst_ptr) == D_OK);
+    D_TEST_EXPR(src_ptr == s);
+    D_TEST_EXPR(dst_ptr == s);
+    free(s);
+    d_stack_destroy(&src);
+    d_stack_destroy(&dst);
+}
+
 int main(void)
 {
     DTest tests[] = {
@@ -525,6 +620,9 @@ int main(void)
         D_TEST_GENERATE_TEST(test_multiple_stacks_are_independent),
         D_TEST_GENERATE_TEST(test_push_exactly_at_pow2_boundary_then_one_more),
         D_TEST_GENERATE_TEST(test_push_pop_alternating_many_times_keeps_lifo),
+        D_TEST_GENERATE_TEST(test_destroy_calls_destructor_for_each_remaining_element),
+        D_TEST_GENERATE_TEST(test_copy_with_copy_fn_deep_copies_pointer_elements),
+        D_TEST_GENERATE_TEST(test_copy_without_copy_fn_pointer_array_is_shallow),
     };
     D_TEST_RUN_TESTS(tests);
     return 0;

@@ -63,7 +63,7 @@ typedef struct DStack
  *   d_stack_destroy(&stack);
  * @endcode
  */
-DResult d_stack_init(DStack *d_stack, usize capacity, usize elem_size);
+DResult d_stack_init(DStack *d_stack, usize capacity, usize elem_size, DestroyElemFn free_fn, CopyElemFn copy_fn);
 
 /**
  * @brief Pushes a copy of @p elem onto the top of the stack.
@@ -99,6 +99,9 @@ DResult d_stack_push(DStack *d_stack, const void *elem);
  * @endcode
  */
 DResult d_stack_pop(DStack *d_stack, void *out_elem);
+
+
+DResult d_stack_copy(DStack *dst, const DStack *src);
 
 /**
  * @brief Writes the current number of elements in the stack into @p size.

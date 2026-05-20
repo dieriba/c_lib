@@ -64,7 +64,10 @@ typedef struct DDeQueue
  *   d_de_queue_destroy(&dq);
  * @endcode
  */
-DResult d_de_queue_init(DDeQueue *d_de_queue, usize capacity, usize elem_size);
+DResult d_de_queue_init(DDeQueue *d_de_queue, usize capacity, usize elem_size, DestroyElemFn free_fn, CopyElemFn copy_fn);
+
+DResult d_de_queue_copy(DDeQueue *dst, const DDeQueue *src);
+
 
 /**
  * @brief Inserts a copy of @p elem at the **front** of the deque.

@@ -4,11 +4,16 @@
 
 ASSERT_FIRST_FIELD(DStack, raw_ring_buffer);
 
-DResult d_stack_init(DStack *d_stack, usize capacity, usize elem_size)
+DResult d_stack_init(DStack *d_stack, usize capacity, usize elem_size, DestroyElemFn free_fn, CopyElemFn copy_fn)
 {
     if (d_stack == NULL)
         return D_ERR_INVALID_ARG;
-    return raw_ring_buffer_default_init((RawRingBuffer *)d_stack, capacity, elem_size);
+    return raw_ring_buffer_default_init((RawRingBuffer *)d_stack, capacity, elem_size, free_fn, copy_fn);
+}
+
+DResult d_stack_copy(DStack *dst, const DStack *src)
+{
+    return raw_ring_buffer_copy((RawRingBuffer *)dst, (const RawRingBuffer *)src);
 }
 
 DResult d_stack_push(DStack *d_stack, const void *elem)

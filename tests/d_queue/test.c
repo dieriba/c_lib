@@ -8,7 +8,7 @@
 
 static void make_int_queue(DQueue *queue, usize capacity)
 {
-    D_TEST_EXPR(d_queue_init(queue, capacity, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_queue_init(queue, capacity, sizeof(int), NULL, NULL) == D_OK);
 }
 
 static void expect_size(DQueue *queue, usize expected)
@@ -64,6 +64,23 @@ static LargeStruct make_large_struct(int seed)
     return value;
 }
 
+static int g_destroy_count = 0;
+static int g_destroy_sum = 0;
+
+static void reset_destroy_tracking(void)
+{
+    g_destroy_count = 0;
+    g_destroy_sum = 0;
+}
+
+static void int_destroy_counter(void *elem_slot)
+{
+    int *value = elem_slot;
+
+    g_destroy_count++;
+    g_destroy_sum += *value;
+}
+
 static void assert_large_struct_eq(const LargeStruct *actual, const LargeStruct *expected)
 {
     D_TEST_EXPR(actual->a == expected->a);
@@ -72,10 +89,40 @@ static void assert_large_struct_eq(const LargeStruct *actual, const LargeStruct 
     D_TEST_EXPR(actual->tail == expected->tail);
 }
 
+static char *owned_string(const char *s)
+{
+    size_t len = strlen(s);
+    char *copy = malloc(len + 1);
+    D_TEST_NOT_NULL(copy);
+    if (copy != NULL)
+        memcpy(copy, s, len + 1);
+    return copy;
+}
+
+static void string_ptr_free(void *elem_slot)
+{
+    free(*(char **)elem_slot);
+}
+
+static void *string_ptr_copy(void *elem_slot)
+{
+    char **slot = elem_slot;
+    char **new_slot = malloc(sizeof(char *));
+    if (new_slot == NULL)
+        return NULL;
+    *new_slot = strdup(*slot);
+    if (*new_slot == NULL)
+    {
+        free(new_slot);
+        return NULL;
+    }
+    return new_slot;
+}
+
 static void test_init_creates_empty_queue(void)
 {
     DQueue queue;
-    D_TEST_EXPR(d_queue_init(&queue, 0, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_queue_init(&queue, 0, sizeof(int), NULL, NULL) == D_OK);
     expect_size(&queue, 0);
     expect_empty(&queue, true);
     d_queue_destroy(&queue);
@@ -84,7 +131,7 @@ static void test_init_creates_empty_queue(void)
 static void test_init_with_capacity_sets_capacity(void)
 {
     DQueue queue;
-    D_TEST_EXPR(d_queue_init(&queue, 8, sizeof(int)) == D_OK);
+    D_TEST_EXPR(d_queue_init(&queue, 8, sizeof(int), NULL, NULL) == D_OK);
     expect_capacity_at_least(&queue, 8);
     expect_size(&queue, 0);
     expect_empty(&queue, true);
@@ -93,13 +140,13 @@ static void test_init_with_capacity_sets_capacity(void)
 
 static void test_init_rejects_null_output_pointer(void)
 {
-    D_TEST_EXPR(d_queue_init(NULL, 4, sizeof(int)) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_queue_init(NULL, 4, sizeof(int), NULL, NULL) == D_ERR_INVALID_ARG);
 }
 
 static void test_init_rejects_zero_elem_size(void)
 {
     DQueue queue;
-    D_TEST_EXPR(d_queue_init(&queue, 4, 0) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_queue_init(&queue, 4, 0, NULL, NULL) == D_ERR_INVALID_ARG);
 }
 
 static void test_push_single_value_updates_size_and_empty_flag(void)
@@ -351,7 +398,7 @@ static void test_queue_stores_pointer_values_fifo(void)
     char a[] = "alpha";
     char b[] = "beta";
     char *pa = a, *pb = b, *out = NULL;
-    D_TEST_EXPR(d_queue_init(&queue, 1, sizeof(char *)) == D_OK);
+    D_TEST_EXPR(d_queue_init(&queue, 1, sizeof(char *), NULL, NULL) == D_OK);
     D_TEST_EXPR(d_queue_push(&queue, &pa) == D_OK);
     D_TEST_EXPR(d_queue_push(&queue, &pb) == D_OK);
     D_TEST_EXPR(d_queue_pop(&queue, &out) == D_OK);
@@ -368,7 +415,7 @@ static void test_queue_can_store_null_pointer_value_when_wrapped_in_slot(void)
     DQueue queue;
     char *ptr = NULL;
     char *out = (char *)0x1;
-    D_TEST_EXPR(d_queue_init(&queue, 1, sizeof(char *)) == D_OK);
+    D_TEST_EXPR(d_queue_init(&queue, 1, sizeof(char *), NULL, NULL) == D_OK);
     D_TEST_EXPR(d_queue_push(&queue, &ptr) == D_OK);
     expect_size(&queue, 1);
     D_TEST_EXPR(d_queue_pop(&queue, &out) == D_OK);
@@ -381,7 +428,7 @@ static void test_large_struct_elements_are_copied_and_fifo(void)
 {
     DQueue queue;
     LargeStruct values[16];
-    D_TEST_EXPR(d_queue_init(&queue, 1, sizeof(LargeStruct)) == D_OK);
+    D_TEST_EXPR(d_queue_init(&queue, 1, sizeof(LargeStruct), NULL, NULL) == D_OK);
     for (int i = 0; i < 16; i++)
     {
         values[i] = make_large_struct(i);
@@ -407,7 +454,7 @@ static void test_binary_data_with_zero_bytes_round_trips(void)
     unsigned char data[8] = {0, 1, 2, 0, 4, 255, 0, 8};
     unsigned char out[8];
     memset(out, 0xaa, sizeof(out));
-    D_TEST_EXPR(d_queue_init(&queue, 1, sizeof(data)) == D_OK);
+    D_TEST_EXPR(d_queue_init(&queue, 1, sizeof(data), NULL, NULL) == D_OK);
     D_TEST_EXPR(d_queue_push(&queue, data) == D_OK);
     memset(data, 0xbb, sizeof(data));
     D_TEST_EXPR(d_queue_pop(&queue, out) == D_OK);
@@ -572,7 +619,7 @@ static void test_destroy_pointer_queue_does_not_free_pointed_values(void)
     char *owned = malloc(6);
     D_TEST_NOT_NULL(owned);
     memcpy(owned, "hello", 6);
-    D_TEST_EXPR(d_queue_init(&queue, 1, sizeof(char *)) == D_OK);
+    D_TEST_EXPR(d_queue_init(&queue, 1, sizeof(char *), NULL, NULL) == D_OK);
     D_TEST_EXPR(d_queue_push(&queue, &owned) == D_OK);
     d_queue_destroy(&queue);
     D_TEST_STR_EQ(owned, "hello");
@@ -629,6 +676,64 @@ static void test_growth_triggered_at_exact_capacity_while_wrapped(void)
     d_queue_destroy(&queue);
 }
 
+static void test_destroy_calls_destructor_for_each_remaining_element(void)
+{
+    DQueue queue;
+    int values[] = {7, 8, 9};
+
+    reset_destroy_tracking();
+    D_TEST_EXPR(d_queue_init(&queue, 0, sizeof(int), int_destroy_counter, NULL) == D_OK);
+    for (int i = 0; i < 3; i++)
+        push_int(&queue, values[i]);
+    d_queue_destroy(&queue);
+    D_TEST_EXPR(g_destroy_count == 3);
+    D_TEST_EXPR(g_destroy_sum == 24);
+}
+
+static void test_copy_with_copy_fn_deep_copies_pointer_elements(void)
+{
+    DQueue src, dst;
+    char *s_hello = owned_string("hello");
+    char *s_world = owned_string("world");
+    char *src_first = NULL, *src_second = NULL, *dst_first = NULL, *dst_second = NULL;
+
+    D_TEST_EXPR(d_queue_init(&src, 0, sizeof(char *), string_ptr_free, string_ptr_copy) == D_OK);
+    D_TEST_EXPR(d_queue_init(&dst, 0, sizeof(char *), string_ptr_free, string_ptr_copy) == D_OK);
+    D_TEST_EXPR(d_queue_push(&src, &s_hello) == D_OK);
+    D_TEST_EXPR(d_queue_push(&src, &s_world) == D_OK);
+    D_TEST_EXPR(d_queue_copy(&dst, &src) == D_OK);
+    D_TEST_EXPR(d_queue_pop(&src, &src_first) == D_OK);   /* FIFO: "hello" */
+    D_TEST_EXPR(d_queue_pop(&src, &src_second) == D_OK);  /* "world" */
+    D_TEST_EXPR(d_queue_pop(&dst, &dst_first) == D_OK);
+    D_TEST_EXPR(d_queue_pop(&dst, &dst_second) == D_OK);
+    D_TEST_EXPR(strcmp(src_first, dst_first) == 0);
+    D_TEST_EXPR(strcmp(src_second, dst_second) == 0);
+    D_TEST_EXPR(src_first != dst_first);
+    D_TEST_EXPR(src_second != dst_second);
+    free(src_first); free(src_second); free(dst_first); free(dst_second);
+    d_queue_destroy(&src);
+    d_queue_destroy(&dst);
+}
+
+static void test_copy_without_copy_fn_pointer_array_is_shallow(void)
+{
+    DQueue src, dst;
+    char *s = owned_string("shallow");
+    char *src_ptr = NULL, *dst_ptr = NULL;
+
+    D_TEST_EXPR(d_queue_init(&src, 0, sizeof(char *), NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_queue_init(&dst, 0, sizeof(char *), NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_queue_push(&src, &s) == D_OK);
+    D_TEST_EXPR(d_queue_copy(&dst, &src) == D_OK);
+    D_TEST_EXPR(d_queue_pop(&src, &src_ptr) == D_OK);
+    D_TEST_EXPR(d_queue_pop(&dst, &dst_ptr) == D_OK);
+    D_TEST_EXPR(src_ptr == s);
+    D_TEST_EXPR(dst_ptr == s);
+    free(s);
+    d_queue_destroy(&src);
+    d_queue_destroy(&dst);
+}
+
 int main(void)
 {
     DTest tests[] = {
@@ -677,6 +782,9 @@ int main(void)
         D_TEST_GENERATE_TEST(test_push_exactly_at_pow2_boundary_then_one_more),
         D_TEST_GENERATE_TEST(test_head_equals_tail_after_half_drain_then_refill),
         D_TEST_GENERATE_TEST(test_growth_triggered_at_exact_capacity_while_wrapped),
+        D_TEST_GENERATE_TEST(test_destroy_calls_destructor_for_each_remaining_element),
+        D_TEST_GENERATE_TEST(test_copy_with_copy_fn_deep_copies_pointer_elements),
+        D_TEST_GENERATE_TEST(test_copy_without_copy_fn_pointer_array_is_shallow),
     };
     D_TEST_RUN_TESTS(tests);
     return 0;

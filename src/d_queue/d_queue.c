@@ -4,9 +4,14 @@
 
 ASSERT_FIRST_FIELD(DQueue, raw_ring_buffer);
 
-DResult d_queue_init(DQueue *d_queue, usize capacity, usize elem_size)
+DResult d_queue_init(DQueue *d_queue, usize capacity, usize elem_size, DestroyElemFn free_fn, CopyElemFn copy_fn)
 {
-    return raw_ring_buffer_default_init((RawRingBuffer *)d_queue, capacity, elem_size);
+    return raw_ring_buffer_default_init((RawRingBuffer *)d_queue, capacity, elem_size, free_fn, copy_fn);
+}
+
+DResult d_queue_copy(DQueue *dst, const DQueue *src)
+{
+    return raw_ring_buffer_copy((RawRingBuffer *)dst, (const RawRingBuffer *)src);
 }
 
 DResult d_queue_push(DQueue *d_queue, const void *elem)

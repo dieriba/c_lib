@@ -13,13 +13,13 @@ typedef struct RawRingBuffer
     usize elem_size;
     usize head;
     usize tail;
+    DestroyElemFn free_fn;
+    CopyElemFn copy_fn;
 } RawRingBuffer;
 
-DResult raw_ring_buffer_init(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize capacity, usize elem_size);
-DResult raw_ring_buffer_default_init(RawRingBuffer *raw_ring_buffer, usize capacity, usize elem_size);
-DResult raw_ring_buffer_init_with_data(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize elem_size, void *data, usize size);
-DResult raw_ring_buffer_new_from(RawRingBuffer **new_raw_ring_buffer, const RawRingBuffer *src);
-
+DResult raw_ring_buffer_init(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize capacity, usize elem_size, DestroyElemFn free_fn, CopyElemFn copy_fn);
+DResult raw_ring_buffer_default_init(RawRingBuffer *raw_ring_buffer, usize capacity, usize elem_size, DestroyElemFn free_fn, CopyElemFn copy_fn);
+DResult raw_ring_buffer_copy(RawRingBuffer *dst, const RawRingBuffer *src);
 DResult raw_ring_buffer_push_front(RawRingBuffer *raw_ring_buffer, const void *elem);
 DResult raw_ring_buffer_pop_front(RawRingBuffer *raw_ring_buffer, void *out_elem);
 
