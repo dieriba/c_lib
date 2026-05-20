@@ -4,6 +4,8 @@
 #include "d_dyn_string.h"
 #include "d_string_view.h"
 
+ASSERT_FIRST_FIELD(DDynString, str);
+
 DResult d_dyn_string_init_with_capacity(DDynString *new_dyn_string, usize reserve)
 {
     if (new_dyn_string == NULL)
@@ -49,7 +51,8 @@ DCompareResult d_dyn_string_compare(DDynString *d1, DDynString *d2)
     if (d1 == NULL || d2 == NULL)
         return D_COMPARE_ERROR;
     return d_string_view_compare(d_string_view_from_dyn_string(d1), d_string_view_from_dyn_string(d2))
-               ? D_COMPARE_EQUAL : D_COMPARE_NOT_EQUAL;
+               ? D_COMPARE_EQUAL
+               : D_COMPARE_NOT_EQUAL;
 }
 
 const char *d_dyn_string_get_string(const DDynString *dstring)

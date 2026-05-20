@@ -1,5 +1,8 @@
 #include "d_queue.h"
+#include "container.h"
 #include <string.h>
+
+ASSERT_FIRST_FIELD(DQueue, raw_ring_buffer);
 
 DResult d_queue_init(DQueue *d_queue, usize capacity, usize elem_size)
 {

@@ -1,8 +1,11 @@
 #include "d_dyn_array.h"
+#include "container.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+ASSERT_FIRST_FIELD(DDynArray, array);
 
 #define d_dyn_array_elt_len(arr, i) ((arr)->array.elem_size * (i))
 #define d_dyn_array_elt_pos(arr, i) ((char *)(arr)->array.data + d_dyn_array_elt_len((arr), (i)))

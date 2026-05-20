@@ -1,5 +1,8 @@
 #include "d_stack.h"
+#include "container.h"
 #include <string.h>
+
+ASSERT_FIRST_FIELD(DStack, raw_ring_buffer);
 
 DResult d_stack_init(DStack *d_stack, usize capacity, usize elem_size)
 {

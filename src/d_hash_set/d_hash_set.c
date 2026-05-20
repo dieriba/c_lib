@@ -5,6 +5,8 @@
 
 #define VALUE_SIZE 0UL
 
+ASSERT_FIRST_FIELD(DHashSet, raw_map);
+
 DResult d_hash_set_init(DHashSet *d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem key_destructor_fn)
 {
     if (d_hash_set == NULL || key_size == 0)
