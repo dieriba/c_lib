@@ -295,14 +295,13 @@ DResult d_dyn_array_remove_last_element(DDynArray *dyn_array, void *out_elem);
  * until capacity is exceeded.
  *
  * @param dyn_array The array to clear. May be NULL (returns NULL).
- * @return @p dyn_array on success, NULL if @p dyn_array is NULL.
  *
  * @code{.c}
  *   d_dyn_array_clear_array(&arr);
  *   // arr.size == 0 but capacity is unchanged
  * @endcode
  */
-DDynArray *d_dyn_array_clear_array(DDynArray *dyn_array);
+DResult d_dyn_array_clear_array(DDynArray *dyn_array);
 
 /**
  * @brief Calls the destructor for all remaining elements, frees the buffer,

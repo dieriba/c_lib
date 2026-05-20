@@ -115,13 +115,13 @@ static void destroy_elements(DDynArray *dyn_array)
 	}
 }
 
-DDynArray *d_dyn_array_clear_array(DDynArray *dyn_array)
+DResult d_dyn_array_clear_array(DDynArray *dyn_array)
 {
 	if (dyn_array == NULL)
-		return NULL;
+		return D_ERR_INVALID_ARG;
 	destroy_elements(dyn_array);
 	dyn_array->array.size = 0;
-	return dyn_array;
+	return D_OK;
 }
 
 void d_dyn_array_destroy(DDynArray *dyn_array)
