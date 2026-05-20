@@ -34,8 +34,6 @@
  * @endcode
  */
 
-
-
 /* -----------------------------------------------------------------------
  * Compiler built-in detection
  * -------------------------------------------------------------------- */
@@ -232,10 +230,10 @@ D_BITS_X_API(d_bits_64, u64, 64)
  *   v = d_bits_clear_least_significant_bit_set(v); // v == 0b1000
  * @endcode
  */
-#define d_bits_clear_least_significant_bit_set(value) ((value) &((value) - 1))
+#define d_bits_clear_least_significant_bit_set(value) ((value) & ((value) - 1))
 
 /* Fills every bit below the MSB with 1 (32-bit range). */
-static inline long long int __d_bits_smear_int(long long int value)
+static inline long long int d_bits_smear_int(long long int value)
 {
     // e.g. value = 0b10110000
     value |= value >> 1;  // 0b10110000 | 0b01011000 = 0b11111000
@@ -247,9 +245,9 @@ static inline long long int __d_bits_smear_int(long long int value)
 }
 
 /* Fills every bit below the MSB with 1 (64-bit range). */
-static inline long long int __d_bits_smear_ll(long long int value)
+static inline long long int d_bits_smear_ll(long long int value)
 {
-    value = __d_bits_smear_int(value);
+    value = d_bits_smear_int(value);
     value |= value >> 32; // fills remaining lower 32 bits → all bits below MSB are 1
     return value;
 }
@@ -257,7 +255,7 @@ static inline long long int __d_bits_smear_ll(long long int value)
 /**
  * @brief Returns @p value with the most-significant set bit cleared.
  *
- * Calls @ref __d_bits_smear_int on @p value to produce a mask @p v in which
+ * Calls @ref d_bits_smear_int on @p value to produce a mask @p v in which
  * every bit below the MSB is 1. Then returns `value & (v >> 1)`, which keeps
  * all bits of the original @p value except the MSB.
  *
@@ -275,7 +273,7 @@ static inline long long int __d_bits_smear_ll(long long int value)
  */
 static inline int d_bits_clear_most_significant_bit_set_int(int value)
 {
-    long long int v = __d_bits_smear_int(value);
+    long long int v = d_bits_smear_int(value);
     return value & (v >> 1);
 }
 
@@ -289,7 +287,7 @@ static inline int d_bits_clear_most_significant_bit_set_int(int value)
  */
 static inline long long int d_bits_clear_most_significant_bit_set_ll(long long int value)
 {
-    long long int v = __d_bits_smear_ll(value);
+    long long int v = d_bits_smear_ll(value);
     return value & (v >> 1);
 }
 
@@ -375,7 +373,7 @@ static inline int d_bits_get_index_least_significant_bit_set_ll(long long int va
  */
 static inline int d_bits_get_index_most_significant_bit_set_int(long long int value)
 {
-    long long int v = __d_bits_smear_int(value);
+    long long int v = d_bits_smear_int(value);
     return d_bits_get_index_least_significant_bit_set_int(v ^ (v >> 1));
 }
 
@@ -393,7 +391,7 @@ static inline int d_bits_get_index_most_significant_bit_set_int(long long int va
  */
 static inline int d_bits_get_index_most_significant_bit_set_ll(long long int value)
 {
-    long long int v = __d_bits_smear_ll(value);
+    long long int v = d_bits_smear_ll(value);
     return d_bits_get_index_least_significant_bit_set_ll(v ^ (v >> 1));
 }
 
