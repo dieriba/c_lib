@@ -16,7 +16,7 @@
  * @ref d_dyn_array_push_back_ptr for convenience.
  *
  * @par Destructor contract
- * When a non-NULL @c free_func is supplied, it is invoked with a pointer to
+ * When a non-NULL @c free_fn is supplied, it is invoked with a pointer to
  * the **element slot** (not the element value cast to a pointer):
  * - `elem_size == sizeof(Person)` → callback receives `Person *`
  * - `elem_size == sizeof(char *)`  → callback receives `char **`
@@ -63,12 +63,12 @@ typedef struct DDynArray
      * slot whenever an element is removed without an output buffer, the
      * array is cleared, or the array is destroyed.
      */
-    DestroyElemFn free_func;
+    DestroyElemFn free_fn;
 
 } DDynArray;
 
-#define d_dyn_array_default_init(d_dyn_array, elem_type, free_func, opts) \
-    d_dyn_array_init(d_dyn_array, sizeof(elem_type), 0x10, free_func, opts)
+#define d_dyn_array_default_init(d_dyn_array, elem_type, free_fn, opts) \
+    d_dyn_array_init(d_dyn_array, sizeof(elem_type), 0x10, free_fn, opts)
 
 #define d_dyn_array_get_elem_addr_at_safe(d_dyn_array, index) ((char *)((d_dyn_array)->array.data)) + d_dyn_array->array.elem_size *(index)
 #define d_dyn_array_get_data_safe(d_dyn_array) (d_dyn_array)->array.data
@@ -85,7 +85,7 @@ typedef struct DDynArray
  * @param  new_dyn_array  Array to initialise. Must not be NULL.
  * @param  elem_size      Size in bytes of each element. Must be > 0.
  * @param  reserved_elem  Number of elements to pre-allocate. May be 0.
- * @param  free_func      Optional destructor called on removed elements. May be NULL.
+ * @param  free_fn      Optional destructor called on removed elements. May be NULL.
  * @param  opts           Buffer option flags (pass @c 0 for defaults).
  * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL or
  *         @p elem_size is 0, ::D_ERR_ALLOC on allocation failure.
@@ -96,7 +96,7 @@ typedef struct DDynArray
  *   d_dyn_array_destroy(&arr);
  * @endcode
  */
-DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFn free_func, BufferOpts opts);
+DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFn free_fn, BufferOpts opts);
 
 /**
  * @brief Initialises a ::DDynArray whose elements are raw pointers (@c void *).
@@ -106,7 +106,7 @@ DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserv
  *
  * @param  new_dyn_array  Array to initialise. Must not be NULL.
  * @param  reserved_elem  Number of pointer slots to pre-allocate. May be 0.
- * @param  free_func      Optional destructor for removed pointer elements. May be NULL.
+ * @param  free_fn      Optional destructor for removed pointer elements. May be NULL.
  * @param  opts           Buffer option flags (pass @c 0 for defaults).
  * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL,
  *         ::D_ERR_ALLOC on allocation failure.
@@ -119,7 +119,7 @@ DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserv
  *   d_dyn_array_destroy(&ptrs); // calls free on "hello"
  * @endcode
  */
-DResult d_dyn_array_init_ptr_arr(DDynArray *new_dyn_array, usize reserved_elem, DestroyElemFn free_func, BufferOpts opts);
+DResult d_dyn_array_init_ptr_arr(DDynArray *new_dyn_array, usize reserved_elem, DestroyElemFn free_fn, BufferOpts opts);
 
 /**
  * @brief Initialises @p new_dyn_array as an independent deep copy of @p dyn_array.

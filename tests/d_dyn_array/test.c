@@ -82,7 +82,7 @@ static void int_destroy_counter(void *elem_slot)
 
 /*
  * Checks the documented contract: for elem_size == sizeof(char *),
- * free_func receives char **, i.e. the address of the element slot.
+ * free_fn receives char **, i.e. the address of the element slot.
  */
 static void tracked_string_ptr_destroy(void *elem_slot)
 {
