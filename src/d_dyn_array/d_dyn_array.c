@@ -10,7 +10,7 @@ ASSERT_FIRST_FIELD(DDynArray, array);
 #define d_dyn_array_elt_len(arr, i) ((arr)->array.elem_size * (i))
 #define d_dyn_array_elt_pos(arr, i) ((char *)(arr)->array.data + d_dyn_array_elt_len((arr), (i)))
 
-DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts)
+DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFn free_func, BufferOpts opts)
 {
 	if (new_dyn_array == NULL || elem_size == 0)
 		return D_ERR_INVALID_ARG;
@@ -19,7 +19,7 @@ DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserv
 	return raw_buffer_init((RawBuffer *)new_dyn_array, elem_size, reserved_elem, opts);
 }
 
-DResult d_dyn_array_init_ptr_arr(DDynArray *new_dyn_array, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts)
+DResult d_dyn_array_init_ptr_arr(DDynArray *new_dyn_array, usize reserved_elem, DestroyElemFn free_func, BufferOpts opts)
 {
 	return d_dyn_array_init(new_dyn_array, sizeof(void *), reserved_elem, free_func, opts);
 }
@@ -83,7 +83,7 @@ DResult d_dyn_array_remove_elem_fast(DDynArray *dyn_array, usize index, void *ou
 	void *elem;
 	if ((op_result = raw_buffer_get_elem_addr(&dyn_array->array, index, &elem)) != D_OK)
 		return op_result;
-	DestroyElemFunc free_func = dyn_array->free_func;
+	DestroyElemFn free_func = dyn_array->free_func;
 	if (free_func && !out_elem)
 		free_func(elem);
 	return raw_buffer_swap_remove(&dyn_array->array, index, out_elem);
@@ -103,7 +103,7 @@ static void destroy_elements(DDynArray *dyn_array)
 {
 	if (dyn_array == NULL)
 		return;
-	DestroyElemFunc free_func = dyn_array->free_func;
+	DestroyElemFn free_func = dyn_array->free_func;
 	if (!free_func)
 		return;
 	usize elem_size = dyn_array->array.elem_size;
