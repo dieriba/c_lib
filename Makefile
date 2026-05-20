@@ -14,13 +14,13 @@ SRCS_TEST := $(shell find $(TEST_DIRS) -name '*.c')
 OBJS_TESTS := $(addprefix $(TARGET_DIR)/, $(SRCS_TEST:.c=.o))
 BIN_TESTS := $(OBJS_TESTS:.o=)
 
-
+VENDOR_DIRS := vendor
 
 DEPS := $(OBJS:.o=.d) $(OBJS_TESTS:.o=.d)
 
 INC_DIRS := ./includes
 INC_DIRS += $(shell find $(SRC_DIRS) -type d)
-
+INC_DIRS += $(shell find $(VENDOR_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CPPFLAGS := $(INC_FLAGS) -MMD -MP -Wall -Werror -Wextra
