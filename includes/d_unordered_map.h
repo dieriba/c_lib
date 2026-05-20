@@ -78,6 +78,7 @@
  */
 #include "d_error.h"
 #include "d_types.h"
+#include "d_hash_utils.h"
 #include "d_general_lib.h"
 
 /**
