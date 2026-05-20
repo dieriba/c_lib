@@ -90,6 +90,19 @@ DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const 
     return raw_buffer_append_data(raw_buffer, data, size);
 }
 
+DResult raw_buffer_init_from_raw_buffer(RawBuffer *new_raw_buffer, const RawBuffer *src)
+{
+    if (new_raw_buffer == NULL || src == NULL)
+        return D_ERR_INVALID_ARG;
+    DResult op_result = raw_buffer_init(new_raw_buffer, src->elem_size, src->capacity, src->free_fn, src->copy_fn, src->opts);
+    if (op_result != D_OK)
+        return op_result;
+    op_result = raw_buffer_copy(new_raw_buffer, src);
+    if (op_result != D_OK)
+        raw_buffer_clear(new_raw_buffer);
+    return op_result;
+}
+
 DResult raw_buffer_clear(RawBuffer *raw_buffer)
 {
     if (raw_buffer == NULL)

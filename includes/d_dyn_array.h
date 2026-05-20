@@ -130,7 +130,7 @@ DResult d_dyn_array_init_ptr_arr(DDynArray *new_dyn_array, usize reserved_elem, 
  *   d_dyn_array_destroy(&copy);
  * @endcode
  */
-DResult d_dyn_array_init_from(DDynArray *new_dyn_array, DDynArray *dyn_array);
+DResult d_dyn_array_init_from(DDynArray *new_dyn_array, const DDynArray *dyn_array);
 
 /* -----------------------------------------------------------------------
  * Accessors
