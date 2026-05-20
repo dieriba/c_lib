@@ -41,8 +41,8 @@
  */
 typedef struct DStringView
 {
-    const char  *data; /**< Pointer to the first character of the viewed range.     */
-    const usize  size; /**< Number of characters in the view (may be 0).            */
+    const char *data; /**< Pointer to the first character of the viewed range.     */
+    usize size;       /**< Number of characters in the view (may be 0).            */
 } DStringView;
 
 /**
@@ -66,7 +66,7 @@ typedef bool (*match)(char c);
  *                 D_STRING_VIEW_FROM_LITERAL(",;"));
  * @endcode
  */
-#define D_STRING_VIEW_FROM_LITERAL(str) ((DStringView){ .data = (str), .size = sizeof(str) - 1 })
+#define D_STRING_VIEW_FROM_LITERAL(str) ((DStringView){.data = (str), .size = sizeof(str) - 1})
 
 /* -----------------------------------------------------------------------
  * Construction
@@ -648,6 +648,5 @@ DResult d_dyn_string_init_from_string_view(DDynString *new_dyn_string, DStringVi
 void d_string_view_dbg_print(DStringView *d_string_view);
 
 /** @} */ /* end of d_string_view group */
-
 
 #endif
