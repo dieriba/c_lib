@@ -109,7 +109,7 @@ typedef struct DUnorderedMap
  * @return ::D_OK, ::D_ERR_INVALID_ARG if required arguments are NULL,
  *         ::D_ERR_ALLOC on allocation failure.
  */
-DResult d_unordered_map_init(DUnorderedMap *d_unordered_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem key_destructor_fn, FnPtrFreeElem value_destructor_fn);
+DResult d_unordered_map_init(DUnorderedMap *d_unordered_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, DestroyElemFn key_destructor_fn, DestroyElemFn value_destructor_fn);
 
 /* -----------------------------------------------------------------------
  * Construction macros
@@ -124,7 +124,7 @@ DResult d_unordered_map_init(DUnorderedMap *d_unordered_map, usize key_size, usi
  *       DUnorderedMap *d_unordered_map,
  *       usize          value_size,
  *       usize          capacity,
- *       FnPtrFreeElem  value_destructor_fn);
+ *       DestroyElemFn  value_destructor_fn);
  * @endcode
  *
  * Pre-instantiated types: @c int8, @c int16, @c int32, @c int64,
@@ -136,7 +136,7 @@ DResult d_unordered_map_init(DUnorderedMap *d_unordered_map, usize key_size, usi
  * @param KEY_TYPE  Underlying C type of the key.
  */
 #define D_UNORDERED_MAP_INIT_WITH_NOT_OWNED_KEY(KEY_NAME, KEY_TYPE)                                                                                            \
-    static inline DResult d_unordered_map_init_not_owned_##KEY_NAME##_key(DUnorderedMap *d_unordered_map, usize value_size, usize capacity, FnPtrFreeElem value_destructor_fn) \
+    static inline DResult d_unordered_map_init_not_owned_##KEY_NAME##_key(DUnorderedMap *d_unordered_map, usize value_size, usize capacity, DestroyElemFn value_destructor_fn) \
     {                                                                                                                                                          \
         return d_unordered_map_init(d_unordered_map, sizeof(KEY_TYPE), value_size, capacity, hash_##KEY_NAME##_key, compare_##KEY_NAME, NULL, value_destructor_fn);            \
     }
@@ -150,7 +150,7 @@ DResult d_unordered_map_init(DUnorderedMap *d_unordered_map, usize key_size, usi
  *       DUnorderedMap *d_unordered_map,
  *       usize          value_size,
  *       usize          capacity,
- *       FnPtrFreeElem  value_destructor_fn);
+ *       DestroyElemFn  value_destructor_fn);
  * @endcode
  *
  * Pre-instantiated types: @c str (@c char *) and @c d_dyn_string (@c DDynString *).
@@ -160,7 +160,7 @@ DResult d_unordered_map_init(DUnorderedMap *d_unordered_map, usize key_size, usi
  * @param KEY_DESTRUCTOR Destructor called when a key is evicted or overwritten.
  */
 #define D_UNORDERED_MAP_INIT_WITH_OWNED_KEY(KEY_NAME, KEY_TYPE, KEY_DESTRUCTOR)                                                                               \
-    static inline DResult d_unordered_map_init_owned_##KEY_NAME##_key(DUnorderedMap *d_unordered_map, usize value_size, usize capacity, FnPtrFreeElem value_destructor_fn)    \
+    static inline DResult d_unordered_map_init_owned_##KEY_NAME##_key(DUnorderedMap *d_unordered_map, usize value_size, usize capacity, DestroyElemFn value_destructor_fn)    \
     {                                                                                                                                                         \
         return d_unordered_map_init(d_unordered_map, sizeof(KEY_TYPE), value_size, capacity, hash_##KEY_NAME##_key, compare_##KEY_NAME, KEY_DESTRUCTOR, value_destructor_fn); \
     }
@@ -183,7 +183,7 @@ D_UNORDERED_MAP_INIT_WITH_NOT_OWNED_KEY(d_string_view, DStringView)
 
 /* Pre-instantiated owned constructors */
 D_UNORDERED_MAP_INIT_WITH_OWNED_KEY(str,          char *,       _free_str)
-D_UNORDERED_MAP_INIT_WITH_OWNED_KEY(d_dyn_string, DDynString *, (FnPtrFreeElem)d_dyn_string_destroy)
+D_UNORDERED_MAP_INIT_WITH_OWNED_KEY(d_dyn_string, DDynString *, (DestroyElemFn)d_dyn_string_destroy)
 
 /* -----------------------------------------------------------------------
  * Operations

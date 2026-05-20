@@ -54,6 +54,6 @@ typedef char *(*FnElemRepr)(void *elem);
  *   void my_free_str(void *elem) { free(*(char **)elem); }
  * @endcode
  */
-typedef void (*FnPtrFreeElem)(void *elem);
+typedef void (*DestroyElemFn)(void *elem);
 
 #endif

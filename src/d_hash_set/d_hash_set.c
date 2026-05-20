@@ -7,7 +7,7 @@
 
 ASSERT_FIRST_FIELD(DHashSet, raw_map);
 
-DResult d_hash_set_init(DHashSet *d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem key_destructor_fn)
+DResult d_hash_set_init(DHashSet *d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, DestroyElemFn key_destructor_fn)
 {
     if (d_hash_set == NULL || key_size == 0)
         return D_ERR_INVALID_ARG;

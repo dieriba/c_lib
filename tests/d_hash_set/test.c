@@ -157,12 +157,12 @@ static char *dup_lit(const char *s)
     return out;
 }
 
-static void init_int_set_custom(DHashSet *set, usize capacity, FnPtrFreeElem free_fn)
+static void init_int_set_custom(DHashSet *set, usize capacity, DestroyElemFn free_fn)
 {
     D_TEST_EXPR(d_hash_set_init(set, sizeof(int), capacity, hash_int_key, cmp_int_key, free_fn) == D_OK);
 }
 
-static void init_collision_set(DHashSet *set, usize capacity, FnPtrFreeElem free_fn)
+static void init_collision_set(DHashSet *set, usize capacity, DestroyElemFn free_fn)
 {
     D_TEST_EXPR(d_hash_set_init(set, sizeof(int), capacity, hash_int_collision, cmp_int_key, free_fn) == D_OK);
 }

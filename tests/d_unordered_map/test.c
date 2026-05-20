@@ -136,12 +136,12 @@ static char *dup_lit(const char *s)
     return out;
 }
 
-static void init_int_map(DUnorderedMap *map, usize value_size, usize capacity, FnPtrFreeElem key_fn, FnPtrFreeElem value_fn)
+static void init_int_map(DUnorderedMap *map, usize value_size, usize capacity, DestroyElemFn key_fn, DestroyElemFn value_fn)
 {
     D_TEST_EXPR(d_unordered_map_init(map, sizeof(int), value_size, capacity, hash_int_key, cmp_int_key, key_fn, value_fn) == D_OK);
 }
 
-static void init_collision_map(DUnorderedMap *map, usize value_size, usize capacity, FnPtrFreeElem key_fn, FnPtrFreeElem value_fn)
+static void init_collision_map(DUnorderedMap *map, usize value_size, usize capacity, DestroyElemFn key_fn, DestroyElemFn value_fn)
 {
     D_TEST_EXPR(d_unordered_map_init(map, sizeof(int), value_size, capacity, hash_int_collision, cmp_int_key, key_fn, value_fn) == D_OK);
 }
@@ -369,9 +369,9 @@ static void test_destroy_calls_destroyer_for_all_live_pairs_only(void)
     D_TEST_EXPR(d_unordered_map_delete(&map, &(int){4}) == D_OK);
     D_TEST_EXPR(g_free_calls == 1);
     d_unordered_map_destroy(&map);
-    D_TEST_EXPR(g_free_calls == 9);   /* 1 deleted + 8 remaining; removed one transferred */
-    D_TEST_EXPR(g_key_sum == 43);     /* 0..9 =45, minus removed key 2 */
-    D_TEST_EXPR(g_value_sum == 430);  /* 0..90 =450, minus removed value 20 */
+    D_TEST_EXPR(g_free_calls == 9);  /* 1 deleted + 8 remaining; removed one transferred */
+    D_TEST_EXPR(g_key_sum == 43);    /* 0..9 =45, minus removed key 2 */
+    D_TEST_EXPR(g_value_sum == 430); /* 0..90 =450, minus removed value 20 */
 }
 
 static void test_duplicate_insert_keeps_size_one_and_updates_value(void)

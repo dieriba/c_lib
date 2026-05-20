@@ -96,7 +96,7 @@ typedef struct DHashSet
  *   DResult d_hash_set_init_not_owned_<KEY_NAME>_key(
  *       DHashSet *d_hash_set,
  *       usize     capacity,
- *       FnPtrFreeElem value_destructor_fn); // always pass NULL
+ *       DestroyElemFn value_destructor_fn); // always pass NULL
  * @endcode
  *
  * The pre-instantiated types are: @c int8, @c int16, @c int32, @c int64,
@@ -107,7 +107,7 @@ typedef struct DHashSet
  * @param KEY_TYPE  Underlying C type of the key.
  */
 #define D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(KEY_NAME, KEY_TYPE)                                                                              \
-    static inline DResult d_hash_set_init_not_owned_##KEY_NAME##_key(DHashSet *d_hash_set, usize capacity, FnPtrFreeElem key_destructor_fn) \
+    static inline DResult d_hash_set_init_not_owned_##KEY_NAME##_key(DHashSet *d_hash_set, usize capacity, DestroyElemFn key_destructor_fn) \
     {                                                                                                                                       \
         return d_hash_set_init(d_hash_set, sizeof(KEY_TYPE), capacity, hash_##KEY_NAME##_key, compare_##KEY_NAME, key_destructor_fn);       \
     }
@@ -120,7 +120,7 @@ typedef struct DHashSet
  *   DResult d_hash_set_init_owned_<KEY_NAME>_key(
  *       DHashSet *d_hash_set,
  *       usize     capacity,
- *       FnPtrFreeElem value_destructor_fn); // always pass NULL
+ *       DestroyElemFn value_destructor_fn); // always pass NULL
  * @endcode
  *
  * The pre-instantiated types are: @c str (@c char *) and @c d_dyn_string
@@ -153,7 +153,7 @@ typedef struct DHashSet
  * @return ::D_OK, ::D_ERR_INVALID_ARG if required arguments are NULL,
  *         ::D_ERR_ALLOC on allocation failure.
  */
-DResult d_hash_set_init(DHashSet *d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem key_destructor_fn);
+DResult d_hash_set_init(DHashSet *d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, DestroyElemFn key_destructor_fn);
 
 /* Pre-instantiated not-owned constructors */
 D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(int8, int8)
@@ -172,7 +172,7 @@ D_HASH_SET_INIT_WITH_NOT_OWNED_KEY(d_dyn_string, DDynString *)
 
 /* Pre-instantiated owned constructors */
 D_HASH_SET_INIT_WITH_OWNED_KEY(str, char *, _free_str)
-D_HASH_SET_INIT_WITH_OWNED_KEY(d_dyn_string, DDynString *, (FnPtrFreeElem)d_dyn_string_destroy)
+D_HASH_SET_INIT_WITH_OWNED_KEY(d_dyn_string, DDynString *, (DestroyElemFn)d_dyn_string_destroy)
 
 /* -----------------------------------------------------------------------
  * Operations

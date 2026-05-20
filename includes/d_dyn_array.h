@@ -48,15 +48,6 @@
 #include "raw_buffer.h"
 
 /**
- * @brief Callback invoked to destroy a single element stored in the array.
- *
- * Receives a pointer to the element **slot** inside the array, not the
- * element value interpreted as a pointer. See the @ref d_dyn_array group
- * description for examples.
- */
-typedef void (*DestroyElemFunc)(void *elem);
-
-/**
  * @brief Type-erased dynamic array.
  *
  * Do not access internal fields directly; use the @ref d_dyn_array API.
@@ -64,6 +55,7 @@ typedef void (*DestroyElemFunc)(void *elem);
 typedef struct DDynArray
 {
     RawBuffer array; /**< Internal raw buffer (implementation detail). */
+
     /**
      * @brief Optional element destructor (may be NULL).
      *
@@ -71,7 +63,8 @@ typedef struct DDynArray
      * slot whenever an element is removed without an output buffer, the
      * array is cleared, or the array is destroyed.
      */
-    DestroyElemFunc free_func;
+    DestroyElemFn free_func;
+
 } DDynArray;
 
 #define d_dyn_array_default_init(d_dyn_array, elem_type, free_func, opts) \
@@ -103,7 +96,7 @@ typedef struct DDynArray
  *   d_dyn_array_destroy(&arr);
  * @endcode
  */
-DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts);
+DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFn free_func, BufferOpts opts);
 
 /**
  * @brief Initialises a ::DDynArray whose elements are raw pointers (@c void *).
@@ -126,7 +119,7 @@ DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserv
  *   d_dyn_array_destroy(&ptrs); // calls free on "hello"
  * @endcode
  */
-DResult d_dyn_array_init_ptr_arr(DDynArray *new_dyn_array, usize reserved_elem, DestroyElemFunc free_func, BufferOpts opts);
+DResult d_dyn_array_init_ptr_arr(DDynArray *new_dyn_array, usize reserved_elem, DestroyElemFn free_func, BufferOpts opts);
 
 /**
  * @brief Initialises @p new_dyn_array as an independent deep copy of @p dyn_array.
