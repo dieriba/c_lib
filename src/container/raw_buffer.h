@@ -18,13 +18,14 @@ typedef struct _Buffer
     usize size;
     usize capacity;
     usize elem_size;
+    DestroyElemFn free_fn;
     DBits8 opts;
 } RawBuffer;
 
-DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, DBits8 opts);
-DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const void *data, usize size, DBits8 opts);
+DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, DestroyElemFn free_fn, DBits8 opts);
+DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const void *data, usize size, DestroyElemFn free_fn, DBits8 opts);
 void raw_buffer_free(RawBuffer *raw_buffer);
-void raw_buffer_destroy(RawBuffer **raw_buffer);
+DResult raw_buffer_clear(RawBuffer *raw_buffer);
 
 void *raw_buffer_get_data(const RawBuffer *raw_buffer);
 DResult raw_buffer_get_elem_at(RawBuffer *raw_buffer, usize index, void *out_elem);
@@ -42,7 +43,6 @@ DResult raw_buffer_prepend(RawBuffer *dst, const RawBuffer *src);
 DResult raw_buffer_push(RawBuffer *raw_buffer, const void *elem);
 DResult raw_buffer_pop(RawBuffer *raw_buffer, void *out_elem);
 DResult raw_buffer_swap_remove(RawBuffer *raw_buffer, usize index, void *out_elem);
-void raw_buffer_clear(RawBuffer *raw_buffer);
 
 #define RAW_BUFFER_GETTER(FIELD, FIELD_TYPE)                                                     \
     static inline DResult raw_buffer_get_##FIELD(const RawBuffer *raw_buffer, FIELD_TYPE *FIELD) \

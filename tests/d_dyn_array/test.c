@@ -437,13 +437,13 @@ static void test_push_back_ptr_rejects_null_array(void)
     D_TEST_EXPR(d_dyn_array_push_back_ptr(NULL, &x) == D_ERR_INVALID_ARG);
 }
 
-static void test_remove_last_on_empty_array_is_noop_ok(void)
+static void test_remove_last_on_empty_array_returns_empty_err(void)
 {
     DDynArray arr;
     int out = 123;
 
     make_int_array(&arr, 0);
-    D_TEST_EXPR(d_dyn_array_remove_last_element(&arr, &out) == D_OK);
+    D_TEST_EXPR(d_dyn_array_remove_last_element(&arr, &out) == D_ERR_EMPTY);
     D_TEST_EXPR(out == 123);
     expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
@@ -914,7 +914,7 @@ int main(void)
         D_TEST_GENERATE_TEST(test_push_back_ptr_stores_pointer_value),
         D_TEST_GENERATE_TEST(test_push_back_ptr_accepts_null_pointer_value),
         D_TEST_GENERATE_TEST(test_push_back_ptr_rejects_null_array),
-        D_TEST_GENERATE_TEST(test_remove_last_on_empty_array_is_noop_ok),
+        D_TEST_GENERATE_TEST(test_remove_last_on_empty_array_returns_empty_err),
         D_TEST_GENERATE_TEST(test_remove_last_returns_removed_value),
         D_TEST_GENERATE_TEST(test_remove_last_without_out_discards_value),
         D_TEST_GENERATE_TEST(test_remove_last_rejects_null_array),

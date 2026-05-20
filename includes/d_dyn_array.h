@@ -21,10 +21,11 @@
  * - `elem_size == sizeof(Person)` → callback receives `Person *`
  * - `elem_size == sizeof(char *)`  → callback receives `char **`
  *
- * The destructor is called in three situations:
+ * The destructor is called in four situations:
  *  1. @ref d_dyn_array_remove_elem_fast called with `out_elem == NULL`
- *  2. @ref d_dyn_array_clear_array
- *  3. @ref d_dyn_array_destroy
+ *  2. @ref d_dyn_array_remove_last_element called with `out_elem == NULL`
+ *  3. @ref d_dyn_array_clear_array
+ *  4. @ref d_dyn_array_destroy
  *
  * When `out_elem` is provided to a remove call the caller takes ownership
  * and the destructor is **not** called.
@@ -55,16 +56,6 @@
 typedef struct DDynArray
 {
     RawBuffer array; /**< Internal raw buffer (implementation detail). */
-
-    /**
-     * @brief Optional element destructor (may be NULL).
-     *
-     * When non-NULL this callback is invoked with a pointer to the element
-     * slot whenever an element is removed without an output buffer, the
-     * array is cleared, or the array is destroyed.
-     */
-    DestroyElemFn free_fn;
-
 } DDynArray;
 
 #define d_dyn_array_default_init(d_dyn_array, elem_type, free_fn, opts) \
@@ -267,12 +258,15 @@ DResult d_dyn_array_remove_elem_fast(DDynArray *dyn_array, usize index, void *ou
 /**
  * @brief Removes the last element from the array.
  *
- * If the array is empty the call succeeds as a no-op without touching @p out_elem.
- * Ownership and destructor semantics are identical to @ref d_dyn_array_remove_elem_fast.
+ * If @p out_elem is non-NULL the removed element is copied there and the
+ * destructor is **not** called. If @p out_elem is NULL the destructor is
+ * called (when one was supplied at init time).
  *
  * @param dyn_array The array to pop from. Must not be NULL.
  * @param     out_elem  Optional buffer that receives the popped element.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p dyn_array is NULL.
+ *                      Must be at least @c elem_size bytes if non-NULL.
+ * @return ::D_OK on success, ::D_ERR_INVALID_ARG if @p dyn_array is NULL,
+ *         ::D_ERR_EMPTY if the array contains no elements.
  */
 DResult d_dyn_array_remove_last_element(DDynArray *dyn_array, void *out_elem);
 

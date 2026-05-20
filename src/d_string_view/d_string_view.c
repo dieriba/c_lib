@@ -386,7 +386,7 @@ DResult d_dyn_string_init_from_string_view(DDynString *new_dyn_string, DStringVi
 {
     if (new_dyn_string == NULL)
         return D_ERR_INVALID_ARG;
-    return raw_buffer_init_with_data((RawBuffer *)new_dyn_string, sizeof(char), view.data, view.size, RAW_BUF_OPT_ZERO_SENTINEL);
+    return raw_buffer_init_with_data((RawBuffer *)new_dyn_string, sizeof(char), view.data, view.size, NULL, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
 static DResult push_back_sub_view_fn(DDynArray *d_dyn_array, DStringView view, usize start_pos, usize size)

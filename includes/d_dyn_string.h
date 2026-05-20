@@ -322,6 +322,8 @@ DResult d_dyn_string_sub_string_in_place(DDynString *dstring, usize pos, usize s
  */
 void d_dyn_string_destroy(DDynString *dstring);
 
+DResult d_dyn_string_clear(DDynString *dstring);
+
 void d_dyn_string_dbg_print(DDynString *dstring);
 
 /** @} */ /* end of d_dyn_string group */

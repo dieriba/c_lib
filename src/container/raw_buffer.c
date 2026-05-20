@@ -61,7 +61,7 @@ static DResult increase_raw_buffer_capacity_if_needed(RawBuffer *raw_buffer, usi
     return D_OK;
 }
 
-DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, DBits8 opts)
+DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, DestroyElemFn free_fn, DBits8 opts)
 {
     if (raw_buffer == NULL || elem_size == 0)
         return D_ERR_INVALID_ARG;
@@ -70,7 +70,7 @@ DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, 
     raw_buffer->elem_size = elem_size;
     raw_buffer->opts = opts;
     raw_buffer->data = NULL;
-
+    raw_buffer->free_fn = free_fn;
     usize alloc_size;
     if (raw_buffer_compute_new_alloc_size(raw_buffer, raw_buffer->capacity, &alloc_size) != D_OK)
         return D_ERR_OVERFLOW;
@@ -80,32 +80,39 @@ DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, 
     return D_OK;
 }
 
-DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const void *data, usize size, DBits8 opts)
+DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const void *data, usize size, DestroyElemFn free_fn, DBits8 opts)
 {
     usize capacity = size < DEFAULT_CAPACITY ? DEFAULT_CAPACITY : size;
-    DResult op_result = raw_buffer_init(raw_buffer, elem_size, capacity, opts);
+    DResult op_result = raw_buffer_init(raw_buffer, elem_size, capacity, free_fn, opts);
     if (op_result != D_OK)
         return op_result;
     return raw_buffer_append_data(raw_buffer, data, size);
+}
+
+DResult raw_buffer_clear(RawBuffer *raw_buffer)
+{
+    if (raw_buffer == NULL)
+        return D_ERR_INVALID_ARG;
+    DestroyElemFn free_fn = raw_buffer->free_fn;
+    if (free_fn)
+    {
+        for (size_t i = 0; i < raw_buffer->size; i++)
+        {
+            free_fn(raw_buffer_elt_pos(raw_buffer, i));
+        }
+    }
+    raw_buffer->size = 0;
+    raw_buffer_write_sentinel(raw_buffer);
+    return D_OK;
 }
 
 void raw_buffer_free(RawBuffer *raw_buffer)
 {
     if (raw_buffer == NULL)
         return;
+    raw_buffer_clear(raw_buffer);
     free(raw_buffer->data);
-    raw_buffer->data = NULL;
-    raw_buffer->size = 0;
-    raw_buffer->capacity = 0;
-}
-
-void raw_buffer_destroy(RawBuffer **raw_buffer)
-{
-    if (raw_buffer == NULL || *raw_buffer == NULL)
-        return;
-    raw_buffer_free(*raw_buffer);
-    free(*raw_buffer);
-    *raw_buffer = NULL;
+    memset(raw_buffer, 0, sizeof(RawBuffer));
 }
 
 void *raw_buffer_get_data(const RawBuffer *raw_buffer)
@@ -274,24 +281,19 @@ DResult raw_buffer_push(RawBuffer *raw_buffer, const void *elem)
     return D_OK;
 }
 
-DResult raw_buffer_pop(RawBuffer *raw_buffer, void *out_elem)
+DResult raw_buffer_swap_remove(RawBuffer *raw_buffer, usize index, void *out_elem)
 {
     if (raw_buffer == NULL)
         return D_ERR_INVALID_ARG;
     if (raw_buffer->size == 0)
         return D_ERR_EMPTY;
-    raw_buffer->size--;
-    if (out_elem != NULL)
-        memcpy(out_elem, raw_buffer_elt_pos(raw_buffer, raw_buffer->size), raw_buffer_elt_size(raw_buffer, 1));
-    raw_buffer_write_sentinel(raw_buffer);
-    return D_OK;
-}
-
-DResult raw_buffer_swap_remove(RawBuffer *raw_buffer, usize index, void *out_elem)
-{
-    if (raw_buffer == NULL || index >= raw_buffer->size)
+    if (index >= raw_buffer->size)
         return D_ERR_INVALID_ARG;
-    if (out_elem != NULL)
+
+    DestroyElemFn free_fn = raw_buffer->free_fn;
+    if (free_fn != NULL && out_elem == NULL)
+        free_fn(raw_buffer_elt_pos(raw_buffer, index));
+    else if (out_elem != NULL)
         memcpy(out_elem, raw_buffer_elt_pos(raw_buffer, index), raw_buffer_elt_size(raw_buffer, 1));
     raw_buffer->size--;
     if (index != raw_buffer->size)
@@ -300,10 +302,9 @@ DResult raw_buffer_swap_remove(RawBuffer *raw_buffer, usize index, void *out_ele
     return D_OK;
 }
 
-void raw_buffer_clear(RawBuffer *raw_buffer)
+DResult raw_buffer_pop(RawBuffer *raw_buffer, void *out_elem)
 {
     if (raw_buffer == NULL)
-        return;
-    raw_buffer->size = 0;
-    raw_buffer_write_sentinel(raw_buffer);
+        return D_ERR_INVALID_ARG;
+    return raw_buffer_swap_remove(raw_buffer, raw_buffer->size - 1, out_elem);
 }
