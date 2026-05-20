@@ -58,8 +58,8 @@ typedef struct DDynArray
     RawBuffer array; /**< Internal raw buffer (implementation detail). */
 } DDynArray;
 
-#define d_dyn_array_default_init(d_dyn_array, elem_type, free_fn, opts) \
-    d_dyn_array_init(d_dyn_array, sizeof(elem_type), 0x10, free_fn, opts)
+#define d_dyn_array_default_init(d_dyn_array, elem_type, free_fn, copy_fn, opts) \
+    d_dyn_array_init(d_dyn_array, sizeof(elem_type), 0x10, free_fn, copy_fn, opts)
 
 #define d_dyn_array_get_elem_addr_at_safe(d_dyn_array, index) ((char *)((d_dyn_array)->array.data)) + d_dyn_array->array.elem_size *(index)
 #define d_dyn_array_get_data_safe(d_dyn_array) (d_dyn_array)->array.data
@@ -87,7 +87,7 @@ typedef struct DDynArray
  *   d_dyn_array_destroy(&arr);
  * @endcode
  */
-DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFn free_fn, BufferOpts opts);
+DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFn free_fn, CopyElemFn copy_fn, BufferOpts opts);
 
 /**
  * @brief Initialises a ::DDynArray whose elements are raw pointers (@c void *).
@@ -110,7 +110,7 @@ DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserv
  *   d_dyn_array_destroy(&ptrs); // calls free on "hello"
  * @endcode
  */
-DResult d_dyn_array_init_ptr_arr(DDynArray *new_dyn_array, usize reserved_elem, DestroyElemFn free_fn, BufferOpts opts);
+DResult d_dyn_array_init_ptr_arr(DDynArray *new_dyn_array, usize reserved_elem, DestroyElemFn free_fn, CopyElemFn copy_fn, BufferOpts opts);
 
 /**
  * @brief Initialises @p new_dyn_array as an independent deep copy of @p dyn_array.

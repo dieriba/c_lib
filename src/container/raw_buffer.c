@@ -61,7 +61,7 @@ static DResult increase_raw_buffer_capacity_if_needed(RawBuffer *raw_buffer, usi
     return D_OK;
 }
 
-DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, DestroyElemFn free_fn, DBits8 opts)
+DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, DestroyElemFn free_fn, CopyElemFn copy_fn, DBits8 opts)
 {
     if (raw_buffer == NULL || elem_size == 0)
         return D_ERR_INVALID_ARG;
@@ -71,6 +71,7 @@ DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, 
     raw_buffer->opts = opts;
     raw_buffer->data = NULL;
     raw_buffer->free_fn = free_fn;
+    raw_buffer->copy_fn = copy_fn;
     usize alloc_size;
     if (raw_buffer_compute_new_alloc_size(raw_buffer, raw_buffer->capacity, &alloc_size) != D_OK)
         return D_ERR_OVERFLOW;
@@ -80,10 +81,10 @@ DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, 
     return D_OK;
 }
 
-DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const void *data, usize size, DestroyElemFn free_fn, DBits8 opts)
+DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const void *data, usize size, DestroyElemFn free_fn, CopyElemFn copy_fn, DBits8 opts)
 {
     usize capacity = size < DEFAULT_CAPACITY ? DEFAULT_CAPACITY : size;
-    DResult op_result = raw_buffer_init(raw_buffer, elem_size, capacity, free_fn, opts);
+    DResult op_result = raw_buffer_init(raw_buffer, elem_size, capacity, free_fn, copy_fn, opts);
     if (op_result != D_OK)
         return op_result;
     return raw_buffer_append_data(raw_buffer, data, size);
@@ -261,6 +262,28 @@ DResult raw_buffer_append_data(RawBuffer *dst, const void *data, usize size)
     if (dst == NULL)
         return D_ERR_INVALID_ARG;
     return raw_buffer_replace_data_at(dst, dst->size, data, size);
+}
+
+DResult raw_buffer_copy(RawBuffer *dst, const RawBuffer *src)
+{
+    if (dst == NULL || src == NULL)
+        return D_ERR_INVALID_ARG;
+
+    CopyElemFn copy_fn = src->copy_fn;
+    raw_buffer_clear(dst);
+    if (copy_fn)
+    {
+        for (size_t i = 0; i < src->size; i++)
+        {
+            void *copy = copy_fn(raw_buffer_elt_pos(src, i));
+            if (copy == NULL)
+                return D_ERR_ALLOC;
+            raw_buffer_push(dst, copy);
+        }
+    }
+    else
+        return raw_buffer_replace_data_at(dst, 0, src->data, src->size);
+    return D_OK;
 }
 
 DResult raw_buffer_prepend(RawBuffer *dst, const RawBuffer *src)

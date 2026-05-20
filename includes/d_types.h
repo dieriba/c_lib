@@ -56,4 +56,6 @@ typedef char *(*FnElemRepr)(void *elem);
  */
 typedef void (*DestroyElemFn)(void *elem);
 
+typedef void *(*CopyElemFn)(void *elem);
+
 #endif

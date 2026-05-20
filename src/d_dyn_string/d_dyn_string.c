@@ -10,7 +10,7 @@ DResult d_dyn_string_init_with_capacity(DDynString *new_dyn_string, usize reserv
 {
     if (new_dyn_string == NULL)
         return D_ERR_INVALID_ARG;
-    return raw_buffer_init((RawBuffer *)new_dyn_string, sizeof(char), reserve, NULL, RAW_BUF_OPT_ZERO_SENTINEL);
+    return raw_buffer_init((RawBuffer *)new_dyn_string, sizeof(char), reserve, NULL, NULL, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
 DResult d_dyn_string_init(DDynString *dyn_string)
@@ -24,7 +24,7 @@ DResult d_dyn_string_init_from_c_string(DDynString *dyn_string, const char *str)
         return D_ERR_INVALID_ARG;
 
     usize size = strlen(str);
-    return raw_buffer_init_with_data((RawBuffer *)dyn_string, sizeof(char), str, size, NULL, RAW_BUF_OPT_ZERO_SENTINEL);
+    return raw_buffer_init_with_data((RawBuffer *)dyn_string, sizeof(char), str, size, NULL, NULL, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
 DResult d_dyn_string_init_with_sub_string(DDynString *dyn_string, const char *str, usize pos, usize size)
@@ -36,7 +36,7 @@ DResult d_dyn_string_init_with_sub_string(DDynString *dyn_string, const char *st
     if (pos > str_len)
         return D_ERR_INVALID_ARG;
     size = (pos + size > str_len) ? (str_len - pos) : size;
-    return raw_buffer_init_with_data((RawBuffer *)dyn_string, sizeof(char), str + pos, size, NULL, RAW_BUF_OPT_ZERO_SENTINEL);
+    return raw_buffer_init_with_data((RawBuffer *)dyn_string, sizeof(char), str + pos, size, NULL, NULL, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
 DResult d_dyn_string_init_from_dstring(DDynString *new_dyn_string, DDynString *dstring)

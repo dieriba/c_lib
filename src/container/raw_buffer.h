@@ -19,13 +19,15 @@ typedef struct _Buffer
     usize capacity;
     usize elem_size;
     DestroyElemFn free_fn;
+    CopyElemFn copy_fn;
     DBits8 opts;
 } RawBuffer;
 
-DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, DestroyElemFn free_fn, DBits8 opts);
-DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const void *data, usize size, DestroyElemFn free_fn, DBits8 opts);
+DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, DestroyElemFn free_fn, CopyElemFn copy_fn, DBits8 opts);
+DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const void *data, usize size, DestroyElemFn free_fn, CopyElemFn copy_fn, DBits8 opts);
 void raw_buffer_free(RawBuffer *raw_buffer);
 DResult raw_buffer_clear(RawBuffer *raw_buffer);
+DResult raw_buffer_copy(RawBuffer *dst, const RawBuffer *src);
 
 void *raw_buffer_get_data(const RawBuffer *raw_buffer);
 DResult raw_buffer_get_elem_at(RawBuffer *raw_buffer, usize index, void *out_elem);
