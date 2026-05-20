@@ -621,7 +621,7 @@ static void test_clear_calls_destructor_for_each_element(void)
     reset_destroy_tracking();
     D_TEST_EXPR(d_dyn_array_init(&arr, sizeof(int), 0, int_destroy_counter, ARRAY_DEFAULT_OPTS) == D_OK);
     D_TEST_EXPR(d_dyn_array_append(&arr, values, 4) == D_OK);
-    D_TEST_EXPR(d_dyn_array_clear_array(&arr) == &arr);
+    D_TEST_EXPR(d_dyn_array_clear_array(&arr) == D_OK);
     D_TEST_EXPR(g_destroy_count == 4);
     D_TEST_EXPR(g_destroy_sum == 10);
     expect_size(&arr, 0);
