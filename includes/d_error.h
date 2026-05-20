@@ -7,8 +7,8 @@
 
 typedef enum DResult
 {
-    D_OK = 0, /**< Operation completed successfully.                                  */
-    D_ERR,    /**< Generic unspecified error.                                         */
+    D_OK = 0,          /**< Operation completed successfully.                                  */
+    D_ERR,             /**< Generic unspecified error.                                         */
     D_ERR_ALLOC,       /**< Memory allocation failed.                                          */
     D_ERR_INVALID_ARG, /**< One or more arguments are NULL or out-of-range.                    */
     D_ERR_NOT_EXIST,   /**< The target resource (key, slot, …) does not exist in the container.*/
@@ -80,6 +80,15 @@ static inline const char *d_error_message(DError err) { return err.msg ? err.msg
 
 /** @brief Prints the message of @p err to stderr followed by a newline. */
 static inline void d_error_print(DError err) { fprintf(stderr, "%s\n", d_error_message(err)); }
+
+#define eprint(PREFIX_LITERAL, ...) fprintf(stderr, #PREFIX_LITERAL ": " __VA_ARGS__)
+
+#define eprint_exit(PREFIX_LITERAL, ...)     \
+    do                                       \
+    {                                        \
+        eprint(PREFIX_LITERAL, __VA_ARGS__); \
+        exit(EXIT_FAILURE);                  \
+    } while (0)
 
 /** @} */
 
