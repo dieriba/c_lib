@@ -159,12 +159,12 @@ static char *dup_lit(const char *s)
 
 static void init_int_set_custom(DHashSet *set, usize capacity, FnPtrFreeElem free_fn)
 {
-    D_TEST_EXPR(d_hash_set_init(set, sizeof(int), capacity, hash_int_key, cmp_int_key, free_fn, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(set, sizeof(int), capacity, hash_int_key, cmp_int_key, free_fn) == D_OK);
 }
 
 static void init_collision_set(DHashSet *set, usize capacity, FnPtrFreeElem free_fn)
 {
-    D_TEST_EXPR(d_hash_set_init(set, sizeof(int), capacity, hash_int_collision, cmp_int_key, free_fn, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(set, sizeof(int), capacity, hash_int_collision, cmp_int_key, free_fn) == D_OK);
 }
 
 static void assert_size(DHashSet *set, usize expected)
@@ -215,13 +215,13 @@ static BigKey make_big_key(int id)
 
 static void test_init_rejects_null_set(void)
 {
-    D_TEST_EXPR(d_hash_set_init(NULL, sizeof(int), 0, hash_int_key, cmp_int_key, NULL, NULL) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_hash_set_init(NULL, sizeof(int), 0, hash_int_key, cmp_int_key, NULL) == D_ERR_INVALID_ARG);
 }
 
 static void test_init_rejects_zero_key_size(void)
 {
     DHashSet set;
-    D_TEST_EXPR(d_hash_set_init(&set, 0, 0, hash_int_key, cmp_int_key, NULL, NULL) == D_ERR_INVALID_ARG);
+    D_TEST_EXPR(d_hash_set_init(&set, 0, 0, hash_int_key, cmp_int_key, NULL) == D_ERR_INVALID_ARG);
 }
 
 static void test_init_accepts_zero_capacity_and_aligns_capacity(void)
@@ -340,7 +340,7 @@ static void test_destroy_null_pointer_is_noop(void)
 static void test_destroy_empty_set_is_safe(void)
 {
     DHashSet set;
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(int), 0, hash_int_key, cmp_int_key, NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(int), 0, hash_int_key, cmp_int_key, NULL) == D_OK);
     d_hash_set_destroy(&set);
 }
 
@@ -606,7 +606,7 @@ static void test_str_set_insert_and_lookup_with_distinct_pointer_same_text(void)
     DHashSet set;
     char *stored = dup_lit("alpha");
     char *lookup = dup_lit("alpha");
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, NULL) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &stored) == D_OK);
     D_TEST_EXPR(d_hash_set_key_exists(&set, &lookup) == true);
     free(stored);
@@ -619,7 +619,7 @@ static void test_str_set_duplicate_text_keeps_size_one(void)
     DHashSet set;
     char *a = dup_lit("same");
     char *b = dup_lit("same");
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, NULL) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &a) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &b) == D_OK);
     assert_size(&set, 1);
@@ -637,7 +637,7 @@ static void test_str_set_remove_transfers_owned_pointer(void)
     char *out = NULL;
     reset_counters();
     g_live_strings = 1;
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, free_owned_string_key, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, free_owned_string_key) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &owned) == D_OK);
     D_TEST_EXPR(d_hash_set_remove(&set, &query, &out) == D_OK);
     D_TEST_NOT_NULL(out);
@@ -658,7 +658,7 @@ static void test_str_set_delete_destroys_owned_pointer(void)
     char *query = dup_lit("owned-delete");
     reset_counters();
     g_live_strings = 1;
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, free_owned_string_key, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, free_owned_string_key) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &owned) == D_OK);
     D_TEST_EXPR(d_hash_set_delete(&set, &query) == D_OK);
     D_TEST_EXPR(g_free_calls == 1);
@@ -672,7 +672,7 @@ static void test_str_set_destroy_destroys_all_owned_pointers(void)
 {
     DHashSet set;
     reset_counters();
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, free_owned_string_key, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, free_owned_string_key) == D_OK);
     for (int i = 0; i < 40; ++i)
     {
         char buf[32];
@@ -695,7 +695,7 @@ static void test_str_set_duplicate_owned_key_destroys_replaced_pointer(void)
     char *b = dup_lit("dup-owned");
     reset_counters();
     g_live_strings = 2;
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, free_owned_string_key, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, free_owned_string_key) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &a) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &b) == D_OK);
     assert_size(&set, 1);
@@ -714,7 +714,7 @@ static void test_str_insert_delete_reinsert_same_content(void)
     char *query = dup_lit("hello");
     reset_counters();
     g_live_strings = 2;
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, free_owned_string_key, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, free_owned_string_key) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &first) == D_OK);
     D_TEST_EXPR(d_hash_set_delete(&set, &query) == D_OK);
     D_TEST_EXPR(g_free_calls == 1);
@@ -816,7 +816,7 @@ static void test_binary_keys_with_embedded_zero_bytes(void)
     BinKey a = {{0, 1, 2, 0, 4, 5, 0, 7, 8, 9, 0, 11, 12, 0, 14, 15}};
     BinKey b = a;
     b.bytes[15] = 99;
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(BinKey), 0, hash_bin_key, cmp_bin_key, NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(BinKey), 0, hash_bin_key, cmp_bin_key, NULL) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &a) == D_OK);
     D_TEST_EXPR(d_hash_set_key_exists(&set, &a) == true);
     D_TEST_EXPR(d_hash_set_key_exists(&set, &b) == false);
@@ -827,7 +827,7 @@ static void test_binary_keys_with_embedded_zero_bytes(void)
 static void test_many_binary_keys_survive_rehash(void)
 {
     DHashSet set;
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(BinKey), 1, hash_bin_key, cmp_bin_key, NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(BinKey), 1, hash_bin_key, cmp_bin_key, NULL) == D_OK);
     for (int i = 0; i < 250; ++i)
     {
         BinKey k = make_bin_key(i);
@@ -848,7 +848,7 @@ static void test_big_struct_key_fieldwise_after_remove(void)
     BigKey key = make_big_key(77);
     BigKey out;
     memset(&out, 0, sizeof(out));
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(BigKey), 0, hash_big_key, cmp_big_key, NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(BigKey), 0, hash_big_key, cmp_big_key, NULL) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &key) == D_OK);
     memset(&key, 0xAB, sizeof(key));
     BigKey query = make_big_key(77);
@@ -864,7 +864,7 @@ static void test_big_struct_destroyer_sees_all_live_keys(void)
 {
     DHashSet set;
     reset_counters();
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(BigKey), 0, hash_big_key, cmp_big_key, free_count_big_key, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(BigKey), 0, hash_big_key, cmp_big_key, free_count_big_key) == D_OK);
     for (int i = 1; i <= 20; ++i)
     {
         BigKey k = make_big_key(i);
@@ -881,7 +881,7 @@ static void test_pair_key_custom_comparator_distinguishes_fields(void)
     PairKey a = {1, 2};
     PairKey b = {2, 1};
     PairKey c = {1, 3};
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(PairKey), 0, hash_pair_key, cmp_pair_key, NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(PairKey), 0, hash_pair_key, cmp_pair_key, NULL) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &a) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &b) == D_OK);
     D_TEST_EXPR(d_hash_set_key_exists(&set, &a) == true);
@@ -894,7 +894,7 @@ static void test_pair_key_custom_comparator_distinguishes_fields(void)
 static void test_two_group_hash_probe_and_delete_stress(void)
 {
     DHashSet set;
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(int), 0, hash_int_two_groups, cmp_int_key, NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(int), 0, hash_int_two_groups, cmp_int_key, NULL) == D_OK);
     for (int i = 0; i < 160; ++i)
         insert_int(&set, i);
     for (int i = 0; i < 160; i += 5)
@@ -1150,7 +1150,7 @@ static void test_string_empty_and_long_keys(void)
     char *long_s = dup_lit(long_buf);
     char *query_empty = dup_lit("");
     char *query_long = dup_lit(long_buf);
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 0, local_hash_str, local_cmp_str, NULL) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &empty) == D_OK);
     D_TEST_EXPR(d_hash_set_insert(&set, &long_s) == D_OK);
     D_TEST_EXPR(d_hash_set_key_exists(&set, &query_empty) == true);
@@ -1167,7 +1167,7 @@ static void test_string_many_keys_delete_some_lookup_rest(void)
 {
     DHashSet set;
     char *keys[120];
-    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 1, local_hash_str, local_cmp_str, NULL, NULL) == D_OK);
+    D_TEST_EXPR(d_hash_set_init(&set, sizeof(char *), 1, local_hash_str, local_cmp_str, NULL) == D_OK);
     for (int i = 0; i < 120; ++i)
     {
         char buf[32];

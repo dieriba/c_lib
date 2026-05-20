@@ -5,11 +5,11 @@
 
 #define VALUE_SIZE 0UL
 
-DResult d_hash_set_init(DHashSet *d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem key_destructor_fn, FnPtrFreeElem value_destructor_fn)
+DResult d_hash_set_init(DHashSet *d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, FnPtrFreeElem key_destructor_fn)
 {
     if (d_hash_set == NULL || key_size == 0)
         return D_ERR_INVALID_ARG;
-    return raw_map_init((RawMap *)d_hash_set, key_size, VALUE_SIZE, capacity, hash_fn, cmp_fn, key_destructor_fn, value_destructor_fn);
+    return raw_map_init((RawMap *)d_hash_set, key_size, VALUE_SIZE, capacity, hash_fn, cmp_fn, key_destructor_fn, NULL);
 }
 
 DResult d_hash_set_get_size(const DHashSet *d_hash_set, usize *size)
