@@ -65,6 +65,8 @@ typedef struct DDynArray
     d_dyn_array_init(d_dyn_array, sizeof(void *), 0x8, free_fn, copy_fn, opts)
 
 #define d_dyn_array_get_elem_addr_at_safe(d_dyn_array, index) (void *)(((char *)((d_dyn_array)->array.data)) + d_dyn_array->array.elem_size * (index))
+#define d_dyn_array_get_elem_deref_addr_at_safe(d_dyn_array, index) *((void **)(((char *)((d_dyn_array)->array.data)) + d_dyn_array->array.elem_size * (index)))
+
 #define d_dyn_array_get_data_safe(d_dyn_array) (d_dyn_array)->array.data
 #define d_dyn_array_get_size_safe(d_dyn_array) (d_dyn_array)->array.size
 #define d_dyn_array_get_capacity_safe(d_dyn_array) (d_dyn_array)->array.capacity
