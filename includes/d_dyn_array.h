@@ -59,7 +59,10 @@ typedef struct DDynArray
 } DDynArray;
 
 #define d_dyn_array_default_init(d_dyn_array, elem_type, free_fn, copy_fn, opts) \
-    d_dyn_array_init(d_dyn_array, sizeof(elem_type), 0x10, free_fn, copy_fn, opts)
+    d_dyn_array_init(d_dyn_array, sizeof(elem_type), 0x8, free_fn, copy_fn, opts)
+
+#define d_dyn_array_default_ptr_arr_init(d_dyn_array, free_fn, copy_fn, opts) \
+    d_dyn_array_init(d_dyn_array, sizeof(void *), 0x8, free_fn, copy_fn, opts)
 
 #define d_dyn_array_get_elem_addr_at_safe(d_dyn_array, index) (void *)(((char *)((d_dyn_array)->array.data)) + d_dyn_array->array.elem_size * (index))
 #define d_dyn_array_get_data_safe(d_dyn_array) (d_dyn_array)->array.data
