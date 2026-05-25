@@ -175,4 +175,6 @@ void *memfill(void *dst, void *filler_elem, usize filler_elem_size, usize nb_slo
 
 /** @} */ /* end of d_general_lib group */
 
+#define PSEUDO_FAST_STRCMP(s1, s2) ((s1[0] == s2[0]) && strcmp(s1, s2) == 0)
+
 #endif
