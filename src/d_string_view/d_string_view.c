@@ -44,7 +44,7 @@ static bool not_match_predicate(char c, const void *ctx)
 
 static usize find_first_from_index(DStringView view, usize pos, char_match_fn matches, const void *ctx)
 {
-    if (pos >= view.size || ctx == NULL)
+    if (pos >= view.size)
         return MAX_SIZE_T_VALUE;
 
     for (usize i = pos; i < view.size; ++i)
@@ -57,7 +57,7 @@ static usize find_first_from_index(DStringView view, usize pos, char_match_fn ma
 
 static usize find_last_from_index(DStringView view, usize pos, char_match_fn matches, const void *ctx)
 {
-    if (view.size == 0 || ctx == NULL)
+    if (view.size == 0)
         return MAX_SIZE_T_VALUE;
 
     pos = pos >= view.size ? view.size - 1 : pos;
@@ -121,7 +121,7 @@ const char *d_string_view_data(DStringView view)
 
 DResult d_string_view_get_char_at(DStringView view, usize index, char *out)
 {
-    if (index >= view.size || out == NULL)
+    if (index >= view.size)
         return D_ERR_INVALID_ARG;
     *out = view.data[index];
     return D_OK;
@@ -384,8 +384,6 @@ DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn)
 
 DResult d_dyn_string_init_from_string_view(DDynString *new_dyn_string, DStringView view)
 {
-    if (new_dyn_string == NULL)
-        return D_ERR_INVALID_ARG;
     return raw_buffer_init_with_data((RawBuffer *)new_dyn_string, sizeof(char), view.data, view.size, NULL, NULL, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 

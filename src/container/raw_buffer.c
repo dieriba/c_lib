@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 #include "container.h"
 #include "raw_buffer.h"
@@ -33,7 +34,7 @@ static DResult raw_buffer_compute_new_alloc_size(const RawBuffer *raw_buffer,
 
 static void raw_buffer_write_sentinel(RawBuffer *raw_buffer)
 {
-    if (raw_buffer->data == NULL || !raw_buffer_has_zero_sentinel(raw_buffer))
+    if (!raw_buffer_has_zero_sentinel(raw_buffer))
         return;
     memset(raw_buffer_elt_pos(raw_buffer, raw_buffer->size), 0, raw_buffer_elt_size(raw_buffer, 1));
 }
@@ -63,8 +64,7 @@ static DResult increase_raw_buffer_capacity_if_needed(RawBuffer *raw_buffer, usi
 
 DResult raw_buffer_init(RawBuffer *raw_buffer, usize elem_size, usize capacity, DestroyElemFn free_fn, CopyElemFn copy_fn, DBits8 opts)
 {
-    if (raw_buffer == NULL || elem_size == 0)
-        return D_ERR_INVALID_ARG;
+    assert(elem_size != 0);
     raw_buffer->size = 0;
     raw_buffer->capacity = capacity == 0 ? DEFAULT_CAPACITY : capacity;
     raw_buffer->elem_size = elem_size;
@@ -92,8 +92,6 @@ DResult raw_buffer_init_with_data(RawBuffer *raw_buffer, usize elem_size, const 
 
 DResult raw_buffer_init_from_raw_buffer(RawBuffer *new_raw_buffer, const RawBuffer *src)
 {
-    if (new_raw_buffer == NULL || src == NULL)
-        return D_ERR_INVALID_ARG;
     DResult op_result = raw_buffer_init(new_raw_buffer, src->elem_size, src->capacity, src->free_fn, src->copy_fn, src->opts);
     if (op_result != D_OK)
         return op_result;
@@ -105,8 +103,6 @@ DResult raw_buffer_init_from_raw_buffer(RawBuffer *new_raw_buffer, const RawBuff
 
 DResult raw_buffer_clear(RawBuffer *raw_buffer)
 {
-    if (raw_buffer == NULL)
-        return D_ERR_INVALID_ARG;
     DestroyElemFn free_fn = raw_buffer->free_fn;
     if (free_fn)
     {
@@ -131,14 +127,12 @@ void raw_buffer_free(RawBuffer *raw_buffer)
 
 void *raw_buffer_get_data(const RawBuffer *raw_buffer)
 {
-    if (raw_buffer == NULL)
-        return NULL;
     return raw_buffer->data;
 }
 
 DResult raw_buffer_get_elem_at(RawBuffer *raw_buffer, usize index, void *out_elem)
 {
-    if (raw_buffer == NULL || index >= raw_buffer->size || out_elem == NULL)
+    if (index >= raw_buffer->size)
         return D_ERR_INVALID_ARG;
     memcpy(out_elem, raw_buffer_elt_pos(raw_buffer, index), raw_buffer->elem_size);
     return D_OK;
@@ -146,7 +140,7 @@ DResult raw_buffer_get_elem_at(RawBuffer *raw_buffer, usize index, void *out_ele
 
 DResult raw_buffer_get_elem_addr(RawBuffer *raw_buffer, usize index, void **out_elem)
 {
-    if (raw_buffer == NULL || index >= raw_buffer->size || out_elem == NULL)
+    if (index >= raw_buffer->size)
         return D_ERR_INVALID_ARG;
     *out_elem = raw_buffer_elt_pos(raw_buffer, index);
     return D_OK;
@@ -154,8 +148,6 @@ DResult raw_buffer_get_elem_addr(RawBuffer *raw_buffer, usize index, void **out_
 
 DResult raw_buffer_get_last_elem(RawBuffer *raw_buffer, void *out_elem)
 {
-    if (raw_buffer == NULL)
-        return D_ERR_INVALID_ARG;
     return raw_buffer_get_elem_at(raw_buffer, raw_buffer->size - 1, out_elem);
 }
 
@@ -172,10 +164,9 @@ DResult raw_buffer_insert_data_from_raw_data(RawBuffer *dst, usize dst_pos, cons
     usize bytes_to_move;
     char *base;
 
-    if (dst == NULL || data == NULL)
-        return D_ERR_INVALID_ARG;
-    else if (size == 0)
+    if (size == 0)
         return D_OK;
+    assert(data != NULL);
     dst_size = raw_buffer_nb_occupied_elem_slot(dst);
     if (dst_pos > dst_size)
         return D_ERR_INVALID_ARG;
@@ -198,15 +189,11 @@ DResult raw_buffer_insert_data_from_raw_data(RawBuffer *dst, usize dst_pos, cons
 
 DResult raw_buffer_insert_data_from_raw_buffer(RawBuffer *dst, const RawBuffer *src, usize dst_pos)
 {
-    if (dst == NULL || src == NULL)
-        return D_ERR_INVALID_ARG;
     return raw_buffer_insert_data_from_raw_data(dst, dst_pos, src->data, src->size);
 }
 
 DResult raw_buffer_resize(RawBuffer *raw_buffer, usize new_size, void *filler)
 {
-    if (raw_buffer == NULL)
-        return D_ERR_INVALID_ARG;
     usize cnt_size = raw_buffer->size;
     if (new_size > cnt_size && filler == NULL)
         return D_ERR_INVALID_ARG;
@@ -225,7 +212,7 @@ DResult raw_buffer_resize(RawBuffer *raw_buffer, usize new_size, void *filler)
 
 DResult raw_buffer_remove(RawBuffer *raw_buffer, usize pos, usize len_to_remove)
 {
-    if (raw_buffer == NULL || pos >= raw_buffer->size)
+    if (pos >= raw_buffer->size)
         return D_ERR_INVALID_ARG;
 
     usize cnt_size = raw_buffer->size;
@@ -245,8 +232,9 @@ DResult raw_buffer_remove(RawBuffer *raw_buffer, usize pos, usize len_to_remove)
 
 DResult raw_buffer_replace_data_at(RawBuffer *raw_buffer, usize pos, const void *data, usize size)
 {
-    if (raw_buffer == NULL || data == NULL || pos > raw_buffer->size)
+    if (pos > raw_buffer->size)
         return D_ERR_INVALID_ARG;
+    assert(size == 0 || data != NULL);
     DResult op_result;
     if ((op_result = increase_raw_buffer_capacity_if_needed(raw_buffer, pos, size)) != D_OK)
         return op_result;
@@ -258,30 +246,21 @@ DResult raw_buffer_replace_data_at(RawBuffer *raw_buffer, usize pos, const void 
 
 DResult raw_buffer_replace_with(RawBuffer *dst, const RawBuffer *src, usize pos)
 {
-    if (dst == NULL || src == NULL)
-        return D_ERR_INVALID_ARG;
     return raw_buffer_replace_data_at(dst, pos, src->data, src->size);
 }
 
 DResult raw_buffer_append_buffer(RawBuffer *dst, const RawBuffer *src)
 {
-    if (dst == NULL || src == NULL)
-        return D_ERR_INVALID_ARG;
     return raw_buffer_replace_data_at(dst, dst->size, src->data, src->size);
 }
 
 DResult raw_buffer_append_data(RawBuffer *dst, const void *data, usize size)
 {
-    if (dst == NULL)
-        return D_ERR_INVALID_ARG;
     return raw_buffer_replace_data_at(dst, dst->size, data, size);
 }
 
 DResult raw_buffer_copy(RawBuffer *dst, const RawBuffer *src)
 {
-    if (dst == NULL || src == NULL)
-        return D_ERR_INVALID_ARG;
-
     CopyElemFn copy_fn = src->copy_fn;
     raw_buffer_clear(dst);
     if (copy_fn)
@@ -306,8 +285,6 @@ DResult raw_buffer_prepend(RawBuffer *dst, const RawBuffer *src)
 
 DResult raw_buffer_push(RawBuffer *raw_buffer, const void *elem)
 {
-    if (raw_buffer == NULL || elem == NULL)
-        return D_ERR_INVALID_ARG;
     DResult op_result = increase_raw_buffer_capacity_if_needed(raw_buffer, raw_buffer->size, 1);
     if (op_result != D_OK)
         return op_result;
@@ -319,8 +296,6 @@ DResult raw_buffer_push(RawBuffer *raw_buffer, const void *elem)
 
 DResult raw_buffer_swap_remove(RawBuffer *raw_buffer, usize index, void *out_elem)
 {
-    if (raw_buffer == NULL)
-        return D_ERR_INVALID_ARG;
     if (raw_buffer->size == 0)
         return D_ERR_EMPTY;
     if (index >= raw_buffer->size)
@@ -340,7 +315,5 @@ DResult raw_buffer_swap_remove(RawBuffer *raw_buffer, usize index, void *out_ele
 
 DResult raw_buffer_pop(RawBuffer *raw_buffer, void *out_elem)
 {
-    if (raw_buffer == NULL)
-        return D_ERR_INVALID_ARG;
     return raw_buffer_swap_remove(raw_buffer, raw_buffer->size - 1, out_elem);
 }

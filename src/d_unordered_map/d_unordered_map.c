@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "raw_map.h"
@@ -7,8 +8,8 @@ ASSERT_FIRST_FIELD(DUnorderedMap, raw_map);
 
 DResult d_unordered_map_init(DUnorderedMap *d_unordered_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, DestroyElemFn key_destructor_fn, DestroyElemFn value_destructor_fn)
 {
-    if (d_unordered_map == NULL)
-        return D_ERR_INVALID_ARG;
+    assert(key_size != 0);
+    assert(value_size != 0);
     return raw_map_init((RawMap *)d_unordered_map, key_size, value_size, capacity, hash_fn, cmp_fn, key_destructor_fn, value_destructor_fn);
 }
 
@@ -34,8 +35,6 @@ void *d_unordered_map_get(const DUnorderedMap *map, void *key)
 
 DResult d_unordered_map_remove(DUnorderedMap *map, void *key, void *slot_key, void *slot_value)
 {
-    if (slot_key == NULL || slot_value == NULL)
-        return D_ERR_INVALID_ARG;
     return raw_map_remove((RawMap *)map, key, slot_key, slot_value);
 }
 

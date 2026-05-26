@@ -12,9 +12,6 @@ ASSERT_FIRST_FIELD(DDynArray, array);
 
 DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserved_elem, DestroyElemFn free_fn, CopyElemFn copy_fn, BufferOpts opts)
 {
-	if (new_dyn_array == NULL || elem_size == 0)
-		return D_ERR_INVALID_ARG;
-
 	return raw_buffer_init((RawBuffer *)new_dyn_array, elem_size, reserved_elem, free_fn, copy_fn, opts);
 }
 

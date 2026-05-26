@@ -51,8 +51,5 @@ DResult d_de_queue_is_empty(const DDeQueue *d_de_queue, bool *is_empty)
 
 void d_de_queue_destroy(DDeQueue *d_de_queue)
 {
-    if (d_de_queue == NULL)
-        return;
     raw_ring_buffer_free((RawRingBuffer *)d_de_queue);
-    memset(d_de_queue, 0, sizeof(DDeQueue));
 }

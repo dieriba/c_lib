@@ -2,9 +2,9 @@
 char *d_substr(const char *str, usize pos, usize size)
 {
     usize str_len;
-    if (str == NULL || pos > (str_len = strlen(str)))
+    if (pos > (str_len = strlen(str)))
         return NULL;
-    
+
     usize cpyable_char = str_len - pos;
     if (size > cpyable_char)
         size = cpyable_char;

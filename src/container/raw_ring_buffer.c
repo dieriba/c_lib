@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <string.h>
 
 #include "raw_ring_buffer.h"
@@ -23,8 +24,7 @@ static void raw_ring_buffer_destroy(RawRingBuffer *raw_ring_buffer)
 
 DResult raw_ring_buffer_init(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize capacity, usize elem_size, DestroyElemFn free_fn, CopyElemFn copy_fn)
 {
-    if (raw_ring_buffer == NULL || elem_size == 0)
-        return D_ERR_INVALID_ARG;
+    assert(elem_size != 0);
     if (capacity == 0)
         capacity = DEFAULT_CAPACITY;
     else if (!d_math_is_pow2(capacity))
@@ -53,8 +53,6 @@ inline DResult raw_ring_buffer_default_init(RawRingBuffer *raw_ring_buffer, usiz
 
 DResult raw_ring_buffer_copy(RawRingBuffer *dst, const RawRingBuffer *src)
 {
-    if (dst == NULL || src == NULL)
-        return D_ERR_INVALID_ARG;
     raw_ring_buffer_clear(dst);
     CopyElemFn copy_fn = src->copy_fn;
     if (copy_fn)
@@ -81,8 +79,6 @@ DResult raw_ring_buffer_copy(RawRingBuffer *dst, const RawRingBuffer *src)
 
 static DResult increase_buffer_capacity_if_needed(RawRingBuffer *raw_ring_buffer)
 {
-    if (raw_ring_buffer == NULL)
-        return D_ERR_INVALID_ARG;
     if (raw_ring_buffer->size + 1 < raw_ring_buffer->capacity)
         return D_OK;
     usize new_capacity = raw_ring_buffer->capacity;
@@ -124,8 +120,6 @@ static void push_back(RawRingBuffer *raw_ring_buffer, const void *elem)
 
 static DResult push(RawRingBuffer *raw_ring_buffer, const void *elem, PushFn push_fn)
 {
-    if (raw_ring_buffer == NULL || elem == NULL)
-        return D_ERR_INVALID_ARG;
     DResult op_result = increase_buffer_capacity_if_needed(raw_ring_buffer);
     if (op_result != D_OK)
         return op_result;
@@ -158,8 +152,6 @@ static void pop_back(RawRingBuffer *raw_ring_buffer, void *out_elem)
 
 static DResult pop(RawRingBuffer *raw_ring_buffer, void *out_elem, PopFn pop_fn)
 {
-    if (raw_ring_buffer == NULL || out_elem == NULL)
-        return D_ERR_INVALID_ARG;
     if (raw_ring_buffer->size == 0)
         return D_ERR_EMPTY;
     pop_fn(raw_ring_buffer, out_elem);
@@ -179,16 +171,12 @@ DResult raw_ring_buffer_pop_back(RawRingBuffer *raw_ring_buffer, void *out_elem)
 
 DResult raw_ring_buffer_is_empty(const RawRingBuffer *raw_ring_buffer, bool *is_empty)
 {
-    if (raw_ring_buffer == NULL || is_empty == NULL)
-        return D_ERR_INVALID_ARG;
     *is_empty = raw_ring_buffer->size == 0;
     return D_OK;
 }
 
 void raw_ring_buffer_clear(RawRingBuffer *raw_ring_buffer)
 {
-    if (raw_ring_buffer == NULL)
-        return;
     DestroyElemFn free_fn = raw_ring_buffer->free_fn;
     if (free_fn)
     {

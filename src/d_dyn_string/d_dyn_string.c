@@ -8,8 +8,6 @@ ASSERT_FIRST_FIELD(DDynString, str);
 
 DResult d_dyn_string_init_with_capacity(DDynString *new_dyn_string, usize reserve)
 {
-    if (new_dyn_string == NULL)
-        return D_ERR_INVALID_ARG;
     return raw_buffer_init((RawBuffer *)new_dyn_string, sizeof(char), reserve, NULL, NULL, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
@@ -20,18 +18,12 @@ DResult d_dyn_string_init(DDynString *dyn_string)
 
 DResult d_dyn_string_init_from_c_string(DDynString *dyn_string, const char *str)
 {
-    if (dyn_string == NULL || str == NULL)
-        return D_ERR_INVALID_ARG;
-
     usize size = strlen(str);
     return raw_buffer_init_with_data((RawBuffer *)dyn_string, sizeof(char), str, size, NULL, NULL, RAW_BUF_OPT_ZERO_SENTINEL);
 }
 
 DResult d_dyn_string_init_with_sub_string(DDynString *dyn_string, const char *str, usize pos, usize size)
 {
-    if (dyn_string == NULL || str == NULL)
-        return D_ERR_INVALID_ARG;
-
     usize str_len = strlen(str);
     if (pos > str_len)
         return D_ERR_INVALID_ARG;
@@ -41,15 +33,11 @@ DResult d_dyn_string_init_with_sub_string(DDynString *dyn_string, const char *st
 
 DResult d_dyn_string_init_from_dstring(DDynString *new_dyn_string, DDynString *dstring)
 {
-    if (dstring == NULL)
-        return D_ERR_INVALID_ARG;
     return d_dyn_string_init_with_sub_string(new_dyn_string, dstring->str.data, 0, dstring->str.size);
 }
 
 DCompareResult d_dyn_string_compare(DDynString *d1, DDynString *d2)
 {
-    if (d1 == NULL || d2 == NULL)
-        return D_COMPARE_ERROR;
     return d_string_view_compare(d_string_view_from_dyn_string(d1), d_string_view_from_dyn_string(d2))
                ? D_COMPARE_EQUAL
                : D_COMPARE_NOT_EQUAL;
@@ -72,8 +60,6 @@ DResult d_dyn_string_get_capacity(const DDynString *dstring, usize *capacity)
 
 DResult d_dyn_string_sub_string_in_place(DDynString *dstring, usize pos, usize size)
 {
-    if (dstring == NULL)
-        return D_ERR_INVALID_ARG;
     usize cnt_size = dstring->str.size;
     if (pos >= cnt_size)
         return D_ERR_INVALID_ARG;
@@ -104,23 +90,16 @@ DResult d_dyn_string_push_str_with_len(DDynString *dstring, const char *str_to_a
 
 DResult d_dyn_string_push_c_str(DDynString *dstring, const char *str_to_append)
 {
-    if (str_to_append == NULL)
-        return D_ERR_INVALID_ARG;
     return d_dyn_string_push_str_with_len(dstring, str_to_append, strlen(str_to_append));
 }
 
 DResult d_dyn_string_merge(DDynString *dstring1, DDynString *dstring2)
 {
-    if (dstring1 == NULL || dstring2 == NULL)
-        return D_ERR_INVALID_ARG;
     return d_dyn_string_push_str_with_len(dstring1, dstring2->str.data, dstring2->str.size);
 }
 
 DResult d_dyn_string_replace_from_str(DDynString *dstring, const char *str)
 {
-    if (dstring == NULL || str == NULL)
-        return D_ERR_INVALID_ARG;
-
     return raw_buffer_replace_data_at(&dstring->str, 0, str, strlen(str));
 }
 
