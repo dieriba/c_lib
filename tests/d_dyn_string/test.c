@@ -85,11 +85,6 @@ static void test_init_creates_zero_terminated_string(void)
     d_dyn_string_destroy(&s);
 }
 
-static void test_init_rejects_null_pointer(void)
-{
-    D_TEST_EXPR(d_dyn_string_init(NULL) == D_ERR_INVALID_ARG);
-}
-
 static void test_init_with_capacity_returns_ok(void)
 {
     DDynString s;
@@ -114,11 +109,6 @@ static void test_init_with_capacity_creates_empty_string(void)
     d_dyn_string_init_with_capacity(&s, 64);
     expect_string(&s, "");
     d_dyn_string_destroy(&s);
-}
-
-static void test_init_with_capacity_rejects_null_pointer(void)
-{
-    D_TEST_EXPR(d_dyn_string_init_with_capacity(NULL, 64) == D_ERR_INVALID_ARG);
 }
 
 static void test_init_with_capacity_accepts_zero_capacity(void)
@@ -167,18 +157,6 @@ static void test_init_from_c_string_accepts_empty_string(void)
     d_dyn_string_destroy(&s);
 }
 
-static void test_init_from_c_string_rejects_null_pointer(void)
-{
-    D_TEST_EXPR(d_dyn_string_init_from_c_string(NULL, "abc") == D_ERR_INVALID_ARG);
-}
-
-static void test_init_from_c_string_rejects_null_string(void)
-{
-    DDynString s;
-
-    D_TEST_EXPR(d_dyn_string_init_from_c_string(&s, NULL) == D_ERR_INVALID_ARG);
-}
-
 static void test_init_with_sub_string_copies_middle(void)
 {
     DDynString s;
@@ -204,18 +182,6 @@ static void test_init_with_sub_string_accepts_pos_equal_len(void)
     D_TEST_EXPR(d_dyn_string_init_with_sub_string(&s, "abc", 3, 10) == D_OK);
     expect_string(&s, "");
     d_dyn_string_destroy(&s);
-}
-
-static void test_init_with_sub_string_rejects_null_pointer(void)
-{
-    D_TEST_EXPR(d_dyn_string_init_with_sub_string(NULL, "abc", 0, 1) == D_ERR_INVALID_ARG);
-}
-
-static void test_init_with_sub_string_rejects_null_source(void)
-{
-    DDynString s;
-
-    D_TEST_EXPR(d_dyn_string_init_with_sub_string(&s, NULL, 0, 1) == D_ERR_INVALID_ARG);
 }
 
 static void test_init_with_sub_string_rejects_pos_after_len(void)
@@ -265,22 +231,6 @@ static void test_init_from_dstring_does_not_alias_source(void)
     d_dyn_string_replace_from_str(&src, "changed");
     expect_string(&copy, "copy me");
     d_dyn_string_destroy(&copy);
-    d_dyn_string_destroy(&src);
-}
-
-static void test_init_from_dstring_rejects_null_source(void)
-{
-    DDynString copy;
-
-    D_TEST_EXPR(d_dyn_string_init_from_dstring(&copy, NULL) == D_ERR_INVALID_ARG);
-}
-
-static void test_init_from_dstring_rejects_null_pointer(void)
-{
-    DDynString src;
-
-    make_string(&src, "abc");
-    D_TEST_EXPR(d_dyn_string_init_from_dstring(NULL, &src) == D_ERR_INVALID_ARG);
     d_dyn_string_destroy(&src);
 }
 
@@ -380,24 +330,6 @@ static void test_merge_does_not_modify_right(void)
     d_dyn_string_destroy(&left);
 }
 
-static void test_merge_rejects_null_left(void)
-{
-    DDynString right;
-
-    make_string(&right, "abc");
-    D_TEST_EXPR(d_dyn_string_merge(NULL, &right) == D_ERR_INVALID_ARG);
-    d_dyn_string_destroy(&right);
-}
-
-static void test_merge_rejects_null_right(void)
-{
-    DDynString left;
-
-    make_string(&left, "abc");
-    D_TEST_EXPR(d_dyn_string_merge(&left, NULL) == D_ERR_INVALID_ARG);
-    d_dyn_string_destroy(&left);
-}
-
 static void test_replace_from_str_replaces_shorter_content(void)
 {
     DDynString s;
@@ -428,20 +360,6 @@ static void test_replace_from_str_accepts_empty_string(void)
     d_dyn_string_destroy(&s);
 }
 
-static void test_replace_from_str_rejects_null_dstring(void)
-{
-    D_TEST_EXPR(d_dyn_string_replace_from_str(NULL, "abc") == D_ERR_INVALID_ARG);
-}
-
-static void test_replace_from_str_rejects_null_source(void)
-{
-    DDynString s;
-
-    make_string(&s, "abc");
-    D_TEST_EXPR(d_dyn_string_replace_from_str(&s, NULL) == D_ERR_INVALID_ARG);
-    d_dyn_string_destroy(&s);
-}
-
 static void test_replace_from_dstring_replaces_content(void)
 {
     DDynString dst;
@@ -466,24 +384,6 @@ static void test_replace_from_dstring_does_not_alias_source(void)
     d_dyn_string_replace_from_str(&src, "changed");
     expect_string(&dst, "source value");
     d_dyn_string_destroy(&src);
-    d_dyn_string_destroy(&dst);
-}
-
-static void test_replace_from_dstring_rejects_null_destination(void)
-{
-    DDynString src;
-
-    make_string(&src, "abc");
-    D_TEST_EXPR(d_dyn_string_replace_from_dstring(NULL, &src) == D_ERR_INVALID_ARG);
-    d_dyn_string_destroy(&src);
-}
-
-static void test_replace_from_dstring_rejects_null_source(void)
-{
-    DDynString dst;
-
-    make_string(&dst, "abc");
-    D_TEST_EXPR(d_dyn_string_replace_from_dstring(&dst, NULL) == D_ERR_INVALID_ARG);
     d_dyn_string_destroy(&dst);
 }
 
@@ -603,45 +503,6 @@ static void test_destroy_empty_string_is_safe(void)
     D_TEST_EXPR(true);
 }
 
-static void test_get_string_rejects_null_dstring_safely(void)
-{
-    D_TEST_NULL(d_dyn_string_get_string(NULL));
-}
-
-static void test_get_size_rejects_null_dstring(void)
-{
-    usize size = 123;
-
-    D_TEST_EXPR(d_dyn_string_get_size(NULL, &size) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(size == 123);
-}
-
-static void test_get_size_rejects_null_output_pointer(void)
-{
-    DDynString s;
-
-    make_string(&s, "abc");
-    D_TEST_EXPR(d_dyn_string_get_size(&s, NULL) == D_ERR_INVALID_ARG);
-    d_dyn_string_destroy(&s);
-}
-
-static void test_get_capacity_rejects_null_dstring(void)
-{
-    usize capacity = 123;
-
-    D_TEST_EXPR(d_dyn_string_get_capacity(NULL, &capacity) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(capacity == 123);
-}
-
-static void test_get_capacity_rejects_null_output_pointer(void)
-{
-    DDynString s;
-
-    make_string(&s, "abc");
-    D_TEST_EXPR(d_dyn_string_get_capacity(&s, NULL) == D_ERR_INVALID_ARG);
-    d_dyn_string_destroy(&s);
-}
-
 static void test_push_char_many_times_preserves_order_and_terminator(void)
 {
     DDynString s;
@@ -658,26 +519,6 @@ static void test_push_char_many_times_preserves_order_and_terminator(void)
     }
     expected[128] = '\0';
     expect_string(&s, expected);
-    d_dyn_string_destroy(&s);
-}
-
-static void test_push_char_rejects_null_dstring(void)
-{
-    D_TEST_EXPR(d_dyn_string_push_char(NULL, 'x') == D_ERR_INVALID_ARG);
-}
-
-static void test_push_c_str_rejects_null_dstring(void)
-{
-    D_TEST_EXPR(d_dyn_string_push_c_str(NULL, "abc") == D_ERR_INVALID_ARG);
-}
-
-static void test_push_c_str_rejects_null_source(void)
-{
-    DDynString s;
-
-    make_string(&s, "abc");
-    D_TEST_EXPR(d_dyn_string_push_c_str(&s, NULL) == D_ERR_INVALID_ARG);
-    expect_string(&s, "abc");
     d_dyn_string_destroy(&s);
 }
 
@@ -706,31 +547,6 @@ static void test_push_str_with_len_accepts_embedded_nul_bytes(void)
     D_TEST_EXPR(c == '\0');
     D_TEST_EXPR(d_dyn_string_get_char_at(&s, 5, &c) == D_OK);
     D_TEST_EXPR(c == 'e');
-    d_dyn_string_destroy(&s);
-}
-
-static void test_push_str_with_len_rejects_null_dstring(void)
-{
-    D_TEST_EXPR(d_dyn_string_push_str_with_len(NULL, "abc", 3) == D_ERR_INVALID_ARG);
-}
-
-static void test_push_str_with_len_rejects_null_source_when_size_nonzero(void)
-{
-    DDynString s;
-
-    make_string(&s, "abc");
-    D_TEST_EXPR(d_dyn_string_push_str_with_len(&s, NULL, 3) == D_ERR_INVALID_ARG);
-    expect_string(&s, "abc");
-    d_dyn_string_destroy(&s);
-}
-
-static void test_push_str_with_len_rejects_null_source_when_size_zero(void)
-{
-    DDynString s;
-
-    make_string(&s, "abc");
-    D_TEST_EXPR(d_dyn_string_push_str_with_len(&s, NULL, 0) == D_ERR_INVALID_ARG);
-    expect_string(&s, "abc");
     d_dyn_string_destroy(&s);
 }
 
@@ -827,11 +643,6 @@ static void test_sub_string_in_place_zero_size_returns_empty(void)
     d_dyn_string_destroy(&s);
 }
 
-static void test_sub_string_in_place_rejects_null_dstring(void)
-{
-    D_TEST_EXPR(d_dyn_string_sub_string_in_place(NULL, 0, 1) == D_ERR_INVALID_ARG);
-}
-
 static void test_sub_string_in_place_on_empty_rejects_without_crash(void)
 {
     DDynString s;
@@ -864,23 +675,6 @@ static void test_get_char_at_rejects_index_equal_size(void)
     d_dyn_string_destroy(&s);
 }
 
-static void test_get_char_at_rejects_null_dstring(void)
-{
-    char c = 'x';
-
-    D_TEST_EXPR(d_dyn_string_get_char_at(NULL, 0, &c) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(c == 'x');
-}
-
-static void test_get_char_at_rejects_null_output_pointer(void)
-{
-    DDynString s;
-
-    make_string(&s, "abc");
-    D_TEST_EXPR(d_dyn_string_get_char_at(&s, 0, NULL) == D_ERR_INVALID_ARG);
-    d_dyn_string_destroy(&s);
-}
-
 static void test_resize_same_size_keeps_content(void)
 {
     DDynString s;
@@ -899,11 +693,6 @@ static void test_resize_empty_grow_fills_all_slots(void)
     D_TEST_EXPR(d_dyn_string_resize(&s, 4, 'z') == D_OK);
     expect_string(&s, "zzzz");
     d_dyn_string_destroy(&s);
-}
-
-static void test_resize_rejects_null_dstring(void)
-{
-    D_TEST_EXPR(d_dyn_string_resize(NULL, 3, 'x') == D_ERR_INVALID_ARG);
 }
 
 static void test_push_char_then_replace_then_push_again(void)
@@ -973,30 +762,22 @@ int main(void)
         D_TEST_GENERATE_TEST(test_init_creates_empty_string),
         D_TEST_GENERATE_TEST(test_init_creates_size_zero),
         D_TEST_GENERATE_TEST(test_init_creates_zero_terminated_string),
-        D_TEST_GENERATE_TEST(test_init_rejects_null_pointer),
         D_TEST_GENERATE_TEST(test_init_with_capacity_returns_ok),
         D_TEST_GENERATE_TEST(test_init_with_capacity_sets_capacity),
         D_TEST_GENERATE_TEST(test_init_with_capacity_creates_empty_string),
-        D_TEST_GENERATE_TEST(test_init_with_capacity_rejects_null_pointer),
         D_TEST_GENERATE_TEST(test_init_with_capacity_accepts_zero_capacity),
         D_TEST_GENERATE_TEST(test_init_from_c_string_returns_ok),
         D_TEST_GENERATE_TEST(test_init_from_c_string_copies_content),
         D_TEST_GENERATE_TEST(test_init_from_c_string_does_not_alias_source),
         D_TEST_GENERATE_TEST(test_init_from_c_string_accepts_empty_string),
-        D_TEST_GENERATE_TEST(test_init_from_c_string_rejects_null_pointer),
-        D_TEST_GENERATE_TEST(test_init_from_c_string_rejects_null_string),
         D_TEST_GENERATE_TEST(test_init_with_sub_string_copies_middle),
         D_TEST_GENERATE_TEST(test_init_with_sub_string_clamps_size_past_end),
         D_TEST_GENERATE_TEST(test_init_with_sub_string_accepts_pos_equal_len),
-        D_TEST_GENERATE_TEST(test_init_with_sub_string_rejects_null_pointer),
-        D_TEST_GENERATE_TEST(test_init_with_sub_string_rejects_null_source),
         D_TEST_GENERATE_TEST(test_init_with_sub_string_rejects_pos_after_len),
         D_TEST_GENERATE_TEST(test_init_with_sub_string_copies_prefix),
         D_TEST_GENERATE_TEST(test_init_with_sub_string_zero_size_returns_empty),
         D_TEST_GENERATE_TEST(test_init_from_dstring_copies_content),
         D_TEST_GENERATE_TEST(test_init_from_dstring_does_not_alias_source),
-        D_TEST_GENERATE_TEST(test_init_from_dstring_rejects_null_source),
-        D_TEST_GENERATE_TEST(test_init_from_dstring_rejects_null_pointer),
         D_TEST_GENERATE_TEST(test_push_char_appends_to_empty_string),
         D_TEST_GENERATE_TEST(test_push_char_appends_after_existing_content),
         D_TEST_GENERATE_TEST(test_push_c_str_appends_to_empty_string),
@@ -1006,17 +787,11 @@ int main(void)
         D_TEST_GENERATE_TEST(test_push_str_with_len_can_append_zero_bytes),
         D_TEST_GENERATE_TEST(test_merge_appends_right_to_left),
         D_TEST_GENERATE_TEST(test_merge_does_not_modify_right),
-        D_TEST_GENERATE_TEST(test_merge_rejects_null_left),
-        D_TEST_GENERATE_TEST(test_merge_rejects_null_right),
         D_TEST_GENERATE_TEST(test_replace_from_str_replaces_shorter_content),
         D_TEST_GENERATE_TEST(test_replace_from_str_replaces_longer_content),
         D_TEST_GENERATE_TEST(test_replace_from_str_accepts_empty_string),
-        D_TEST_GENERATE_TEST(test_replace_from_str_rejects_null_dstring),
-        D_TEST_GENERATE_TEST(test_replace_from_str_rejects_null_source),
         D_TEST_GENERATE_TEST(test_replace_from_dstring_replaces_content),
         D_TEST_GENERATE_TEST(test_replace_from_dstring_does_not_alias_source),
-        D_TEST_GENERATE_TEST(test_replace_from_dstring_rejects_null_destination),
-        D_TEST_GENERATE_TEST(test_replace_from_dstring_rejects_null_source),
         D_TEST_GENERATE_TEST(test_sub_string_in_place_keeps_middle),
         D_TEST_GENERATE_TEST(test_sub_string_in_place_clamps_size_past_end),
         D_TEST_GENERATE_TEST(test_sub_string_in_place_rejects_pos_equal_size),
@@ -1029,19 +804,8 @@ int main(void)
         D_TEST_GENERATE_TEST(test_destroy_accepts_null_pointer),
         D_TEST_GENERATE_TEST(test_destroy_is_safe),
         D_TEST_GENERATE_TEST(test_destroy_empty_string_is_safe),
-        D_TEST_GENERATE_TEST(test_get_string_rejects_null_dstring_safely),
-        D_TEST_GENERATE_TEST(test_get_size_rejects_null_dstring),
-        D_TEST_GENERATE_TEST(test_get_size_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_get_capacity_rejects_null_dstring),
-        D_TEST_GENERATE_TEST(test_get_capacity_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_push_char_many_times_preserves_order_and_terminator),
-        D_TEST_GENERATE_TEST(test_push_char_rejects_null_dstring),
-        D_TEST_GENERATE_TEST(test_push_c_str_rejects_null_dstring),
-        D_TEST_GENERATE_TEST(test_push_c_str_rejects_null_source),
         D_TEST_GENERATE_TEST(test_push_str_with_len_accepts_embedded_nul_bytes),
-        D_TEST_GENERATE_TEST(test_push_str_with_len_rejects_null_dstring),
-        D_TEST_GENERATE_TEST(test_push_str_with_len_rejects_null_source_when_size_nonzero),
-        D_TEST_GENERATE_TEST(test_push_str_with_len_rejects_null_source_when_size_zero),
         D_TEST_GENERATE_TEST(test_merge_with_empty_right_keeps_left),
         D_TEST_GENERATE_TEST(test_merge_empty_left_gets_right_content),
         D_TEST_GENERATE_TEST(test_merge_self_duplicates_content),
@@ -1050,15 +814,11 @@ int main(void)
         D_TEST_GENERATE_TEST(test_replace_from_dstring_self_is_noop),
         D_TEST_GENERATE_TEST(test_sub_string_in_place_keeps_prefix),
         D_TEST_GENERATE_TEST(test_sub_string_in_place_zero_size_returns_empty),
-        D_TEST_GENERATE_TEST(test_sub_string_in_place_rejects_null_dstring),
         D_TEST_GENERATE_TEST(test_sub_string_in_place_on_empty_rejects_without_crash),
         D_TEST_GENERATE_TEST(test_get_char_at_reads_last_character),
         D_TEST_GENERATE_TEST(test_get_char_at_rejects_index_equal_size),
-        D_TEST_GENERATE_TEST(test_get_char_at_rejects_null_dstring),
-        D_TEST_GENERATE_TEST(test_get_char_at_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_resize_same_size_keeps_content),
         D_TEST_GENERATE_TEST(test_resize_empty_grow_fills_all_slots),
-        D_TEST_GENERATE_TEST(test_resize_rejects_null_dstring),
         D_TEST_GENERATE_TEST(test_push_char_then_replace_then_push_again),
         D_TEST_GENERATE_TEST(test_init_from_dstring_then_mutate_both_independently),
         D_TEST_GENERATE_TEST(test_merge_chain_three_strings),

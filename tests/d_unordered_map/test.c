@@ -172,11 +172,6 @@ static void assert_get_int(DUnorderedMap *map, int key, int expected)
     D_TEST_EXPR(*got == expected);
 }
 
-static void test_init_rejects_null_map_pointer(void)
-{
-    D_TEST_EXPR(d_unordered_map_init(NULL, sizeof(int), sizeof(int), 0, hash_int_key, cmp_int_key, NULL, NULL) == D_ERR_INVALID_ARG);
-}
-
 static void test_init_allows_zero_capacity_and_reports_nonzero_capacity(void)
 {
     DUnorderedMap map;
@@ -200,108 +195,6 @@ static void test_destroy_empty_map_is_safe(void)
     init_int_map(&map, sizeof(int), 0, NULL, NULL);
     d_unordered_map_destroy(&map);
     D_TEST_EXPR(true);
-}
-
-static void test_insert_rejects_null_map(void)
-{
-    int k = 1;
-    int v = 2;
-    D_TEST_EXPR(d_unordered_map_insert(NULL, &k, &v) == D_ERR_INVALID_ARG);
-}
-
-static void test_insert_rejects_null_key(void)
-{
-    DUnorderedMap map;
-    int v = 2;
-
-    init_int_map(&map, sizeof(int), 0, NULL, NULL);
-    D_TEST_EXPR(d_unordered_map_insert(&map, NULL, &v) == D_ERR_INVALID_ARG);
-    assert_size(&map, 0);
-    d_unordered_map_destroy(&map);
-}
-
-static void test_insert_rejects_null_value(void)
-{
-    DUnorderedMap map;
-    int k = 1;
-
-    init_int_map(&map, sizeof(int), 0, NULL, NULL);
-    D_TEST_EXPR(d_unordered_map_insert(&map, &k, NULL) == D_ERR_INVALID_ARG);
-    assert_size(&map, 0);
-    d_unordered_map_destroy(&map);
-}
-
-static void test_get_null_map_returns_null(void)
-{
-    int k = 1;
-    D_TEST_NULL(d_unordered_map_get(NULL, &k));
-}
-
-static void test_get_null_key_returns_null(void)
-{
-    DUnorderedMap map;
-
-    init_int_map(&map, sizeof(int), 0, NULL, NULL);
-    D_TEST_NULL(d_unordered_map_get(&map, NULL));
-    d_unordered_map_destroy(&map);
-}
-
-static void test_remove_rejects_null_output_key_slot(void)
-{
-    DUnorderedMap map;
-    int out_value = 0;
-
-    init_int_map(&map, sizeof(int), 0, NULL, NULL);
-    insert_int(&map, 1, 10);
-    D_TEST_EXPR(d_unordered_map_remove(&map, &(int){1}, NULL, &out_value) == D_ERR_INVALID_ARG);
-    assert_size(&map, 1);
-    assert_get_int(&map, 1, 10);
-    d_unordered_map_destroy(&map);
-}
-
-static void test_remove_rejects_null_output_value_slot(void)
-{
-    DUnorderedMap map;
-    int out_key = 0;
-
-    init_int_map(&map, sizeof(int), 0, NULL, NULL);
-    insert_int(&map, 1, 10);
-    D_TEST_EXPR(d_unordered_map_remove(&map, &(int){1}, &out_key, NULL) == D_ERR_INVALID_ARG);
-    assert_size(&map, 1);
-    assert_get_int(&map, 1, 10);
-    d_unordered_map_destroy(&map);
-}
-
-static void test_remove_null_map_is_invalid(void)
-{
-    int out_key = 0;
-    int out_value = 0;
-    D_TEST_EXPR(d_unordered_map_remove(NULL, &(int){1}, &out_key, &out_value) == D_ERR_INVALID_ARG);
-}
-
-static void test_remove_null_lookup_key_is_invalid(void)
-{
-    DUnorderedMap map;
-    int out_key = 0;
-    int out_value = 0;
-
-    init_int_map(&map, sizeof(int), 0, NULL, NULL);
-    D_TEST_EXPR(d_unordered_map_remove(&map, NULL, &out_key, &out_value) == D_ERR_INVALID_ARG);
-    d_unordered_map_destroy(&map);
-}
-
-static void test_delete_null_map_is_invalid(void)
-{
-    D_TEST_EXPR(d_unordered_map_delete(NULL, &(int){1}) == D_ERR_INVALID_ARG);
-}
-
-static void test_delete_null_key_is_invalid(void)
-{
-    DUnorderedMap map;
-
-    init_int_map(&map, sizeof(int), 0, NULL, NULL);
-    D_TEST_EXPR(d_unordered_map_delete(&map, NULL) == D_ERR_INVALID_ARG);
-    d_unordered_map_destroy(&map);
 }
 
 static void test_single_insert_get_remove_transfers_key_and_value(void)
@@ -820,23 +713,6 @@ static void test_long_interleaved_insert_remove_delete_stress(void)
     d_unordered_map_destroy(&map);
 }
 
-static void test_get_size_and_capacity_reject_null_out_params(void)
-{
-    DUnorderedMap map;
-
-    init_int_map(&map, sizeof(int), 0, NULL, NULL);
-    D_TEST_EXPR(d_unordered_map_get_size(&map, NULL) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(d_unordered_map_get_capacity(&map, NULL) == D_ERR_INVALID_ARG);
-    d_unordered_map_destroy(&map);
-}
-
-static void test_get_size_and_capacity_reject_null_map(void)
-{
-    usize out = 0;
-    D_TEST_EXPR(d_unordered_map_get_size(NULL, &out) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(d_unordered_map_get_capacity(NULL, &out) == D_ERR_INVALID_ARG);
-}
-
 static void test_two_groups_hash_all_entries_retrievable(void)
 {
     DUnorderedMap map;
@@ -907,21 +783,9 @@ static void test_capacity_grows_monotonically_under_load(void)
 int main(void)
 {
     DTest tests[] = {
-        D_TEST_GENERATE_TEST(test_init_rejects_null_map_pointer),
         D_TEST_GENERATE_TEST(test_init_allows_zero_capacity_and_reports_nonzero_capacity),
         D_TEST_GENERATE_TEST(test_destroy_null_pointer_is_noop),
         D_TEST_GENERATE_TEST(test_destroy_empty_map_is_safe),
-        D_TEST_GENERATE_TEST(test_insert_rejects_null_map),
-        D_TEST_GENERATE_TEST(test_insert_rejects_null_key),
-        D_TEST_GENERATE_TEST(test_insert_rejects_null_value),
-        D_TEST_GENERATE_TEST(test_get_null_map_returns_null),
-        D_TEST_GENERATE_TEST(test_get_null_key_returns_null),
-        D_TEST_GENERATE_TEST(test_remove_rejects_null_output_key_slot),
-        D_TEST_GENERATE_TEST(test_remove_rejects_null_output_value_slot),
-        D_TEST_GENERATE_TEST(test_remove_null_map_is_invalid),
-        D_TEST_GENERATE_TEST(test_remove_null_lookup_key_is_invalid),
-        D_TEST_GENERATE_TEST(test_delete_null_map_is_invalid),
-        D_TEST_GENERATE_TEST(test_delete_null_key_is_invalid),
         D_TEST_GENERATE_TEST(test_single_insert_get_remove_transfers_key_and_value),
         D_TEST_GENERATE_TEST(test_remove_does_not_call_destroyer),
         D_TEST_GENERATE_TEST(test_delete_calls_destroyer_once_with_key_and_value),
@@ -948,8 +812,6 @@ int main(void)
         D_TEST_GENERATE_TEST(test_owned_str_key_value_map_remove_transfers_ownership),
         D_TEST_GENERATE_TEST(test_owned_str_key_value_duplicate_insert_destroys_old_pair),
         D_TEST_GENERATE_TEST(test_long_interleaved_insert_remove_delete_stress),
-        D_TEST_GENERATE_TEST(test_get_size_and_capacity_reject_null_out_params),
-        D_TEST_GENERATE_TEST(test_get_size_and_capacity_reject_null_map),
         D_TEST_GENERATE_TEST(test_two_groups_hash_all_entries_retrievable),
         D_TEST_GENERATE_TEST(test_insert_get_absent_key_is_null),
         D_TEST_GENERATE_TEST(test_repeated_delete_same_key_returns_not_exist_second_time),

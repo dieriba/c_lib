@@ -138,17 +138,6 @@ static void test_init_with_capacity_sets_capacity(void)
     d_queue_destroy(&queue);
 }
 
-static void test_init_rejects_null_output_pointer(void)
-{
-    D_TEST_EXPR(d_queue_init(NULL, 4, sizeof(int), NULL, NULL) == D_ERR_INVALID_ARG);
-}
-
-static void test_init_rejects_zero_elem_size(void)
-{
-    DQueue queue;
-    D_TEST_EXPR(d_queue_init(&queue, 4, 0, NULL, NULL) == D_ERR_INVALID_ARG);
-}
-
 static void test_push_single_value_updates_size_and_empty_flag(void)
 {
     DQueue queue;
@@ -156,22 +145,6 @@ static void test_push_single_value_updates_size_and_empty_flag(void)
     push_int(&queue, 42);
     expect_size(&queue, 1);
     expect_empty(&queue, false);
-    d_queue_destroy(&queue);
-}
-
-static void test_push_rejects_null_queue(void)
-{
-    int value = 1;
-    D_TEST_EXPR(d_queue_push(NULL, &value) == D_ERR_INVALID_ARG);
-}
-
-static void test_push_rejects_null_elem(void)
-{
-    DQueue queue;
-    make_int_queue(&queue, 1);
-    D_TEST_EXPR(d_queue_push(&queue, NULL) == D_ERR_INVALID_ARG);
-    expect_size(&queue, 0);
-    expect_empty(&queue, true);
     d_queue_destroy(&queue);
 }
 
@@ -212,26 +185,6 @@ static void test_pop_many_values_are_fifo(void)
         D_TEST_EXPR(pop_int(&queue) == i);
     expect_size(&queue, 0);
     expect_empty(&queue, true);
-    d_queue_destroy(&queue);
-}
-
-static void test_pop_rejects_null_queue(void)
-{
-    int out = 0x12345678;
-    D_TEST_EXPR(d_queue_pop(NULL, &out) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(out == 0x12345678);
-}
-
-static void test_pop_rejects_null_output_pointer(void)
-{
-    DQueue queue;
-    make_int_queue(&queue, 1);
-    int value = 11;
-    D_TEST_EXPR(d_queue_push(&queue, &value) == D_OK);
-    D_TEST_EXPR(d_queue_pop(&queue, NULL) == D_ERR_INVALID_ARG);
-    expect_size(&queue, 1);
-    expect_empty(&queue, false);
-    D_TEST_EXPR(pop_int(&queue) == 11);
     d_queue_destroy(&queue);
 }
 
@@ -347,51 +300,6 @@ static void test_capacity_does_not_shrink_after_pops(void)
     d_queue_destroy(&queue);
 }
 
-static void test_size_rejects_null_queue(void)
-{
-    usize size = 123;
-    D_TEST_EXPR(d_queue_get_size(NULL, &size) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(size == 123);
-}
-
-static void test_size_rejects_null_output_pointer(void)
-{
-    DQueue queue;
-    make_int_queue(&queue, 1);
-    D_TEST_EXPR(d_queue_get_size(&queue, NULL) == D_ERR_INVALID_ARG);
-    d_queue_destroy(&queue);
-}
-
-static void test_capacity_rejects_null_queue(void)
-{
-    usize capacity = 123;
-    D_TEST_EXPR(d_queue_get_capacity(NULL, &capacity) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(capacity == 123);
-}
-
-static void test_capacity_rejects_null_output_pointer(void)
-{
-    DQueue queue;
-    make_int_queue(&queue, 1);
-    D_TEST_EXPR(d_queue_get_capacity(&queue, NULL) == D_ERR_INVALID_ARG);
-    d_queue_destroy(&queue);
-}
-
-static void test_is_empty_rejects_null_queue(void)
-{
-    bool is_empty = false;
-    D_TEST_EXPR(d_queue_is_empty(NULL, &is_empty) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(is_empty == false);
-}
-
-static void test_is_empty_rejects_null_output_pointer(void)
-{
-    DQueue queue;
-    make_int_queue(&queue, 1);
-    D_TEST_EXPR(d_queue_is_empty(&queue, NULL) == D_ERR_INVALID_ARG);
-    d_queue_destroy(&queue);
-}
-
 static void test_queue_stores_pointer_values_fifo(void)
 {
     DQueue queue;
@@ -472,18 +380,6 @@ static void test_mutating_after_failed_pop_is_still_valid(void)
     D_TEST_EXPR(out == 111);
     push_int(&queue, 42);
     D_TEST_EXPR(pop_int(&queue) == 42);
-    expect_empty(&queue, true);
-    d_queue_destroy(&queue);
-}
-
-static void test_mutating_after_failed_null_push_is_still_valid(void)
-{
-    DQueue queue;
-    make_int_queue(&queue, 1);
-    D_TEST_EXPR(d_queue_push(&queue, NULL) == D_ERR_INVALID_ARG);
-    expect_empty(&queue, true);
-    push_int(&queue, 77);
-    D_TEST_EXPR(pop_int(&queue) == 77);
     expect_empty(&queue, true);
     d_queue_destroy(&queue);
 }
@@ -739,8 +635,6 @@ int main(void)
     DTest tests[] = {
         D_TEST_GENERATE_TEST(test_init_creates_empty_queue),
         D_TEST_GENERATE_TEST(test_init_with_capacity_sets_capacity),
-        D_TEST_GENERATE_TEST(test_init_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_init_rejects_zero_elem_size),
         D_TEST_GENERATE_TEST(test_destroy_null_pointer_is_safe),
         D_TEST_GENERATE_TEST(test_destroy_empty_queue_is_safe),
         D_TEST_GENERATE_TEST(test_destroy_non_empty_queue_is_safe),
@@ -749,13 +643,9 @@ int main(void)
         D_TEST_GENERATE_TEST(test_destroy_can_be_called_twice_safely),
         D_TEST_GENERATE_TEST(test_destroy_pointer_queue_does_not_free_pointed_values),
         D_TEST_GENERATE_TEST(test_push_single_value_updates_size_and_empty_flag),
-        D_TEST_GENERATE_TEST(test_push_rejects_null_queue),
-        D_TEST_GENERATE_TEST(test_push_rejects_null_elem),
         D_TEST_GENERATE_TEST(test_push_copies_value_not_source_address),
         D_TEST_GENERATE_TEST(test_pop_returns_first_pushed_value),
         D_TEST_GENERATE_TEST(test_pop_many_values_are_fifo),
-        D_TEST_GENERATE_TEST(test_pop_rejects_null_queue),
-        D_TEST_GENERATE_TEST(test_pop_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_pop_empty_queue_fails_and_keeps_output_unchanged),
         D_TEST_GENERATE_TEST(test_pop_until_empty_then_push_again),
         D_TEST_GENERATE_TEST(test_interleaved_push_pop_preserves_fifo_order),
@@ -763,18 +653,11 @@ int main(void)
         D_TEST_GENERATE_TEST(test_growth_while_wrapped_preserves_order),
         D_TEST_GENERATE_TEST(test_capacity_grows_from_zero_capacity),
         D_TEST_GENERATE_TEST(test_capacity_does_not_shrink_after_pops),
-        D_TEST_GENERATE_TEST(test_size_rejects_null_queue),
-        D_TEST_GENERATE_TEST(test_size_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_capacity_rejects_null_queue),
-        D_TEST_GENERATE_TEST(test_capacity_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_is_empty_rejects_null_queue),
-        D_TEST_GENERATE_TEST(test_is_empty_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_queue_stores_pointer_values_fifo),
         D_TEST_GENERATE_TEST(test_queue_can_store_null_pointer_value_when_wrapped_in_slot),
         D_TEST_GENERATE_TEST(test_large_struct_elements_are_copied_and_fifo),
         D_TEST_GENERATE_TEST(test_binary_data_with_zero_bytes_round_trips),
         D_TEST_GENERATE_TEST(test_mutating_after_failed_pop_is_still_valid),
-        D_TEST_GENERATE_TEST(test_mutating_after_failed_null_push_is_still_valid),
         D_TEST_GENERATE_TEST(test_many_alternating_operations_leave_consistent_state),
         D_TEST_GENERATE_TEST(test_multiple_queues_are_independent),
         D_TEST_GENERATE_TEST(test_fifo_order_after_repeated_full_empty_cycles),

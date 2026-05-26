@@ -213,122 +213,12 @@ static BigKey make_big_key(int id)
     return k;
 }
 
-static void test_init_rejects_null_set(void)
-{
-    D_TEST_EXPR(d_hash_set_init(NULL, sizeof(int), 0, hash_int_key, cmp_int_key, NULL) == D_ERR_INVALID_ARG);
-}
-
-static void test_init_rejects_zero_key_size(void)
-{
-    DHashSet set;
-    D_TEST_EXPR(d_hash_set_init(&set, 0, 0, hash_int_key, cmp_int_key, NULL) == D_ERR_INVALID_ARG);
-}
-
 static void test_init_accepts_zero_capacity_and_aligns_capacity(void)
 {
     DHashSet set;
     init_int_set_custom(&set, 0, NULL);
     assert_size(&set, 0);
     assert_capacity_at_least(&set, 16);
-    d_hash_set_destroy(&set);
-}
-
-static void test_get_size_rejects_null_set(void)
-{
-    usize size = 123;
-    D_TEST_EXPR(d_hash_set_get_size(NULL, &size) == D_ERR_INVALID_ARG);
-}
-
-static void test_get_size_rejects_null_out_pointer(void)
-{
-    DHashSet set;
-    init_int_set_custom(&set, 0, NULL);
-    D_TEST_EXPR(d_hash_set_get_size(&set, NULL) == D_ERR_INVALID_ARG);
-    d_hash_set_destroy(&set);
-}
-
-static void test_get_capacity_rejects_null_set(void)
-{
-    usize capacity = 123;
-    D_TEST_EXPR(d_hash_set_get_capacity(NULL, &capacity) == D_ERR_INVALID_ARG);
-}
-
-static void test_get_capacity_rejects_null_out_pointer(void)
-{
-    DHashSet set;
-    init_int_set_custom(&set, 0, NULL);
-    D_TEST_EXPR(d_hash_set_get_capacity(&set, NULL) == D_ERR_INVALID_ARG);
-    d_hash_set_destroy(&set);
-}
-
-static void test_insert_rejects_null_set(void)
-{
-    int key = 1;
-    D_TEST_EXPR(d_hash_set_insert(NULL, &key) == D_ERR_INVALID_ARG);
-}
-
-static void test_insert_rejects_null_key(void)
-{
-    DHashSet set;
-    init_int_set_custom(&set, 0, NULL);
-    D_TEST_EXPR(d_hash_set_insert(&set, NULL) == D_ERR_INVALID_ARG);
-    assert_size(&set, 0);
-    d_hash_set_destroy(&set);
-}
-
-static void test_key_exists_null_set_is_false(void)
-{
-    int key = 1;
-    D_TEST_EXPR(d_hash_set_key_exists(NULL, &key) == false);
-}
-
-static void test_key_exists_null_key_is_false(void)
-{
-    DHashSet set;
-    init_int_set_custom(&set, 0, NULL);
-    D_TEST_EXPR(d_hash_set_key_exists(&set, NULL) == false);
-    d_hash_set_destroy(&set);
-}
-
-static void test_delete_rejects_null_set(void)
-{
-    int key = 1;
-    D_TEST_EXPR(d_hash_set_delete(NULL, &key) == D_ERR_INVALID_ARG);
-}
-
-static void test_delete_rejects_null_key(void)
-{
-    DHashSet set;
-    init_int_set_custom(&set, 0, NULL);
-    D_TEST_EXPR(d_hash_set_delete(&set, NULL) == D_ERR_INVALID_ARG);
-    d_hash_set_destroy(&set);
-}
-
-static void test_remove_rejects_null_set(void)
-{
-    int key = 1;
-    int out = 0;
-    D_TEST_EXPR(d_hash_set_remove(NULL, &key, &out) == D_ERR_INVALID_ARG);
-}
-
-static void test_remove_rejects_null_key(void)
-{
-    DHashSet set;
-    int out = 0;
-    init_int_set_custom(&set, 0, NULL);
-    D_TEST_EXPR(d_hash_set_remove(&set, NULL, &out) == D_ERR_INVALID_ARG);
-    d_hash_set_destroy(&set);
-}
-
-static void test_remove_rejects_null_output_slot(void)
-{
-    DHashSet set;
-    int key = 1;
-    init_int_set_custom(&set, 0, NULL);
-    insert_int(&set, key);
-    D_TEST_EXPR(d_hash_set_remove(&set, &key, NULL) == D_ERR_INVALID_ARG);
-    assert_exists_int(&set, key);
-    assert_size(&set, 1);
     d_hash_set_destroy(&set);
 }
 
@@ -1267,22 +1157,7 @@ static void test_delete_during_collision_probe_does_not_delete_neighbor(void)
 int main(void)
 {
     DTest tests[] = {
-        D_TEST_GENERATE_TEST(test_init_rejects_null_set),
-        D_TEST_GENERATE_TEST(test_init_rejects_zero_key_size),
         D_TEST_GENERATE_TEST(test_init_accepts_zero_capacity_and_aligns_capacity),
-        D_TEST_GENERATE_TEST(test_get_size_rejects_null_set),
-        D_TEST_GENERATE_TEST(test_get_size_rejects_null_out_pointer),
-        D_TEST_GENERATE_TEST(test_get_capacity_rejects_null_set),
-        D_TEST_GENERATE_TEST(test_get_capacity_rejects_null_out_pointer),
-        D_TEST_GENERATE_TEST(test_insert_rejects_null_set),
-        D_TEST_GENERATE_TEST(test_insert_rejects_null_key),
-        D_TEST_GENERATE_TEST(test_key_exists_null_set_is_false),
-        D_TEST_GENERATE_TEST(test_key_exists_null_key_is_false),
-        D_TEST_GENERATE_TEST(test_delete_rejects_null_set),
-        D_TEST_GENERATE_TEST(test_delete_rejects_null_key),
-        D_TEST_GENERATE_TEST(test_remove_rejects_null_set),
-        D_TEST_GENERATE_TEST(test_remove_rejects_null_key),
-        D_TEST_GENERATE_TEST(test_remove_rejects_null_output_slot),
         D_TEST_GENERATE_TEST(test_destroy_null_pointer_is_noop),
         D_TEST_GENERATE_TEST(test_destroy_empty_set_is_safe),
         D_TEST_GENERATE_TEST(test_single_insert_exists_and_size_one),

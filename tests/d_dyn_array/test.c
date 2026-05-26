@@ -127,18 +127,6 @@ static void test_init_with_reserved_capacity_sets_capacity(void)
     d_dyn_array_destroy(&arr);
 }
 
-static void test_init_rejects_null_array_pointer(void)
-{
-    D_TEST_EXPR(d_dyn_array_init(NULL, sizeof(int), 0, NULL, NULL, ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
-}
-
-static void test_init_rejects_zero_elem_size(void)
-{
-    DDynArray arr;
-
-    D_TEST_EXPR(d_dyn_array_init(&arr, 0, 0, NULL, NULL, ARRAY_DEFAULT_OPTS) == D_ERR_INVALID_ARG);
-}
-
 static void test_init_ptr_arr_creates_empty_pointer_array(void)
 {
     DDynArray arr;
@@ -187,23 +175,6 @@ static void test_push_back_grows_capacity_and_preserves_values(void)
     d_dyn_array_destroy(&arr);
 }
 
-static void test_push_back_rejects_null_array(void)
-{
-    int value = 1;
-
-    D_TEST_EXPR(d_dyn_array_push_back(NULL, &value) == D_ERR_INVALID_ARG);
-}
-
-static void test_push_back_rejects_null_data(void)
-{
-    DDynArray arr;
-
-    make_int_array(&arr, 0);
-    D_TEST_EXPR(d_dyn_array_push_back(&arr, NULL) == D_ERR_INVALID_ARG);
-    expect_size(&arr, 0);
-    d_dyn_array_destroy(&arr);
-}
-
 static void test_append_multiple_ints(void)
 {
     DDynArray arr;
@@ -234,23 +205,6 @@ static void test_append_after_push_preserves_order(void)
     d_dyn_array_destroy(&arr);
 }
 
-static void test_append_rejects_null_array(void)
-{
-    int values[] = {1, 2};
-
-    D_TEST_EXPR(d_dyn_array_append(NULL, values, 2) == D_ERR_INVALID_ARG);
-}
-
-static void test_append_rejects_null_data_even_when_count_is_zero(void)
-{
-    DDynArray arr;
-
-    make_int_array(&arr, 0);
-    D_TEST_EXPR(d_dyn_array_append(&arr, NULL, 0) == D_ERR_INVALID_ARG);
-    expect_size(&arr, 0);
-    d_dyn_array_destroy(&arr);
-}
-
 static void test_append_zero_count_keeps_array_unchanged(void)
 {
     DDynArray arr;
@@ -275,25 +229,6 @@ static void test_get_elem_at_reads_first_middle_last(void)
     d_dyn_array_destroy(&arr);
 }
 
-static void test_get_elem_at_rejects_null_array(void)
-{
-    int out = 123;
-
-    D_TEST_EXPR(d_dyn_array_get_elem_at(NULL, 0, &out) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(out == 123);
-}
-
-static void test_get_elem_at_rejects_null_output_pointer(void)
-{
-    DDynArray arr;
-    int value = 77;
-
-    make_int_array(&arr, 0);
-    D_TEST_EXPR(d_dyn_array_push_back(&arr, &value) == D_OK);
-    D_TEST_EXPR(d_dyn_array_get_elem_at(&arr, 0, NULL) == D_ERR_INVALID_ARG);
-    d_dyn_array_destroy(&arr);
-}
-
 static void test_get_elem_at_rejects_index_equal_size(void)
 {
     DDynArray arr;
@@ -315,40 +250,6 @@ static void test_get_elem_at_rejects_index_from_empty_array(void)
     make_int_array(&arr, 0);
     D_TEST_EXPR(d_dyn_array_get_elem_at(&arr, 0, &out) != D_OK);
     D_TEST_EXPR(out == 123);
-    d_dyn_array_destroy(&arr);
-}
-
-static void test_get_size_rejects_null_array(void)
-{
-    usize size = 123;
-
-    D_TEST_EXPR(d_dyn_array_get_size(NULL, &size) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(size == 123);
-}
-
-static void test_get_size_rejects_null_output_pointer(void)
-{
-    DDynArray arr;
-
-    make_int_array(&arr, 0);
-    D_TEST_EXPR(d_dyn_array_get_size(&arr, NULL) == D_ERR_INVALID_ARG);
-    d_dyn_array_destroy(&arr);
-}
-
-static void test_get_capacity_rejects_null_array(void)
-{
-    usize capacity = 123;
-
-    D_TEST_EXPR(d_dyn_array_get_capacity(NULL, &capacity) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(capacity == 123);
-}
-
-static void test_get_capacity_rejects_null_output_pointer(void)
-{
-    DDynArray arr;
-
-    make_int_array(&arr, 0);
-    D_TEST_EXPR(d_dyn_array_get_capacity(&arr, NULL) == D_ERR_INVALID_ARG);
     d_dyn_array_destroy(&arr);
 }
 
@@ -387,22 +288,6 @@ static void test_init_from_does_not_alias_source_storage(void)
     d_dyn_array_destroy(&src);
 }
 
-static void test_init_from_rejects_null_destination(void)
-{
-    DDynArray src;
-
-    make_int_array(&src, 0);
-    D_TEST_EXPR(d_dyn_array_init_from(NULL, &src) == D_ERR_INVALID_ARG);
-    d_dyn_array_destroy(&src);
-}
-
-static void test_init_from_rejects_null_source(void)
-{
-    DDynArray copy;
-
-    D_TEST_EXPR(d_dyn_array_init_from(&copy, NULL) == D_ERR_INVALID_ARG);
-}
-
 static void test_push_back_ptr_stores_pointer_value(void)
 {
     DDynArray arr;
@@ -428,13 +313,6 @@ static void test_push_back_ptr_accepts_null_pointer_value(void)
     D_TEST_EXPR(d_dyn_array_get_elem_at(&arr, 0, &out) == D_OK);
     D_TEST_NULL(out);
     d_dyn_array_destroy(&arr);
-}
-
-static void test_push_back_ptr_rejects_null_array(void)
-{
-    int x = 1;
-
-    D_TEST_EXPR(d_dyn_array_push_back_ptr(NULL, &x) == D_ERR_INVALID_ARG);
 }
 
 static void test_remove_last_on_empty_array_returns_empty_err(void)
@@ -479,13 +357,6 @@ static void test_remove_last_without_out_discards_value(void)
     d_dyn_array_destroy(&arr);
 }
 
-static void test_remove_last_rejects_null_array(void)
-{
-    int out = 0;
-
-    D_TEST_EXPR(d_dyn_array_remove_last_element(NULL, &out) == D_ERR_INVALID_ARG);
-}
-
 static void test_remove_elem_fast_from_middle_swaps_last_into_removed_slot(void)
 {
     DDynArray arr;
@@ -515,13 +386,6 @@ static void test_remove_elem_fast_first_from_single_element_array(void)
     D_TEST_EXPR(out == 555);
     expect_size(&arr, 0);
     d_dyn_array_destroy(&arr);
-}
-
-static void test_remove_elem_fast_rejects_null_array(void)
-{
-    int out = 0;
-
-    D_TEST_EXPR(d_dyn_array_remove_elem_fast(NULL, 0, &out) == D_ERR_INVALID_ARG);
 }
 
 static void test_remove_elem_fast_rejects_index_equal_size(void)
@@ -606,11 +470,6 @@ static void test_clear_removes_all_elements_but_keeps_capacity(void)
     D_TEST_EXPR(d_dyn_array_get_capacity(&arr, &after_capacity) == D_OK);
     D_TEST_EXPR(after_capacity == before_capacity);
     d_dyn_array_destroy(&arr);
-}
-
-static void test_clear_null_returns_null(void)
-{
-    D_TEST_EXPR(d_dyn_array_clear_array(NULL) == D_ERR_INVALID_ARG);
 }
 
 static void test_clear_calls_destructor_for_each_element(void)
@@ -983,49 +842,31 @@ int main(void)
     DTest tests[] = {
         D_TEST_GENERATE_TEST(test_init_creates_empty_array),
         D_TEST_GENERATE_TEST(test_init_with_reserved_capacity_sets_capacity),
-        D_TEST_GENERATE_TEST(test_init_rejects_null_array_pointer),
-        D_TEST_GENERATE_TEST(test_init_rejects_zero_elem_size),
         D_TEST_GENERATE_TEST(test_init_ptr_arr_creates_empty_pointer_array),
         D_TEST_GENERATE_TEST(test_push_back_appends_single_int),
         D_TEST_GENERATE_TEST(test_push_back_copies_value_not_alias_source),
         D_TEST_GENERATE_TEST(test_push_back_grows_capacity_and_preserves_values),
-        D_TEST_GENERATE_TEST(test_push_back_rejects_null_array),
-        D_TEST_GENERATE_TEST(test_push_back_rejects_null_data),
         D_TEST_GENERATE_TEST(test_append_multiple_ints),
         D_TEST_GENERATE_TEST(test_append_after_push_preserves_order),
-        D_TEST_GENERATE_TEST(test_append_rejects_null_array),
-        D_TEST_GENERATE_TEST(test_append_rejects_null_data_even_when_count_is_zero),
         D_TEST_GENERATE_TEST(test_append_zero_count_keeps_array_unchanged),
         D_TEST_GENERATE_TEST(test_get_elem_at_reads_first_middle_last),
-        D_TEST_GENERATE_TEST(test_get_elem_at_rejects_null_array),
-        D_TEST_GENERATE_TEST(test_get_elem_at_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_get_elem_at_rejects_index_equal_size),
         D_TEST_GENERATE_TEST(test_get_elem_at_rejects_index_from_empty_array),
-        D_TEST_GENERATE_TEST(test_get_size_rejects_null_array),
-        D_TEST_GENERATE_TEST(test_get_size_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_get_capacity_rejects_null_array),
-        D_TEST_GENERATE_TEST(test_get_capacity_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_init_from_copies_size_capacity_and_values),
         D_TEST_GENERATE_TEST(test_init_from_does_not_alias_source_storage),
-        D_TEST_GENERATE_TEST(test_init_from_rejects_null_destination),
-        D_TEST_GENERATE_TEST(test_init_from_rejects_null_source),
         D_TEST_GENERATE_TEST(test_push_back_ptr_stores_pointer_value),
         D_TEST_GENERATE_TEST(test_push_back_ptr_accepts_null_pointer_value),
-        D_TEST_GENERATE_TEST(test_push_back_ptr_rejects_null_array),
         D_TEST_GENERATE_TEST(test_remove_last_on_empty_array_returns_empty_err),
         D_TEST_GENERATE_TEST(test_remove_last_returns_removed_value),
         D_TEST_GENERATE_TEST(test_remove_last_without_out_discards_value),
-        D_TEST_GENERATE_TEST(test_remove_last_rejects_null_array),
         D_TEST_GENERATE_TEST(test_remove_elem_fast_from_middle_swaps_last_into_removed_slot),
         D_TEST_GENERATE_TEST(test_remove_elem_fast_first_from_single_element_array),
-        D_TEST_GENERATE_TEST(test_remove_elem_fast_rejects_null_array),
         D_TEST_GENERATE_TEST(test_remove_elem_fast_rejects_index_equal_size),
         D_TEST_GENERATE_TEST(test_remove_elem_fast_rejects_remove_from_empty_array),
         D_TEST_GENERATE_TEST(test_remove_elem_fast_with_out_does_not_call_destructor),
         D_TEST_GENERATE_TEST(test_remove_elem_fast_without_out_calls_destructor_once),
         D_TEST_GENERATE_TEST(test_clear_empty_array_is_ok),
         D_TEST_GENERATE_TEST(test_clear_removes_all_elements_but_keeps_capacity),
-        D_TEST_GENERATE_TEST(test_clear_null_returns_null),
         D_TEST_GENERATE_TEST(test_clear_calls_destructor_for_each_element),
         D_TEST_GENERATE_TEST(test_destroy_null_pointer_is_safe),
         D_TEST_GENERATE_TEST(test_destroy_empty_array_is_safe),

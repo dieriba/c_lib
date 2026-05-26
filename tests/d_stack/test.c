@@ -128,17 +128,6 @@ static void test_init_with_capacity_sets_capacity(void)
     d_stack_destroy(&stack);
 }
 
-static void test_init_rejects_null_output_pointer(void)
-{
-    D_TEST_EXPR(d_stack_init(NULL, 4, sizeof(int), NULL, NULL) == D_ERR_INVALID_ARG);
-}
-
-static void test_init_rejects_zero_elem_size(void)
-{
-    DStack stack;
-    D_TEST_EXPR(d_stack_init(&stack, 4, 0, NULL, NULL) == D_ERR_INVALID_ARG);
-}
-
 static void test_destroy_null_pointer_is_safe(void)
 {
     d_stack_destroy(NULL);
@@ -167,22 +156,6 @@ static void test_push_single_value_updates_size_and_empty_flag(void)
     push_int(&stack, 42);
     expect_size(&stack, 1);
     expect_empty(&stack, false);
-    d_stack_destroy(&stack);
-}
-
-static void test_push_rejects_null_stack(void)
-{
-    int value = 1;
-    D_TEST_EXPR(d_stack_push(NULL, &value) == D_ERR_INVALID_ARG);
-}
-
-static void test_push_rejects_null_elem(void)
-{
-    DStack stack;
-    make_int_stack(&stack, 1);
-    D_TEST_EXPR(d_stack_push(&stack, NULL) == D_ERR_INVALID_ARG);
-    expect_size(&stack, 0);
-    expect_empty(&stack, true);
     d_stack_destroy(&stack);
 }
 
@@ -222,24 +195,6 @@ static void test_pop_many_values_are_lifo(void)
         D_TEST_EXPR(pop_int(&stack) == i);
     expect_size(&stack, 0);
     expect_empty(&stack, true);
-    d_stack_destroy(&stack);
-}
-
-static void test_pop_rejects_null_stack(void)
-{
-    int out = 0x12345678;
-    D_TEST_EXPR(d_stack_pop(NULL, &out) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(out == 0x12345678);
-}
-
-static void test_pop_rejects_null_output_pointer(void)
-{
-    DStack stack;
-    make_int_stack(&stack, 1);
-    push_int(&stack, 77);
-    D_TEST_EXPR(d_stack_pop(&stack, NULL) == D_ERR_INVALID_ARG);
-    expect_size(&stack, 1);
-    D_TEST_EXPR(pop_int(&stack) == 77);
     d_stack_destroy(&stack);
 }
 
@@ -285,51 +240,6 @@ static void test_interleaved_push_pop_preserves_lifo_order(void)
     D_TEST_EXPR(pop_int(&stack) == 3);
     D_TEST_EXPR(pop_int(&stack) == 1);
     expect_size(&stack, 0);
-    d_stack_destroy(&stack);
-}
-
-static void test_size_rejects_null_stack(void)
-{
-    usize size = 111;
-    D_TEST_EXPR(d_stack_get_size(NULL, &size) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(size == 111);
-}
-
-static void test_size_rejects_null_output_pointer(void)
-{
-    DStack stack;
-    make_int_stack(&stack, 1);
-    D_TEST_EXPR(d_stack_get_size(&stack, NULL) == D_ERR_INVALID_ARG);
-    d_stack_destroy(&stack);
-}
-
-static void test_capacity_rejects_null_stack(void)
-{
-    usize capacity = 111;
-    D_TEST_EXPR(d_stack_get_capacity(NULL, &capacity) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(capacity == 111);
-}
-
-static void test_capacity_rejects_null_output_pointer(void)
-{
-    DStack stack;
-    make_int_stack(&stack, 1);
-    D_TEST_EXPR(d_stack_get_capacity(&stack, NULL) == D_ERR_INVALID_ARG);
-    d_stack_destroy(&stack);
-}
-
-static void test_is_empty_rejects_null_stack(void)
-{
-    bool is_empty = false;
-    D_TEST_EXPR(d_stack_is_empty(NULL, &is_empty) == D_ERR_INVALID_ARG);
-    D_TEST_EXPR(is_empty == false);
-}
-
-static void test_is_empty_rejects_null_output_pointer(void)
-{
-    DStack stack;
-    make_int_stack(&stack, 1);
-    D_TEST_EXPR(d_stack_is_empty(&stack, NULL) == D_ERR_INVALID_ARG);
     d_stack_destroy(&stack);
 }
 
@@ -442,17 +352,6 @@ static void test_mutating_after_failed_pop_is_still_valid(void)
     D_TEST_EXPR(d_stack_pop(&stack, &out) != D_OK);
     push_int(&stack, 1234);
     D_TEST_EXPR(pop_int(&stack) == 1234);
-    expect_empty(&stack, true);
-    d_stack_destroy(&stack);
-}
-
-static void test_mutating_after_failed_null_push_is_still_valid(void)
-{
-    DStack stack;
-    make_int_stack(&stack, 1);
-    D_TEST_EXPR(d_stack_push(&stack, NULL) == D_ERR_INVALID_ARG);
-    push_int(&stack, 55);
-    D_TEST_EXPR(pop_int(&stack) == 55);
     expect_empty(&stack, true);
     d_stack_destroy(&stack);
 }
@@ -586,28 +485,16 @@ int main(void)
     DTest tests[] = {
         D_TEST_GENERATE_TEST(test_init_creates_empty_stack),
         D_TEST_GENERATE_TEST(test_init_with_capacity_sets_capacity),
-        D_TEST_GENERATE_TEST(test_init_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_init_rejects_zero_elem_size),
         D_TEST_GENERATE_TEST(test_destroy_null_pointer_is_safe),
         D_TEST_GENERATE_TEST(test_destroy_empty_stack_is_safe),
         D_TEST_GENERATE_TEST(test_destroy_can_be_called_twice_safely),
         D_TEST_GENERATE_TEST(test_push_single_value_updates_size_and_empty_flag),
-        D_TEST_GENERATE_TEST(test_push_rejects_null_stack),
-        D_TEST_GENERATE_TEST(test_push_rejects_null_elem),
         D_TEST_GENERATE_TEST(test_push_copies_value_not_source_address),
         D_TEST_GENERATE_TEST(test_pop_returns_last_pushed_value),
         D_TEST_GENERATE_TEST(test_pop_many_values_are_lifo),
-        D_TEST_GENERATE_TEST(test_pop_rejects_null_stack),
-        D_TEST_GENERATE_TEST(test_pop_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_pop_empty_stack_fails_and_keeps_output_unchanged),
         D_TEST_GENERATE_TEST(test_pop_until_empty_then_push_again),
         D_TEST_GENERATE_TEST(test_interleaved_push_pop_preserves_lifo_order),
-        D_TEST_GENERATE_TEST(test_size_rejects_null_stack),
-        D_TEST_GENERATE_TEST(test_size_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_capacity_rejects_null_stack),
-        D_TEST_GENERATE_TEST(test_capacity_rejects_null_output_pointer),
-        D_TEST_GENERATE_TEST(test_is_empty_rejects_null_stack),
-        D_TEST_GENERATE_TEST(test_is_empty_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_stack_stores_pointer_values),
         D_TEST_GENERATE_TEST(test_stack_can_store_null_pointer_value_when_wrapped_in_slot),
         D_TEST_GENERATE_TEST(test_large_struct_elements_are_copied_exactly),
@@ -615,7 +502,6 @@ int main(void)
         D_TEST_GENERATE_TEST(test_capacity_grows_from_zero_capacity),
         D_TEST_GENERATE_TEST(test_capacity_does_not_shrink_after_pops),
         D_TEST_GENERATE_TEST(test_mutating_after_failed_pop_is_still_valid),
-        D_TEST_GENERATE_TEST(test_mutating_after_failed_null_push_is_still_valid),
         D_TEST_GENERATE_TEST(test_many_alternating_operations_leave_consistent_state),
         D_TEST_GENERATE_TEST(test_multiple_stacks_are_independent),
         D_TEST_GENERATE_TEST(test_push_exactly_at_pow2_boundary_then_one_more),

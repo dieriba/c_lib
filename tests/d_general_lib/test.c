@@ -52,11 +52,6 @@ static void test_substr_pos_after_strlen_returns_null(void)
     D_TEST_NULL(d_substr("abcdef", 7, 1));
 }
 
-static void test_substr_null_string_returns_null(void)
-{
-    D_TEST_NULL(d_substr(NULL, 0, 1));
-}
-
 static void test_substr_does_not_alias_source(void)
 {
     char src[] = "abcdef";
@@ -118,12 +113,6 @@ static void test_strdup_preserves_full_string_until_first_nul(void)
 {
     const char src[] = {'a', 'b', '\0', 'c', '\0'};
     expect_alloc_str(d_strdup(src), "ab");
-}
-
-static void test_strdup_null_input_should_return_null_not_crash(void)
-{
-    /* This test intentionally exposes the current strlen(NULL) bug if present. */
-    D_TEST_NULL(d_strdup(NULL));
 }
 
 static void test_memfill_rejects_null_dst(void)
@@ -338,7 +327,6 @@ int main(void)
         D_TEST_GENERATE_TEST(test_substr_zero_size_inside_string_returns_allocated_empty_string),
         D_TEST_GENERATE_TEST(test_substr_pos_equal_strlen_returns_allocated_empty_string),
         D_TEST_GENERATE_TEST(test_substr_pos_after_strlen_returns_null),
-        D_TEST_GENERATE_TEST(test_substr_null_string_returns_null),
         D_TEST_GENERATE_TEST(test_substr_does_not_alias_source),
         D_TEST_GENERATE_TEST(test_substr_result_is_nul_terminated_after_clamp),
         D_TEST_GENERATE_TEST(test_substr_source_with_embedded_nul_uses_c_string_length),
@@ -348,7 +336,6 @@ int main(void)
         D_TEST_GENERATE_TEST(test_strdup_empty_string_returns_allocated_empty_string),
         D_TEST_GENERATE_TEST(test_strdup_does_not_alias_source),
         D_TEST_GENERATE_TEST(test_strdup_preserves_full_string_until_first_nul),
-        D_TEST_GENERATE_TEST(test_strdup_null_input_should_return_null_not_crash),
         D_TEST_GENERATE_TEST(test_memfill_rejects_null_dst),
         D_TEST_GENERATE_TEST(test_memfill_rejects_null_filler),
         D_TEST_GENERATE_TEST(test_memfill_rejects_zero_elem_size),

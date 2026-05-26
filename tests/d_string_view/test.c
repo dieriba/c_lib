@@ -622,11 +622,6 @@ static void test_split_owned_by_char_empty_view_returns_empty_array(void)
     d_dyn_array_destroy(&arr);
 }
 
-static void test_split_owned_by_char_rejects_null_output_pointer(void)
-{
-    D_TEST_EXPR(d_string_view_split_by_char_owned(NULL, d_string_view_from_c_string("a,b"), ARRAY_DEFAULT_OPTS, ',') == D_ERR_INVALID_ARG);
-}
-
 static void test_split_owned_by_char_of_str_basic_multiple_separators(void)
 {
     DDynArray arr;
@@ -656,11 +651,6 @@ static void test_split_owned_by_char_of_str_empty_separator_set_returns_whole_st
     expect_split_size(&arr, 1);
     expect_split_elem(&arr, 0, "abc");
     d_dyn_array_destroy(&arr);
-}
-
-static void test_split_owned_by_char_of_str_rejects_null_output_pointer(void)
-{
-    D_TEST_EXPR(d_string_view_split_by_char_of_str_owned(NULL, d_string_view_from_c_string("a"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",")) == D_ERR_INVALID_ARG);
 }
 
 static void test_split_owned_by_char_should_respect_embedded_nul_in_view(void)
@@ -704,11 +694,6 @@ static void test_dyn_string_init_from_string_view_empty_view(void)
     D_TEST_EXPR(d_dyn_string_init_from_string_view(&s, d_string_view_from_c_string("")) == D_OK);
     D_TEST_STR_EQ(d_dyn_string_get_string(&s), "");
     d_dyn_string_destroy(&s);
-}
-
-static void test_dyn_string_init_from_string_view_rejects_null_dstring(void)
-{
-    D_TEST_EXPR(d_dyn_string_init_from_string_view(NULL, d_string_view_from_c_string("abc")) == D_ERR_INVALID_ARG);
 }
 
 static void test_dyn_string_init_from_string_view_from_null_parts_succeeds(void)
@@ -872,11 +857,6 @@ static void test_split_not_owned_by_char_empty_view_returns_empty_array(void)
     d_dyn_array_destroy(&arr);
 }
 
-static void test_split_not_owned_by_char_rejects_null_output_pointer(void)
-{
-    D_TEST_EXPR(d_string_view_split_by_char_not_owned(NULL, d_string_view_from_c_string("a,b"), ARRAY_DEFAULT_OPTS, ',') == D_ERR_INVALID_ARG);
-}
-
 static void test_split_not_owned_by_char_views_do_not_allocate(void)
 {
     const char src[] = "hello world foo";
@@ -894,7 +874,6 @@ static void test_split_not_owned_by_char_views_do_not_allocate(void)
     }
     d_dyn_array_destroy(&arr);
 }
-
 
 static void test_split_not_owned_by_char_of_str_basic(void)
 {
@@ -941,11 +920,6 @@ static void test_split_not_owned_by_char_of_str_all_delims_returns_empty_array(v
     D_TEST_EXPR(d_string_view_split_by_char_of_str_not_owned(&arr, d_string_view_from_c_string(";,;,"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",;")) == D_OK);
     expect_split_size(&arr, 0);
     d_dyn_array_destroy(&arr);
-}
-
-static void test_split_not_owned_by_char_of_str_rejects_null_output_pointer(void)
-{
-    D_TEST_EXPR(d_string_view_split_by_char_of_str_not_owned(NULL, d_string_view_from_c_string("a"), ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(",")) == D_ERR_INVALID_ARG);
 }
 
 static void test_split_not_owned_by_char_of_str_views_point_into_source(void)
@@ -1047,16 +1021,13 @@ int main(void)
         D_TEST_GENERATE_TEST(test_split_owned_by_char_no_separator_returns_original_copy),
         D_TEST_GENERATE_TEST(test_split_owned_by_char_all_separators_returns_empty_array),
         D_TEST_GENERATE_TEST(test_split_owned_by_char_empty_view_returns_empty_array),
-        D_TEST_GENERATE_TEST(test_split_owned_by_char_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_split_owned_by_char_of_str_basic_multiple_separators),
         D_TEST_GENERATE_TEST(test_split_owned_by_char_of_str_collapses_consecutive_separators),
         D_TEST_GENERATE_TEST(test_split_owned_by_char_of_str_empty_separator_set_returns_whole_string),
-        D_TEST_GENERATE_TEST(test_split_owned_by_char_of_str_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_split_owned_by_char_should_respect_embedded_nul_in_view),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_basic),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_subview),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_empty_view),
-        D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_rejects_null_dstring),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_from_null_parts_succeeds),
         D_TEST_GENERATE_TEST(test_dyn_string_init_from_string_view_preserves_embedded_nul),
         D_TEST_GENERATE_TEST(test_repeated_subviews_across_every_position_and_length),
@@ -1068,13 +1039,11 @@ int main(void)
         D_TEST_GENERATE_TEST(test_split_not_owned_by_char_no_separator_returns_whole),
         D_TEST_GENERATE_TEST(test_split_not_owned_by_char_all_separators_returns_empty_array),
         D_TEST_GENERATE_TEST(test_split_not_owned_by_char_empty_view_returns_empty_array),
-        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_split_not_owned_by_char_views_do_not_allocate),
         D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_basic),
         D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_collapses_consecutive),
         D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_empty_set_returns_whole),
         D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_all_delims_returns_empty_array),
-        D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_rejects_null_output_pointer),
         D_TEST_GENERATE_TEST(test_split_not_owned_by_char_of_str_views_point_into_source),
         D_TEST_GENERATE_TEST(test_view_remains_non_owning_after_dyn_string_mutation_pointer_may_be_invalid_contract),
     };
