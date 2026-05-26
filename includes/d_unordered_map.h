@@ -278,22 +278,25 @@ DResult d_unordered_map_delete(DUnorderedMap *map, void *key);
 void d_unordered_map_destroy(DUnorderedMap *map);
 
 /**
- * @brief Writes the current number of key-value pairs into @p size.
+ * @brief Returns the current number of key-value pairs.
  *
  * @param  d_unordered_map Map to query. Must not be NULL.
- * @param size            Receives the entry count. Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_unordered_map_get_size(const DUnorderedMap *d_unordered_map, usize *size);
+usize d_unordered_map_get_size(const DUnorderedMap *d_unordered_map);
 
 /**
- * @brief Writes the current table capacity into @p capacity.
+ * @brief Returns the current table capacity.
  *
  * @param  d_unordered_map Map to query. Must not be NULL.
- * @param capacity        Receives the capacity. Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_unordered_map_get_capacity(const DUnorderedMap *d_unordered_map, usize *capacity);
+usize d_unordered_map_get_capacity(const DUnorderedMap *d_unordered_map);
+
+/**
+ * @brief Returns true if the map has no entries.
+ *
+ * @param  d_unordered_map Map to query. Must not be NULL.
+ */
+bool d_unordered_map_is_empty(const DUnorderedMap *d_unordered_map);
 
 /** @} */ /* end of d_unordered_map group */
 

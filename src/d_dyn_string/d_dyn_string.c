@@ -48,15 +48,6 @@ const char *d_dyn_string_get_string(const DDynString *dstring)
     return raw_buffer_get_data((const RawBuffer *)dstring);
 }
 
-DResult d_dyn_string_get_size(const DDynString *dstring, usize *size)
-{
-    return raw_buffer_get_size((const RawBuffer *)dstring, size);
-}
-
-DResult d_dyn_string_get_capacity(const DDynString *dstring, usize *capacity)
-{
-    return raw_buffer_get_capacity((const RawBuffer *)dstring, capacity);
-}
 
 DResult d_dyn_string_sub_string_in_place(DDynString *dstring, usize pos, usize size)
 {
@@ -116,6 +107,21 @@ DResult d_dyn_string_clear(DDynString *dstring)
 void d_dyn_string_destroy(DDynString *dstring)
 {
     raw_buffer_free((RawBuffer *)dstring);
+}
+
+bool d_dyn_string_is_empty(const DDynString *dstring)
+{
+    return raw_buffer_is_empty((const RawBuffer *)dstring);
+}
+
+usize d_dyn_string_get_size(const DDynString *dstring)
+{
+    return raw_buffer_get_size((const RawBuffer *)dstring);
+}
+
+usize d_dyn_string_get_capacity(const DDynString *dstring)
+{
+    return raw_buffer_get_capacity((const RawBuffer *)dstring);
 }
 
 void d_dyn_string_dbg_print(DDynString *dstring)

@@ -29,16 +29,15 @@ DResult raw_map_remove(RawMap *raw_map, void *key, void *slot_key, void *slot_va
 DResult raw_map_delete(RawMap *raw_map, void *key);
 void raw_map_free(RawMap *raw_map);
 
-#define RAW_MAP_GETTER(FIELD, FIELD_TYPE)                                               \
-    static inline DResult raw_map_get_##FIELD(const RawMap *raw_map, FIELD_TYPE *FIELD) \
-    {                                                                                   \
-        if (raw_map == NULL || FIELD == NULL)                                           \
-            return D_ERR_INVALID_ARG;                                                   \
-        *FIELD = raw_map->FIELD;                                                        \
-        return D_OK;                                                                    \
+#define RAW_MAP_GETTER(FIELD, FIELD_TYPE)                                         \
+    static inline FIELD_TYPE raw_map_get_##FIELD(const RawMap *raw_map)           \
+    {                                                                             \
+        return raw_map->FIELD;                                                    \
     }
 
 RAW_MAP_GETTER(size, usize)
 RAW_MAP_GETTER(capacity, usize)
+
+bool raw_map_is_empty(const RawMap *raw_map);
 
 #endif

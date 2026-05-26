@@ -133,32 +133,25 @@ DResult d_de_queue_push_back(DDeQueue *d_de_queue, const void *elem);
 DResult d_de_queue_pop_back(DDeQueue *d_de_queue, void *out_elem);
 
 /**
- * @brief Writes the current number of elements in the deque into @p size.
+ * @brief Returns the current number of elements in the deque.
  *
  * @param  d_de_queue Deque to query. Must not be NULL.
- * @param size       Receives the element count. Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_de_queue_get_size(const DDeQueue *d_de_queue, usize *size);
+usize d_de_queue_get_size(const DDeQueue *d_de_queue);
 
 /**
- * @brief Writes the current allocated capacity (in elements) into @p capacity.
+ * @brief Returns the current allocated capacity in elements.
  *
  * @param  d_de_queue Deque to query. Must not be NULL.
- * @param capacity   Receives the capacity. Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_de_queue_get_capacity(const DDeQueue *d_de_queue, usize *capacity);
+usize d_de_queue_get_capacity(const DDeQueue *d_de_queue);
 
 /**
- * @brief Writes whether the deque has no elements into @p is_empty.
+ * @brief Returns true if the deque has no elements.
  *
  * @param  d_de_queue Deque to query. Must not be NULL.
- * @param is_empty   Set to @c true if size == 0, @c false otherwise.
- *                        Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_de_queue_is_empty(const DDeQueue *d_de_queue, bool *is_empty);
+bool d_de_queue_is_empty(const DDeQueue *d_de_queue);
 
 /**
  * @brief Frees all memory held by the deque and zeroes the struct.

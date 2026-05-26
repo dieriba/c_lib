@@ -13,15 +13,6 @@ DResult d_unordered_map_init(DUnorderedMap *d_unordered_map, usize key_size, usi
     return raw_map_init((RawMap *)d_unordered_map, key_size, value_size, capacity, hash_fn, cmp_fn, key_destructor_fn, value_destructor_fn);
 }
 
-DResult d_unordered_map_get_size(const DUnorderedMap *d_unordered_map, usize *size)
-{
-    return raw_map_get_size((RawMap *)d_unordered_map, size);
-}
-
-DResult d_unordered_map_get_capacity(const DUnorderedMap *d_unordered_map, usize *capacity)
-{
-    return raw_map_get_capacity((RawMap *)d_unordered_map, capacity);
-}
 
 DResult d_unordered_map_insert(DUnorderedMap *map, void *key, void *value)
 {
@@ -49,4 +40,19 @@ void d_unordered_map_destroy(DUnorderedMap *map)
         return;
     raw_map_free((RawMap *)map);
     memset(map, 0, sizeof(DUnorderedMap));
+}
+
+bool d_unordered_map_is_empty(const DUnorderedMap *map)
+{
+    return raw_map_is_empty((const RawMap *)map);
+}
+
+usize d_unordered_map_get_size(const DUnorderedMap *map)
+{
+    return raw_map_get_size((const RawMap *)map);
+}
+
+usize d_unordered_map_get_capacity(const DUnorderedMap *map)
+{
+    return raw_map_get_capacity((const RawMap *)map);
 }

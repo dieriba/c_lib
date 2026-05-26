@@ -247,22 +247,25 @@ DResult d_hash_set_delete(DHashSet *map, void *key);
 DResult d_hash_set_remove(DHashSet *map, void *key, void *slot_key);
 
 /**
- * @brief Writes the current number of keys in the set into @p size.
+ * @brief Returns the current number of keys in the set.
  *
  * @param  d_hash_set Hash set to query. Must not be NULL.
- * @param size       Receives the key count. Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_hash_set_get_size(const DHashSet *d_hash_set, usize *size);
+usize d_hash_set_get_size(const DHashSet *d_hash_set);
 
 /**
- * @brief Writes the current table capacity into @p capacity.
+ * @brief Returns the current table capacity.
  *
  * @param  d_hash_set Hash set to query. Must not be NULL.
- * @param capacity   Receives the capacity. Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_hash_set_get_capacity(const DHashSet *d_hash_set, usize *capacity);
+usize d_hash_set_get_capacity(const DHashSet *d_hash_set);
+
+/**
+ * @brief Returns true if the hash set has no entries.
+ *
+ * @param  d_hash_set Hash set to query. Must not be NULL.
+ */
+bool d_hash_set_is_empty(const DHashSet *d_hash_set);
 
 /**
  * @brief Calls the key destructor for all remaining entries, frees the table,

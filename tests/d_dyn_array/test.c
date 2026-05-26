@@ -9,18 +9,12 @@
 
 static void expect_size(DDynArray *arr, usize expected)
 {
-    usize size = (usize)-1;
-
-    D_TEST_EXPR(d_dyn_array_get_size(arr, &size) == D_OK);
-    D_TEST_EXPR(size == expected);
+    D_TEST_EXPR(d_dyn_array_get_size(arr) == expected);
 }
 
 static void expect_capacity_at_least(DDynArray *arr, usize min_capacity)
 {
-    usize capacity = 0;
-
-    D_TEST_EXPR(d_dyn_array_get_capacity(arr, &capacity) == D_OK);
-    D_TEST_EXPR(capacity >= min_capacity);
+    D_TEST_EXPR(d_dyn_array_get_capacity(arr) >= min_capacity);
 }
 
 static void make_int_array(DDynArray *arr, usize reserved)
@@ -464,10 +458,10 @@ static void test_clear_removes_all_elements_but_keeps_capacity(void)
 
     make_int_array(&arr, 16);
     D_TEST_EXPR(d_dyn_array_append(&arr, values, 4) == D_OK);
-    D_TEST_EXPR(d_dyn_array_get_capacity(&arr, &before_capacity) == D_OK);
+    before_capacity = d_dyn_array_get_capacity(&arr);
     D_TEST_EXPR(d_dyn_array_clear_array(&arr) == D_OK);
     expect_size(&arr, 0);
-    D_TEST_EXPR(d_dyn_array_get_capacity(&arr, &after_capacity) == D_OK);
+    after_capacity = d_dyn_array_get_capacity(&arr);
     D_TEST_EXPR(after_capacity == before_capacity);
     d_dyn_array_destroy(&arr);
 }

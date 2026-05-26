@@ -101,37 +101,25 @@ DResult d_stack_pop(DStack *d_stack, void *out_elem);
 DResult d_stack_copy(DStack *dst, const DStack *src);
 
 /**
- * @brief Writes the current number of elements in the stack into @p size.
+ * @brief Returns the current number of elements in the stack.
  *
  * @param d_stack Stack to query. Must not be NULL.
- * @param size    Receives the element count. Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_stack_get_size(const DStack *d_stack, usize *size);
+usize d_stack_get_size(const DStack *d_stack);
 
 /**
- * @brief Writes the current allocated capacity (in elements) into @p capacity.
+ * @brief Returns the current allocated capacity in elements.
  *
- * @param d_stack  Stack to query. Must not be NULL.
- * @param capacity Receives the capacity. Must not be NULL.
- * @return ::D_OK.
+ * @param d_stack Stack to query. Must not be NULL.
  */
-DResult d_stack_get_capacity(const DStack *d_stack, usize *capacity);
+usize d_stack_get_capacity(const DStack *d_stack);
 
 /**
- * @brief Writes whether the stack has no elements into @p is_empty.
+ * @brief Returns true if the stack has no elements.
  *
- * @param d_stack  Stack to query. Must not be NULL.
- * @param is_empty Set to @c true if size == 0, @c false otherwise. Must not be NULL.
- * @return ::D_OK.
- *
- * @code{.c}
- *   bool empty;
- *   d_stack_is_empty(&stack, &empty);
- *   if (empty) puts("stack is empty");
- * @endcode
+ * @param d_stack Stack to query. Must not be NULL.
  */
-DResult d_stack_is_empty(const DStack *d_stack, bool *is_empty);
+bool d_stack_is_empty(const DStack *d_stack);
 
 /**
  * @brief Frees all memory held by the stack and zeroes the struct.

@@ -67,10 +67,6 @@ typedef struct DDynArray
 #define d_dyn_array_get_elem_addr_at_safe(d_dyn_array, index) (void *)(((char *)((d_dyn_array)->array.data)) + d_dyn_array->array.elem_size * (index))
 #define d_dyn_array_get_elem_deref_addr_at_safe(d_dyn_array, index) *((void **)(((char *)((d_dyn_array)->array.data)) + d_dyn_array->array.elem_size * (index)))
 
-#define d_dyn_array_get_data_safe(d_dyn_array) (d_dyn_array)->array.data
-#define d_dyn_array_get_size_safe(d_dyn_array) (d_dyn_array)->array.size
-#define d_dyn_array_get_capacity_safe(d_dyn_array) (d_dyn_array)->array.capacity
-
 /* -----------------------------------------------------------------------
  * Initialisation
  * -------------------------------------------------------------------- */
@@ -159,22 +155,25 @@ DResult d_dyn_array_get_elem_at(const DDynArray *dyn_array, usize index, void *o
 DResult d_dyn_array_get_elem_addr_at(const DDynArray *dyn_array, usize index, void **out_elem);
 
 /**
- * @brief Writes the current element count into @p size.
+ * @brief Returns the current element count.
  *
  * @param  dyn_array The array to query. Must not be NULL.
- * @param  size      Receives the element count. Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_dyn_array_get_size(const DDynArray *dyn_array, usize *size);
+usize d_dyn_array_get_size(const DDynArray *dyn_array);
 
 /**
- * @brief Writes the allocated capacity (in elements) into @p capacity.
+ * @brief Returns the allocated capacity in elements.
  *
  * @param  dyn_array The array to query. Must not be NULL.
- * @param  capacity  Receives the capacity. Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_dyn_array_get_capacity(const DDynArray *dyn_array, usize *capacity);
+usize d_dyn_array_get_capacity(const DDynArray *dyn_array);
+
+/**
+ * @brief Returns true if the array has no elements.
+ *
+ * @param  dyn_array The array to query. Must not be NULL.
+ */
+bool d_dyn_array_is_empty(const DDynArray *dyn_array);
 
 /* -----------------------------------------------------------------------
  * Insertion

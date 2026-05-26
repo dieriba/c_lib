@@ -13,23 +13,17 @@ static void make_int_queue(DQueue *queue, usize capacity)
 
 static void expect_size(DQueue *queue, usize expected)
 {
-    usize size = (usize)-1;
-    D_TEST_EXPR(d_queue_get_size(queue, &size) == D_OK);
-    D_TEST_EXPR(size == expected);
+    D_TEST_EXPR(d_queue_get_size(queue) == expected);
 }
 
 static void expect_capacity_at_least(DQueue *queue, usize expected_min)
 {
-    usize capacity = 0;
-    D_TEST_EXPR(d_queue_get_capacity(queue, &capacity) == D_OK);
-    D_TEST_EXPR(capacity >= expected_min);
+    D_TEST_EXPR(d_queue_get_capacity(queue) >= expected_min);
 }
 
 static void expect_empty(DQueue *queue, bool expected)
 {
-    bool is_empty = !expected;
-    D_TEST_EXPR(d_queue_is_empty(queue, &is_empty) == D_OK);
-    D_TEST_EXPR(is_empty == expected);
+    D_TEST_EXPR(d_queue_is_empty(queue) == expected);
 }
 
 static void push_int(DQueue *queue, int value)
@@ -291,10 +285,10 @@ static void test_capacity_does_not_shrink_after_pops(void)
     usize before = 0, after = 0;
     for (int i = 0; i < 64; i++)
         push_int(&queue, i);
-    D_TEST_EXPR(d_queue_get_capacity(&queue, &before) == D_OK);
+    before = d_queue_get_capacity(&queue);
     for (int i = 0; i < 64; i++)
         D_TEST_EXPR(pop_int(&queue) == i);
-    D_TEST_EXPR(d_queue_get_capacity(&queue, &after) == D_OK);
+    after = d_queue_get_capacity(&queue);
     D_TEST_EXPR(after == before);
     expect_empty(&queue, true);
     d_queue_destroy(&queue);

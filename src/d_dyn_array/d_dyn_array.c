@@ -50,15 +50,6 @@ DResult d_dyn_array_get_elem_addr_at(const DDynArray *dyn_array, usize index, vo
 	return raw_buffer_get_elem_addr((RawBuffer *)dyn_array, index, out_elem);
 }
 
-DResult d_dyn_array_get_size(const DDynArray *dyn_array, usize *size)
-{
-	return raw_buffer_get_size((const RawBuffer *)dyn_array, size);
-}
-
-DResult d_dyn_array_get_capacity(const DDynArray *dyn_array, usize *capacity)
-{
-	return raw_buffer_get_capacity((const RawBuffer *)dyn_array, capacity);
-}
 
 DResult d_dyn_array_remove_elem_fast(DDynArray *dyn_array, usize index, void *out_elem)
 {
@@ -78,6 +69,21 @@ DResult d_dyn_array_clear_array(DDynArray *dyn_array)
 void d_dyn_array_destroy(DDynArray *dyn_array)
 {
 	return raw_buffer_free((RawBuffer *)dyn_array);
+}
+
+bool d_dyn_array_is_empty(const DDynArray *dyn_array)
+{
+	return raw_buffer_is_empty((const RawBuffer *)dyn_array);
+}
+
+usize d_dyn_array_get_size(const DDynArray *dyn_array)
+{
+	return raw_buffer_get_size((const RawBuffer *)dyn_array);
+}
+
+usize d_dyn_array_get_capacity(const DDynArray *dyn_array)
+{
+	return raw_buffer_get_capacity((const RawBuffer *)dyn_array);
 }
 
 void d_dyn_array_dbg_print(DDynArray *dyn_array, FnElemRepr elem_repr)

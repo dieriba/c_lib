@@ -6,18 +6,12 @@
 
 static void expect_size(DDynString *s, usize expected)
 {
-    usize size = 0;
-
-    D_TEST_EXPR(d_dyn_string_get_size(s, &size) == D_OK);
-    D_TEST_EXPR(size == expected);
+    D_TEST_EXPR(d_dyn_string_get_size(s) == expected);
 }
 
 static void expect_capacity_at_least(DDynString *s, usize expected_min)
 {
-    usize capacity = 0;
-
-    D_TEST_EXPR(d_dyn_string_get_capacity(s, &capacity) == D_OK);
-    D_TEST_EXPR(capacity >= expected_min);
+    D_TEST_EXPR(d_dyn_string_get_capacity(s) >= expected_min);
 }
 
 static void expect_c_string(DDynString *s, const char *expected)
@@ -27,11 +21,8 @@ static void expect_c_string(DDynString *s, const char *expected)
 
 static void expect_zero_terminated(DDynString *s)
 {
-    usize size = 0;
-    const char *str = NULL;
-
-    D_TEST_EXPR(d_dyn_string_get_size(s, &size) == D_OK);
-    str = d_dyn_string_get_string(s);
+    usize size = d_dyn_string_get_size(s);
+    const char *str = d_dyn_string_get_string(s);
     D_TEST_NOT_NULL(str);
     D_TEST_EXPR(str[size] == '\0');
 }

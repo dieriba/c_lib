@@ -1,5 +1,6 @@
 #include "d_stack.h"
 #include "container.h"
+#include "raw_ring_buffer.h"
 #include <string.h>
 
 ASSERT_FIRST_FIELD(DStack, raw_ring_buffer);
@@ -24,19 +25,20 @@ DResult d_stack_pop(DStack *d_stack, void *out_elem)
     return raw_ring_buffer_pop_back((RawRingBuffer *)d_stack, out_elem);
 }
 
-DResult d_stack_get_size(const DStack *d_stack, usize *size)
+
+bool d_stack_is_empty(const DStack *d_stack)
 {
-    return raw_ring_buffer_get_size((RawRingBuffer *)d_stack, size);
+    return raw_ring_buffer_is_empty((const RawRingBuffer *)d_stack);
 }
 
-DResult d_stack_get_capacity(const DStack *d_stack, usize *capacity)
+usize d_stack_get_size(const DStack *d_stack)
 {
-    return raw_ring_buffer_get_capacity((RawRingBuffer *)d_stack, capacity);
+    return raw_ring_buffer_get_size((const RawRingBuffer *)d_stack);
 }
 
-DResult d_stack_is_empty(const DStack *d_stack, bool *is_empty)
+usize d_stack_get_capacity(const DStack *d_stack)
 {
-    return raw_ring_buffer_is_empty((RawRingBuffer *)d_stack, is_empty);
+    return raw_ring_buffer_get_capacity((const RawRingBuffer *)d_stack);
 }
 
 void d_stack_destroy(DStack *d_stack)

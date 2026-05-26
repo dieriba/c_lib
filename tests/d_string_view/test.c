@@ -56,9 +56,7 @@ static void expect_split_elem(DDynArray *arr, usize index, const char *expected)
 
 static void expect_split_size(DDynArray *arr, usize expected)
 {
-    usize size = 0;
-    D_TEST_EXPR(d_dyn_array_get_size(arr, &size) == D_OK);
-    D_TEST_EXPR(size == expected);
+    D_TEST_EXPR(d_dyn_array_get_size(arr) == expected);
 }
 
 static void expect_split_view_elem(DDynArray *arr, usize index, const char *expected)
@@ -708,10 +706,8 @@ static void test_dyn_string_init_from_string_view_preserves_embedded_nul(void)
 {
     const char data[] = {'a', '\0', 'b'};
     DDynString s;
-    usize size = 0;
     D_TEST_EXPR(d_dyn_string_init_from_string_view(&s, d_string_view_from_parts(data, sizeof(data))) == D_OK);
-    D_TEST_EXPR(d_dyn_string_get_size(&s, &size) == D_OK);
-    D_TEST_EXPR(size == sizeof(data));
+    D_TEST_EXPR(d_dyn_string_get_size(&s) == sizeof(data));
     D_TEST_MEM_EQ(d_dyn_string_get_string(&s), data, sizeof(data));
     D_TEST_EXPR(d_dyn_string_get_string(&s)[sizeof(data)] == '\0');
     d_dyn_string_destroy(&s);
@@ -864,8 +860,7 @@ static void test_split_not_owned_by_char_views_do_not_allocate(void)
     DDynArray arr;
     D_TEST_EXPR(d_string_view_split_by_char_not_owned(&arr, view, ARRAY_DEFAULT_OPTS, ' ') == D_OK);
     expect_split_size(&arr, 3);
-    usize size = 0;
-    d_dyn_array_get_size(&arr, &size);
+    usize size = d_dyn_array_get_size(&arr);
     for (usize i = 0; i < size; ++i)
     {
         DStringView tok = {0};
@@ -929,8 +924,7 @@ static void test_split_not_owned_by_char_of_str_views_point_into_source(void)
     DDynArray arr;
     D_TEST_EXPR(d_string_view_split_by_char_of_str_not_owned(&arr, view, ARRAY_DEFAULT_OPTS, D_STRING_VIEW_FROM_LITERAL(" ,")) == D_OK);
     expect_split_size(&arr, 3);
-    usize size = 0;
-    d_dyn_array_get_size(&arr, &size);
+    usize size = d_dyn_array_get_size(&arr);
     for (usize i = 0; i < size; ++i)
     {
         DStringView tok = {0};

@@ -14,15 +14,6 @@ DResult d_hash_set_init(DHashSet *d_hash_set, usize key_size, usize capacity, Fn
     return raw_map_init((RawMap *)d_hash_set, key_size, VALUE_SIZE, capacity, hash_fn, cmp_fn, key_destructor_fn, NULL);
 }
 
-DResult d_hash_set_get_size(const DHashSet *d_hash_set, usize *size)
-{
-    return raw_map_get_size((RawMap *)d_hash_set, size);
-}
-
-DResult d_hash_set_get_capacity(const DHashSet *d_hash_set, usize *capacity)
-{
-    return raw_map_get_capacity((RawMap *)d_hash_set, capacity);
-}
 
 DResult d_hash_set_insert(DHashSet *map, void *key)
 {
@@ -50,4 +41,19 @@ void d_hash_set_destroy(DHashSet *map)
         return;
     raw_map_free((RawMap *)map);
     memset(map, 0, sizeof(DHashSet));
+}
+
+bool d_hash_set_is_empty(const DHashSet *map)
+{
+    return raw_map_is_empty((const RawMap *)map);
+}
+
+usize d_hash_set_get_size(const DHashSet *map)
+{
+    return raw_map_get_size((const RawMap *)map);
+}
+
+usize d_hash_set_get_capacity(const DHashSet *map)
+{
+    return raw_map_get_capacity((const RawMap *)map);
 }

@@ -317,3 +317,8 @@ DResult raw_buffer_pop(RawBuffer *raw_buffer, void *out_elem)
 {
     return raw_buffer_swap_remove(raw_buffer, raw_buffer->size - 1, out_elem);
 }
+
+bool raw_buffer_is_empty(const RawBuffer *raw_buffer)
+{
+    return raw_buffer->size == 0;
+}

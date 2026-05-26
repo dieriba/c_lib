@@ -148,16 +148,12 @@ static void init_collision_map(DUnorderedMap *map, usize value_size, usize capac
 
 static void assert_size(DUnorderedMap *map, usize expected)
 {
-    usize size = 999999;
-    D_TEST_EXPR(d_unordered_map_get_size(map, &size) == D_OK);
-    D_TEST_EXPR(size == expected);
+    D_TEST_EXPR(d_unordered_map_get_size(map) == expected);
 }
 
 static void assert_capacity_at_least(DUnorderedMap *map, usize expected_min)
 {
-    usize capacity = 0;
-    D_TEST_EXPR(d_unordered_map_get_capacity(map, &capacity) == D_OK);
-    D_TEST_EXPR(capacity >= expected_min);
+    D_TEST_EXPR(d_unordered_map_get_capacity(map) >= expected_min);
 }
 
 static void insert_int(DUnorderedMap *map, int key, int value)
@@ -769,11 +765,11 @@ static void test_capacity_grows_monotonically_under_load(void)
     usize curr_capacity = 0;
 
     init_int_map(&map, sizeof(int), 0, NULL, NULL);
-    D_TEST_EXPR(d_unordered_map_get_capacity(&map, &prev_capacity) == D_OK);
+    prev_capacity = d_unordered_map_get_capacity(&map);
     for (int i = 0; i < 500; ++i)
     {
         insert_int(&map, i, i);
-        D_TEST_EXPR(d_unordered_map_get_capacity(&map, &curr_capacity) == D_OK);
+        curr_capacity = d_unordered_map_get_capacity(&map);
         D_TEST_EXPR(curr_capacity >= prev_capacity);
         prev_capacity = curr_capacity;
     }

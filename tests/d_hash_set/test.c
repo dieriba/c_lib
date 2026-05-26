@@ -169,16 +169,12 @@ static void init_collision_set(DHashSet *set, usize capacity, DestroyElemFn free
 
 static void assert_size(DHashSet *set, usize expected)
 {
-    usize size = 999999;
-    D_TEST_EXPR(d_hash_set_get_size(set, &size) == D_OK);
-    D_TEST_EXPR(size == expected);
+    D_TEST_EXPR(d_hash_set_get_size(set) == expected);
 }
 
 static void assert_capacity_at_least(DHashSet *set, usize expected_min)
 {
-    usize capacity = 0;
-    D_TEST_EXPR(d_hash_set_get_capacity(set, &capacity) == D_OK);
-    D_TEST_EXPR(capacity >= expected_min);
+    D_TEST_EXPR(d_hash_set_get_capacity(set) >= expected_min);
 }
 
 static void insert_int(DHashSet *set, int key)
@@ -920,10 +916,10 @@ static void test_capacity_never_shrinks_after_deletes(void)
     init_int_set_custom(&set, 1, NULL);
     for (int i = 0; i < 300; ++i)
         insert_int(&set, i);
-    D_TEST_EXPR(d_hash_set_get_capacity(&set, &cap_before) == D_OK);
+    cap_before = d_hash_set_get_capacity(&set);
     for (int i = 0; i < 300; ++i)
         D_TEST_EXPR(d_hash_set_delete(&set, &i) == D_OK);
-    D_TEST_EXPR(d_hash_set_get_capacity(&set, &cap_after) == D_OK);
+    cap_after = d_hash_set_get_capacity(&set);
     D_TEST_EXPR(cap_after == cap_before);
     assert_size(&set, 0);
     d_hash_set_destroy(&set);
@@ -938,13 +934,13 @@ static void test_capacity_grows_monotonically_under_load(void)
     init_int_set_custom(&set, 0, NULL);
     for (int i = 0; i < 125; ++i)
         insert_int(&set, i);
-    D_TEST_EXPR(d_hash_set_get_capacity(&set, &cap_at_125) == D_OK);
+    cap_at_125 = d_hash_set_get_capacity(&set);
     for (int i = 125; i < 250; ++i)
         insert_int(&set, i);
-    D_TEST_EXPR(d_hash_set_get_capacity(&set, &cap_at_250) == D_OK);
+    cap_at_250 = d_hash_set_get_capacity(&set);
     for (int i = 250; i < 500; ++i)
         insert_int(&set, i);
-    D_TEST_EXPR(d_hash_set_get_capacity(&set, &cap_at_500) == D_OK);
+    cap_at_500 = d_hash_set_get_capacity(&set);
     D_TEST_EXPR(cap_at_250 >= cap_at_125);
     D_TEST_EXPR(cap_at_500 >= cap_at_250);
     assert_size(&set, 500);

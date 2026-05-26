@@ -100,31 +100,25 @@ DResult d_queue_copy(DQueue *dst, const DQueue *src);
 DResult d_queue_pop(DQueue *d_queue, void *out_elem);
 
 /**
- * @brief Writes whether the queue has no elements into @p is_empty.
- *
- * @param  d_queue  Queue to query. Must not be NULL.
- * @param is_empty Set to @c true if size == 0, @c false otherwise. Must not be NULL.
- * @return ::D_OK.
- */
-DResult d_queue_is_empty(const DQueue *d_queue, bool *is_empty);
-
-/**
- * @brief Writes the current number of elements in the queue into @p size.
+ * @brief Returns true if the queue has no elements.
  *
  * @param  d_queue Queue to query. Must not be NULL.
- * @param size    Receives the element count. Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_queue_get_size(const DQueue *d_queue, usize *size);
+bool d_queue_is_empty(const DQueue *d_queue);
 
 /**
- * @brief Writes the current allocated capacity (in elements) into @p capacity.
+ * @brief Returns the current number of elements in the queue.
  *
- * @param  d_queue  Queue to query. Must not be NULL.
- * @param capacity Receives the capacity. Must not be NULL.
- * @return ::D_OK.
+ * @param  d_queue Queue to query. Must not be NULL.
  */
-DResult d_queue_get_capacity(const DQueue *d_queue, usize *capacity);
+usize d_queue_get_size(const DQueue *d_queue);
+
+/**
+ * @brief Returns the current allocated capacity in elements.
+ *
+ * @param  d_queue Queue to query. Must not be NULL.
+ */
+usize d_queue_get_capacity(const DQueue *d_queue);
 
 /**
  * @brief Frees all memory held by the queue and zeroes the struct.

@@ -337,3 +337,8 @@ void raw_map_free(RawMap *raw_map)
     free(raw_map->map);
     memset(raw_map, 0, sizeof(RawMap));
 }
+
+bool raw_map_is_empty(const RawMap *raw_map)
+{
+    return raw_map->size == 0;
+}

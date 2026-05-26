@@ -13,23 +13,17 @@ static void make_int_stack(DStack *stack, usize capacity)
 
 static void expect_size(DStack *stack, usize expected)
 {
-    usize size = (usize)-1;
-    D_TEST_EXPR(d_stack_get_size(stack, &size) == D_OK);
-    D_TEST_EXPR(size == expected);
+    D_TEST_EXPR(d_stack_get_size(stack) == expected);
 }
 
 static void expect_capacity_at_least(DStack *stack, usize expected_min)
 {
-    usize capacity = 0;
-    D_TEST_EXPR(d_stack_get_capacity(stack, &capacity) == D_OK);
-    D_TEST_EXPR(capacity >= expected_min);
+    D_TEST_EXPR(d_stack_get_capacity(stack) >= expected_min);
 }
 
 static void expect_empty(DStack *stack, bool expected)
 {
-    bool is_empty = !expected;
-    D_TEST_EXPR(d_stack_is_empty(stack, &is_empty) == D_OK);
-    D_TEST_EXPR(is_empty == expected);
+    D_TEST_EXPR(d_stack_is_empty(stack) == expected);
 }
 
 static void push_int(DStack *stack, int value)
@@ -336,10 +330,10 @@ static void test_capacity_does_not_shrink_after_pops(void)
     usize capacity_before = 0, capacity_after = 0;
     for (int i = 0; i < 64; i++)
         push_int(&stack, i);
-    D_TEST_EXPR(d_stack_get_capacity(&stack, &capacity_before) == D_OK);
+    capacity_before = d_stack_get_capacity(&stack);
     for (int i = 0; i < 64; i++)
         (void)pop_int(&stack);
-    D_TEST_EXPR(d_stack_get_capacity(&stack, &capacity_after) == D_OK);
+    capacity_after = d_stack_get_capacity(&stack);
     D_TEST_EXPR(capacity_after == capacity_before);
     d_stack_destroy(&stack);
 }

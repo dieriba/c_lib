@@ -34,19 +34,20 @@ DResult d_de_queue_pop_back(DDeQueue *d_de_queue, void *out_elem)
     return raw_ring_buffer_pop_back((RawRingBuffer *)d_de_queue, out_elem);
 }
 
-DResult d_de_queue_get_size(const DDeQueue *d_de_queue, usize *size)
+
+bool d_de_queue_is_empty(const DDeQueue *d_de_queue)
 {
-    return raw_ring_buffer_get_size((RawRingBuffer *)d_de_queue, size);
+    return raw_ring_buffer_is_empty((const RawRingBuffer *)d_de_queue);
 }
 
-DResult d_de_queue_get_capacity(const DDeQueue *d_de_queue, usize *capacity)
+usize d_de_queue_get_size(const DDeQueue *d_de_queue)
 {
-    return raw_ring_buffer_get_capacity((RawRingBuffer *)d_de_queue, capacity);
+    return raw_ring_buffer_get_size((const RawRingBuffer *)d_de_queue);
 }
 
-DResult d_de_queue_is_empty(const DDeQueue *d_de_queue, bool *is_empty)
+usize d_de_queue_get_capacity(const DDeQueue *d_de_queue)
 {
-    return raw_ring_buffer_is_empty((RawRingBuffer *)d_de_queue, is_empty);
+    return raw_ring_buffer_get_capacity((const RawRingBuffer *)d_de_queue);
 }
 
 void d_de_queue_destroy(DDeQueue *d_de_queue)

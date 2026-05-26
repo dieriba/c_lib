@@ -169,10 +169,9 @@ DResult raw_ring_buffer_pop_back(RawRingBuffer *raw_ring_buffer, void *out_elem)
     return pop(raw_ring_buffer, out_elem, pop_back);
 }
 
-DResult raw_ring_buffer_is_empty(const RawRingBuffer *raw_ring_buffer, bool *is_empty)
+bool raw_ring_buffer_is_empty(const RawRingBuffer *raw_ring_buffer)
 {
-    *is_empty = raw_ring_buffer->size == 0;
-    return D_OK;
+    return raw_ring_buffer->size == 0;
 }
 
 void raw_ring_buffer_clear(RawRingBuffer *raw_ring_buffer)

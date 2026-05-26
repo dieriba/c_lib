@@ -160,24 +160,27 @@ DResult d_dyn_string_get_char_at(const DDynString *dstring, usize i, char *out_e
 DCompareResult d_dyn_string_compare(DDynString *d1, DDynString *d2);
 
 /**
- * @brief Writes the number of characters (excluding the null terminator) into @p size.
+ * @brief Returns the number of characters (excluding the null terminator).
  *
  * @param  dstring The string to query. Must not be NULL.
- * @param size    Receives the character count. Must not be NULL.
- * @return ::D_OK.
  */
-DResult d_dyn_string_get_size(const DDynString *dstring, usize *size);
+usize d_dyn_string_get_size(const DDynString *dstring);
 
 /**
- * @brief Writes the allocated capacity (in characters) into @p capacity.
+ * @brief Returns the allocated capacity in characters.
  *
  * The capacity is always at least `size + 1` to hold the null terminator.
  *
- * @param  dstring  The string to query. Must not be NULL.
- * @param capacity Receives the capacity. Must not be NULL.
- * @return ::D_OK.
+ * @param  dstring The string to query. Must not be NULL.
  */
-DResult d_dyn_string_get_capacity(const DDynString *dstring, usize *capacity);
+usize d_dyn_string_get_capacity(const DDynString *dstring);
+
+/**
+ * @brief Returns true if the string has no characters.
+ *
+ * @param  dstring The string to query. Must not be NULL.
+ */
+bool d_dyn_string_is_empty(const DDynString *dstring);
 
 /* -----------------------------------------------------------------------
  * Mutation

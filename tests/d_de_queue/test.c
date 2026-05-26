@@ -14,26 +14,17 @@ static void make_int_deque(DDeQueue *deque, usize capacity)
 
 static void expect_size(DDeQueue *deque, usize expected)
 {
-    usize size = (usize)-1;
-
-    D_TEST_EXPR(d_de_queue_get_size(deque, &size) == D_OK);
-    D_TEST_EXPR(size == expected);
+    D_TEST_EXPR(d_de_queue_get_size(deque) == expected);
 }
 
 static void expect_capacity_at_least(DDeQueue *deque, usize min_capacity)
 {
-    usize capacity = 0;
-
-    D_TEST_EXPR(d_de_queue_get_capacity(deque, &capacity) == D_OK);
-    D_TEST_EXPR(capacity >= min_capacity);
+    D_TEST_EXPR(d_de_queue_get_capacity(deque) >= min_capacity);
 }
 
 static void expect_empty(DDeQueue *deque, bool expected)
 {
-    bool is_empty = !expected;
-
-    D_TEST_EXPR(d_de_queue_is_empty(deque, &is_empty) == D_OK);
-    D_TEST_EXPR(is_empty == expected);
+    D_TEST_EXPR(d_de_queue_is_empty(deque) == expected);
 }
 
 static void push_front_int(DDeQueue *deque, int value)
@@ -713,11 +704,11 @@ static void test_capacity_never_shrinks_after_pops(void)
     make_int_deque(&deque, 1);
     for (int i = 0; i < 128; i++)
         push_back_int(&deque, i);
-    D_TEST_EXPR(d_de_queue_get_capacity(&deque, &capacity_after_growth) == D_OK);
+    capacity_after_growth = d_de_queue_get_capacity(&deque);
     D_TEST_EXPR(capacity_after_growth >= 128);
     for (int i = 0; i < 128; i++)
         D_TEST_EXPR(pop_front_int(&deque) == i);
-    D_TEST_EXPR(d_de_queue_get_capacity(&deque, &capacity_after_drain) == D_OK);
+    capacity_after_drain = d_de_queue_get_capacity(&deque);
     D_TEST_EXPR(capacity_after_drain == capacity_after_growth);
     d_de_queue_destroy(&deque);
 }
@@ -730,10 +721,10 @@ static void test_capacity_stable_after_failed_operations(void)
     int out = 0;
 
     make_int_deque(&deque, 4);
-    D_TEST_EXPR(d_de_queue_get_capacity(&deque, &before) == D_OK);
+    before = d_de_queue_get_capacity(&deque);
     D_TEST_EXPR(d_de_queue_pop_front(&deque, &out) != D_OK);
     D_TEST_EXPR(d_de_queue_pop_back(&deque, &out) != D_OK);
-    D_TEST_EXPR(d_de_queue_get_capacity(&deque, &after) == D_OK);
+    after = d_de_queue_get_capacity(&deque);
     D_TEST_EXPR(after == before);
     expect_size(&deque, 0);
     d_de_queue_destroy(&deque);

@@ -46,14 +46,12 @@ DResult raw_buffer_prepend(RawBuffer *dst, const RawBuffer *src);
 DResult raw_buffer_push(RawBuffer *raw_buffer, const void *elem);
 DResult raw_buffer_pop(RawBuffer *raw_buffer, void *out_elem);
 DResult raw_buffer_swap_remove(RawBuffer *raw_buffer, usize index, void *out_elem);
+bool raw_buffer_is_empty(const RawBuffer *raw_buffer);
 
-#define RAW_BUFFER_GETTER(FIELD, FIELD_TYPE)                                                     \
-    static inline DResult raw_buffer_get_##FIELD(const RawBuffer *raw_buffer, FIELD_TYPE *FIELD) \
-    {                                                                                            \
-        if (raw_buffer == NULL || FIELD == NULL)                                                 \
-            return D_ERR_INVALID_ARG;                                                            \
-        *FIELD = raw_buffer->FIELD;                                                              \
-        return D_OK;                                                                             \
+#define RAW_BUFFER_GETTER(FIELD, FIELD_TYPE)                                             \
+    static inline FIELD_TYPE raw_buffer_get_##FIELD(const RawBuffer *raw_buffer)         \
+    {                                                                                    \
+        return raw_buffer->FIELD;                                                        \
     }
 
 RAW_BUFFER_GETTER(size, usize)
