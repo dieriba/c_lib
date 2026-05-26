@@ -44,15 +44,15 @@ static inline void _free_str(void *elem)
  * The result is always null-terminated. The caller is responsible for freeing
  * the returned pointer.
  *
- * @param str  Null-terminated source string. If NULL, returns NULL.
+ * @param str  Null-terminated source string. Must not be NULL.
  * @param pos  Zero-based start offset. If @p pos is strictly greater than
  *             @c strlen(str), returns NULL.
  * @param size Number of characters to copy. If @p pos equals @c strlen(str)
  *             or the effective copy length is 0, returns an empty allocated
  *             string @c "".
  * @return Newly allocated substring, @c "" (empty string) if the effective
- *         length is 0 and @p pos is in-range, or NULL if @p str is NULL,
- *         @p pos exceeds the string length, or allocation fails.
+ *         length is 0 and @p pos is in-range, or NULL if @p pos exceeds the
+ *         string length or allocation fails.
  *
  * @code{.c}
  *   char *s = d_substr("hello world", 6, 5); // s == "world"
@@ -70,9 +70,8 @@ char *d_substr(const char *str, usize pos, usize size);
  * Implemented as @c d_substr(str, 0, strlen(str)). The caller is responsible
  * for freeing the returned pointer.
  *
- * @param str Null-terminated string to duplicate. If NULL, returns NULL.
- * @return Newly allocated copy of @p str, or NULL if @p str is NULL or
- *         allocation fails.
+ * @param str Null-terminated string to duplicate. Must not be NULL.
+ * @return Newly allocated copy of @p str, or NULL on allocation failure.
  *
  * @code{.c}
  *   char *copy = d_strdup("hello");

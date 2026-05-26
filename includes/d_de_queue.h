@@ -55,8 +55,7 @@ typedef struct DDeQueue
  * @param d_de_queue Deque to initialise. Must not be NULL.
  * @param  capacity   Initial element capacity (hint). May be 0 for a default.
  * @param  elem_size  Size in bytes of each element. Must be > 0.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p d_de_queue is NULL or @p elem_size is 0,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDeQueue dq;
@@ -76,8 +75,7 @@ DResult d_de_queue_copy(DDeQueue *dst, const DDeQueue *src);
  *
  * @param d_de_queue Deque to push onto. Must not be NULL.
  * @param     elem       Pointer to the element to copy. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC if the growth reallocation fails,
+ * @return ::D_OK, ::D_ERR_ALLOC if the growth reallocation fails,
  *         ::D_ERR_OVERFLOW if the capacity would exceed the @c usize limit.
  *
  * @code{.c}
@@ -93,8 +91,7 @@ DResult d_de_queue_push_front(DDeQueue *d_de_queue, const void *elem);
  * @param d_de_queue Deque to pop from. Must not be NULL.
  * @param    out_elem   Buffer that receives the removed element.
  *                           Must not be NULL and must be at least @c elem_size bytes.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_EMPTY if the deque is empty.
+ * @return ::D_OK, ::D_ERR_EMPTY if the deque is empty.
  *
  * @code{.c}
  *   int front;
@@ -110,8 +107,7 @@ DResult d_de_queue_pop_front(DDeQueue *d_de_queue, void *out_elem);
  *
  * @param d_de_queue Deque to push onto. Must not be NULL.
  * @param     elem       Pointer to the element to copy. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC if the growth reallocation fails,
+ * @return ::D_OK, ::D_ERR_ALLOC if the growth reallocation fails,
  *         ::D_ERR_OVERFLOW if the capacity would exceed the @c usize limit.
  *
  * @code{.c}
@@ -127,8 +123,7 @@ DResult d_de_queue_push_back(DDeQueue *d_de_queue, const void *elem);
  * @param d_de_queue Deque to pop from. Must not be NULL.
  * @param    out_elem   Buffer that receives the removed element.
  *                           Must not be NULL and must be at least @c elem_size bytes.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_EMPTY if the deque is empty.
+ * @return ::D_OK, ::D_ERR_EMPTY if the deque is empty.
  *
  * @code{.c}
  *   int back;
@@ -142,7 +137,7 @@ DResult d_de_queue_pop_back(DDeQueue *d_de_queue, void *out_elem);
  *
  * @param  d_de_queue Deque to query. Must not be NULL.
  * @param size       Receives the element count. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_de_queue_get_size(const DDeQueue *d_de_queue, usize *size);
 
@@ -151,7 +146,7 @@ DResult d_de_queue_get_size(const DDeQueue *d_de_queue, usize *size);
  *
  * @param  d_de_queue Deque to query. Must not be NULL.
  * @param capacity   Receives the capacity. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_de_queue_get_capacity(const DDeQueue *d_de_queue, usize *capacity);
 
@@ -161,7 +156,7 @@ DResult d_de_queue_get_capacity(const DDeQueue *d_de_queue, usize *capacity);
  * @param  d_de_queue Deque to query. Must not be NULL.
  * @param is_empty   Set to @c true if size == 0, @c false otherwise.
  *                        Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_de_queue_is_empty(const DDeQueue *d_de_queue, bool *is_empty);
 

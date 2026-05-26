@@ -42,8 +42,7 @@ typedef struct DDynString
  * @brief Initialises an empty ::DDynString with a default internal capacity.
  *
  * @param dyn_string String to initialise. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p dyn_string is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDynString s;
@@ -61,8 +60,7 @@ DResult d_dyn_string_init(DDynString *dyn_string);
  *
  * @param dyn_string String to initialise. Must not be NULL.
  * @param  str        Null-terminated source string. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDynString s;
@@ -77,8 +75,7 @@ DResult d_dyn_string_init_from_c_string(DDynString *dyn_string, const char *str)
  *
  * @param new_dyn_string Destination string to initialise. Must not be NULL.
  * @param  dstring        Source string to copy from. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  */
 DResult d_dyn_string_init_from_dstring(DDynString *new_dyn_string, DDynString *dstring);
 
@@ -90,8 +87,7 @@ DResult d_dyn_string_init_from_dstring(DDynString *new_dyn_string, DDynString *d
  *
  * @param dyn_string String to initialise. Must not be NULL.
  * @param  reserve    Number of characters to pre-allocate (excluding the null terminator).
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p dyn_string is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDynString s;
@@ -113,8 +109,8 @@ DResult d_dyn_string_init_with_capacity(DDynString *dyn_string, usize reserve);
  * @param  str        Null-terminated source string. Must not be NULL.
  * @param  pos        Starting byte offset within @p str.
  * @param  size       Maximum number of characters to copy.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either pointer is NULL or
- *         @p pos is past the end of @p str, ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_INVALID_ARG if @p pos is past the end of @p str,
+ *         ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDynString s;
@@ -149,7 +145,7 @@ const char *d_dyn_string_get_string(const DDynString *dstring);
  * @param  dstring  The string to read. Must not be NULL.
  * @param  i        Zero-based character index.
  * @param out_elem Pointer to a @c char that receives the value. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if any argument is NULL or @p i is out of range.
+ * @return ::D_OK, ::D_ERR_INVALID_ARG if @p i is out of range.
  */
 DResult d_dyn_string_get_char_at(const DDynString *dstring, usize i, char *out_elem);
 
@@ -159,8 +155,7 @@ DResult d_dyn_string_get_char_at(const DDynString *dstring, usize i, char *out_e
  * @param d1 First string. Must not be NULL.
  * @param d2 Second string. Must not be NULL.
  * @return ::D_COMPARE_EQUAL if both strings have the same length and content,
- *         ::D_COMPARE_NOT_EQUAL otherwise, or ::D_COMPARE_ERROR if either
- *         argument is NULL.
+ *         ::D_COMPARE_NOT_EQUAL otherwise.
  */
 DCompareResult d_dyn_string_compare(DDynString *d1, DDynString *d2);
 
@@ -169,7 +164,7 @@ DCompareResult d_dyn_string_compare(DDynString *d1, DDynString *d2);
  *
  * @param  dstring The string to query. Must not be NULL.
  * @param size    Receives the character count. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_dyn_string_get_size(const DDynString *dstring, usize *size);
 
@@ -180,7 +175,7 @@ DResult d_dyn_string_get_size(const DDynString *dstring, usize *size);
  *
  * @param  dstring  The string to query. Must not be NULL.
  * @param capacity Receives the capacity. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_dyn_string_get_capacity(const DDynString *dstring, usize *capacity);
 
@@ -197,8 +192,7 @@ DResult d_dyn_string_get_capacity(const DDynString *dstring, usize *capacity);
  * @param dstring The string to resize. Must not be NULL.
  * @param     size    New character count (excluding the null terminator).
  * @param     c       Fill character used when the string grows.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p dstring is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDynString s;
@@ -215,8 +209,7 @@ DResult d_dyn_string_resize(DDynString *dstring, usize size, char c);
  *
  * @param dstring The string to append to. Must not be NULL.
  * @param     c       The character to append.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p dstring is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  */
 DResult d_dyn_string_push_char(DDynString *dstring, char c);
 
@@ -229,8 +222,7 @@ DResult d_dyn_string_push_char(DDynString *dstring, char c);
  * @param dstring       The string to append to. Must not be NULL.
  * @param     str_to_append Pointer to the bytes to append. Must not be NULL.
  * @param     size          Number of bytes to copy.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either pointer is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  */
 DResult d_dyn_string_push_str_with_len(DDynString *dstring, const char *str_to_append, usize size);
 
@@ -239,8 +231,7 @@ DResult d_dyn_string_push_str_with_len(DDynString *dstring, const char *str_to_a
  *
  * @param dstring       The string to append to. Must not be NULL.
  * @param     str_to_append Null-terminated string to append. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDynString s;
@@ -258,8 +249,7 @@ DResult d_dyn_string_push_c_str(DDynString *dstring, const char *str_to_append);
  *
  * @param dstring1 Destination string. Must not be NULL.
  * @param     dstring2 Source string to append. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  */
 DResult d_dyn_string_merge(DDynString *dstring1, DDynString *dstring2);
 
@@ -270,8 +260,7 @@ DResult d_dyn_string_merge(DDynString *dstring1, DDynString *dstring2);
  *
  * @param dstring The string to replace. Must not be NULL.
  * @param     str     Null-terminated replacement string. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  */
 DResult d_dyn_string_replace_from_str(DDynString *dstring, const char *str);
 
@@ -280,8 +269,7 @@ DResult d_dyn_string_replace_from_str(DDynString *dstring, const char *str);
  *
  * @param dstring  The string to replace. Must not be NULL.
  * @param     to_copy  Source whose content is copied in. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  */
 DResult d_dyn_string_replace_from_dstring(DDynString *dstring, const DDynString *to_copy);
 
@@ -296,8 +284,7 @@ DResult d_dyn_string_replace_from_dstring(DDynString *dstring, const DDynString 
  * @param dstring The string to modify. Must not be NULL.
  * @param     pos     Starting byte offset of the desired substring.
  * @param     size    Maximum character count of the desired substring.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p dstring is NULL or @p pos is
- *         at or past the current length.
+ * @return ::D_OK, ::D_ERR_INVALID_ARG if @p pos is at or past the current length.
  *
  * @code{.c}
  *   DDynString s;

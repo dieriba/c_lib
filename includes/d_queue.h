@@ -54,8 +54,7 @@ typedef struct DQueue
  * @param d_queue   Queue to initialise. Must not be NULL.
  * @param  capacity  Initial element capacity (hint). May be 0 for a default.
  * @param  elem_size Size in bytes of each element. Must be > 0.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p d_queue is NULL or @p elem_size is 0,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DQueue q;
@@ -72,8 +71,7 @@ DResult d_queue_init(DQueue *d_queue, usize capacity, usize elem_size, DestroyEl
  *
  * @param d_queue Queue to push onto. Must not be NULL.
  * @param     elem    Pointer to the element to copy. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC if the growth reallocation fails,
+ * @return ::D_OK, ::D_ERR_ALLOC if the growth reallocation fails,
  *         ::D_ERR_OVERFLOW if the capacity would exceed the @c usize limit.
  *
  * @code{.c}
@@ -91,8 +89,7 @@ DResult d_queue_copy(DQueue *dst, const DQueue *src);
  * @param d_queue  Queue to pop from. Must not be NULL.
  * @param    out_elem Buffer that receives the dequeued element.
  *                         Must not be NULL and must be at least @c elem_size bytes.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_EMPTY if the queue is empty.
+ * @return ::D_OK, ::D_ERR_EMPTY if the queue is empty.
  *
  * @code{.c}
  *   int front;
@@ -107,7 +104,7 @@ DResult d_queue_pop(DQueue *d_queue, void *out_elem);
  *
  * @param  d_queue  Queue to query. Must not be NULL.
  * @param is_empty Set to @c true if size == 0, @c false otherwise. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_queue_is_empty(const DQueue *d_queue, bool *is_empty);
 
@@ -116,7 +113,7 @@ DResult d_queue_is_empty(const DQueue *d_queue, bool *is_empty);
  *
  * @param  d_queue Queue to query. Must not be NULL.
  * @param size    Receives the element count. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_queue_get_size(const DQueue *d_queue, usize *size);
 
@@ -125,7 +122,7 @@ DResult d_queue_get_size(const DQueue *d_queue, usize *size);
  *
  * @param  d_queue  Queue to query. Must not be NULL.
  * @param capacity Receives the capacity. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_queue_get_capacity(const DQueue *d_queue, usize *capacity);
 

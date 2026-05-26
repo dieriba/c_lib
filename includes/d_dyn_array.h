@@ -83,8 +83,7 @@ typedef struct DDynArray
  * @param  reserved_elem  Number of elements to pre-allocate. May be 0.
  * @param  free_fn      Optional destructor called on removed elements. May be NULL.
  * @param  opts           Buffer option flags (pass @c 0 for defaults).
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL or
- *         @p elem_size is 0, ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDynArray arr;
@@ -104,8 +103,7 @@ DResult d_dyn_array_init(DDynArray *new_dyn_array, usize elem_size, usize reserv
  * @param  reserved_elem  Number of pointer slots to pre-allocate. May be 0.
  * @param  free_fn      Optional destructor for removed pointer elements. May be NULL.
  * @param  opts           Buffer option flags (pass @c 0 for defaults).
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDynArray ptrs;
@@ -125,8 +123,7 @@ DResult d_dyn_array_init_ptr_arr(DDynArray *new_dyn_array, usize reserved_elem, 
  *
  * @param  new_dyn_array  Destination array to initialise. Must not be NULL.
  * @param  dyn_array      Source array to copy. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDynArray copy;
@@ -150,7 +147,7 @@ DResult d_dyn_array_init_from(DDynArray *new_dyn_array, const DDynArray *dyn_arr
  * @param  dyn_array The array to read. Must not be NULL.
  * @param  index     Zero-based element index.
  * @param  out_elem  Buffer that receives a copy of the element. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if any argument is NULL or @p index >= size.
+ * @return ::D_OK, ::D_ERR_INVALID_ARG if @p index >= size.
  *
  * @code{.c}
  *   int val;
@@ -166,7 +163,7 @@ DResult d_dyn_array_get_elem_addr_at(const DDynArray *dyn_array, usize index, vo
  *
  * @param  dyn_array The array to query. Must not be NULL.
  * @param  size      Receives the element count. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_dyn_array_get_size(const DDynArray *dyn_array, usize *size);
 
@@ -175,7 +172,7 @@ DResult d_dyn_array_get_size(const DDynArray *dyn_array, usize *size);
  *
  * @param  dyn_array The array to query. Must not be NULL.
  * @param  capacity  Receives the capacity. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_dyn_array_get_capacity(const DDynArray *dyn_array, usize *capacity);
 
@@ -189,8 +186,7 @@ DResult d_dyn_array_get_capacity(const DDynArray *dyn_array, usize *capacity);
  * @param dyn_array       The array to append to. Must not be NULL.
  * @param     data            Pointer to the source elements. Must not be NULL.
  * @param     nb_elem_to_copy Number of elements to copy from @p data.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either pointer is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   int vals[] = {1, 2, 3};
@@ -204,8 +200,7 @@ DResult d_dyn_array_append(DDynArray *dyn_array, const void *data, usize nb_elem
  *
  * @param dyn_array The array to append to. Must not be NULL.
  * @param     data      Pointer to the element to copy. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   int x = 42;
@@ -223,8 +218,7 @@ DResult d_dyn_array_push_back(DDynArray *dyn_array, const void *data);
  *
  * @param dyn_array The pointer array to append to. Must not be NULL.
  * @param     data      Pointer value to store (may be NULL).
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p dyn_array is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   char *s = strdup("hello");
@@ -250,7 +244,7 @@ DResult d_dyn_array_push_back_ptr(DDynArray *dyn_array, const void *data);
  * @param     index     Zero-based index of the element to remove.
  * @param     out_elem  Optional buffer that receives the removed element.
  *                          Must be at least @c elem_size bytes if non-NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p dyn_array is NULL or @p index >= size.
+ * @return ::D_OK, ::D_ERR_INVALID_ARG if @p index >= size.
  *
  * @code{.c}
  *   int removed;
@@ -270,8 +264,7 @@ DResult d_dyn_array_remove_elem_fast(DDynArray *dyn_array, usize index, void *ou
  * @param dyn_array The array to pop from. Must not be NULL.
  * @param     out_elem  Optional buffer that receives the popped element.
  *                      Must be at least @c elem_size bytes if non-NULL.
- * @return ::D_OK on success, ::D_ERR_INVALID_ARG if @p dyn_array is NULL,
- *         ::D_ERR_EMPTY if the array contains no elements.
+ * @return ::D_OK, ::D_ERR_EMPTY if the array contains no elements.
  */
 DResult d_dyn_array_remove_last_element(DDynArray *dyn_array, void *out_elem);
 
@@ -286,7 +279,7 @@ DResult d_dyn_array_remove_last_element(DDynArray *dyn_array, void *out_elem);
  * The internal buffer is not freed so subsequent pushes will not reallocate
  * until capacity is exceeded.
  *
- * @param dyn_array The array to clear. May be NULL (returns NULL).
+ * @param dyn_array The array to clear. Must not be NULL.
  *
  * @code{.c}
  *   d_dyn_array_clear_array(&arr);

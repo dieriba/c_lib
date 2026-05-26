@@ -155,7 +155,7 @@ const char *d_string_view_data(DStringView view);
  * @param  view  The view to read from.
  * @param  index Zero-based character index.
  * @param out   Pointer to a @c char that receives the character. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p out is NULL or @p index >= view.size.
+ * @return ::D_OK, ::D_ERR_INVALID_ARG if @p index >= view.size.
  *
  * @code{.c}
  *   DStringView v = d_string_view_from_c_string("hello");
@@ -527,8 +527,7 @@ DStringView d_string_view_trim_right_by_predicate(DStringView view, match fn);
  * @param  view          The view to split.
  * @param  opts          Buffer option flags for the internal array (pass @c 0).
  * @param  c             Delimiter character.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDynArray parts;
@@ -553,8 +552,7 @@ DResult d_string_view_split_by_char_owned(DDynArray *new_dyn_array, DStringView 
  * @param  opts          Buffer option flags (pass @c 0).
  * @param  set           View over the set of delimiter characters.
  *                       Use @ref D_STRING_VIEW_FROM_LITERAL for string-literal sets.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DDynArray tokens;
@@ -579,8 +577,7 @@ DResult d_string_view_split_by_char_of_str_owned(DDynArray *new_dyn_array, DStri
  * @param  view          The view to split.
  * @param  opts          Buffer option flags (pass @c 0).
  * @param  c             Delimiter character.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   const char *src = "a,b,c";
@@ -607,8 +604,7 @@ DResult d_string_view_split_by_char_not_owned(DDynArray *new_dyn_array, DStringV
  * @param  opts          Buffer option flags (pass @c 0).
  * @param  set           View over the set of delimiter characters.
  *                       Use @ref D_STRING_VIEW_FROM_LITERAL for string-literal sets.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_array is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   const char *src = "one two,three";
@@ -633,8 +629,7 @@ DResult d_string_view_split_by_char_of_str_not_owned(DDynArray *new_dyn_array, D
  *
  * @param new_dyn_string Dynamic string to initialise. Must not be NULL.
  * @param  view           Source view to copy from.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p new_dyn_string is NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DStringView v = d_string_view_from_c_string("hello");

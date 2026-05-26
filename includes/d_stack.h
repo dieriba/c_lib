@@ -54,8 +54,7 @@ typedef struct DStack
  * @param d_stack   Stack to initialise. Must not be NULL.
  * @param capacity  Initial element capacity (hint). May be 0 for a default.
  * @param elem_size Size in bytes of each element. Must be > 0.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if @p d_stack is NULL or @p elem_size is 0,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  *
  * @code{.c}
  *   DStack stack;
@@ -72,8 +71,7 @@ DResult d_stack_init(DStack *d_stack, usize capacity, usize elem_size, DestroyEl
  *
  * @param d_stack Stack to push onto. Must not be NULL.
  * @param elem    Pointer to the element to copy. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC if the growth reallocation fails,
+ * @return ::D_OK, ::D_ERR_ALLOC if the growth reallocation fails,
  *         ::D_ERR_OVERFLOW if the capacity would exceed the @c usize limit.
  *
  * @code{.c}
@@ -89,8 +87,7 @@ DResult d_stack_push(DStack *d_stack, const void *elem);
  * @param d_stack  Stack to pop from. Must not be NULL.
  * @param out_elem Buffer that receives the popped element. Must not be NULL
  *                 and must be at least @c elem_size bytes.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_EMPTY if the stack is empty.
+ * @return ::D_OK, ::D_ERR_EMPTY if the stack is empty.
  *
  * @code{.c}
  *   int top;
@@ -108,7 +105,7 @@ DResult d_stack_copy(DStack *dst, const DStack *src);
  *
  * @param d_stack Stack to query. Must not be NULL.
  * @param size    Receives the element count. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_stack_get_size(const DStack *d_stack, usize *size);
 
@@ -117,7 +114,7 @@ DResult d_stack_get_size(const DStack *d_stack, usize *size);
  *
  * @param d_stack  Stack to query. Must not be NULL.
  * @param capacity Receives the capacity. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_stack_get_capacity(const DStack *d_stack, usize *capacity);
 
@@ -126,7 +123,7 @@ DResult d_stack_get_capacity(const DStack *d_stack, usize *capacity);
  *
  * @param d_stack  Stack to query. Must not be NULL.
  * @param is_empty Set to @c true if size == 0, @c false otherwise. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  *
  * @code{.c}
  *   bool empty;

@@ -150,9 +150,7 @@ typedef struct DHashSet
  * @param  hash_fn              Hash function for the key type. Must not be NULL.
  * @param  cmp_fn               Equality function for the key type. Must not be NULL.
  * @param  key_destructor_fn    Called when a key is removed/overwritten. May be NULL.
- * @param  value_destructor_fn  Unused by the hash set; pass NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if required arguments are NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  */
 DResult d_hash_set_init(DHashSet *d_hash_set, usize key_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, DestroyElemFn key_destructor_fn);
 
@@ -187,8 +185,7 @@ D_HASH_SET_INIT_WITH_OWNED_KEY(d_dyn_string, DDynString *, (DestroyElemFn)d_dyn_
  *
  * @param map The hash set to insert into. Must not be NULL.
  * @param     key Pointer to the key to copy. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_ALLOC on allocation failure (e.g. during a rehash).
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure (e.g. during a rehash).
  *
  * @code{.c}
  *   int32 k = 7;
@@ -219,8 +216,7 @@ bool d_hash_set_key_exists(const DHashSet *map, void *key);
  *
  * @param map The hash set to delete from. Must not be NULL.
  * @param     key Pointer to the key to remove. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_NOT_EXIST if the key is not in the set.
+ * @return ::D_OK, ::D_ERR_NOT_EXIST if the key is not in the set.
  *
  * @code{.c}
  *   int32 k = 7;
@@ -239,8 +235,7 @@ DResult d_hash_set_delete(DHashSet *map, void *key);
  * @param     key      Pointer to the key to look up. Must not be NULL.
  * @param    slot_key Buffer that receives the stored key bytes.
  *                         Must not be NULL and must be at least @c key_size bytes.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if any argument is NULL,
- *         ::D_ERR_NOT_EXIST if the key is not in the set.
+ * @return ::D_OK, ::D_ERR_NOT_EXIST if the key is not in the set.
  *
  * @code{.c}
  *   char *lookup = "hello";
@@ -256,7 +251,7 @@ DResult d_hash_set_remove(DHashSet *map, void *key, void *slot_key);
  *
  * @param  d_hash_set Hash set to query. Must not be NULL.
  * @param size       Receives the key count. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_hash_set_get_size(const DHashSet *d_hash_set, usize *size);
 
@@ -265,7 +260,7 @@ DResult d_hash_set_get_size(const DHashSet *d_hash_set, usize *size);
  *
  * @param  d_hash_set Hash set to query. Must not be NULL.
  * @param capacity   Receives the capacity. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_hash_set_get_capacity(const DHashSet *d_hash_set, usize *capacity);
 

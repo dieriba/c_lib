@@ -107,8 +107,7 @@ typedef struct DUnorderedMap
  * @param  cmp_fn             Equality function for the key type. Must not be NULL.
  * @param  key_destructor_fn  Destructor for evicted keys. May be NULL.
  * @param  value_destructor_fn Destructor for evicted values. May be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if required arguments are NULL,
- *         ::D_ERR_ALLOC on allocation failure.
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure.
  */
 DResult d_unordered_map_init(DUnorderedMap *d_unordered_map, usize key_size, usize value_size, usize capacity, FnPtrGenHash hash_fn, FnPtrCmpKey cmp_fn, DestroyElemFn key_destructor_fn, DestroyElemFn value_destructor_fn);
 
@@ -200,8 +199,7 @@ D_UNORDERED_MAP_INIT_WITH_OWNED_KEY(d_dyn_string, DDynString *, (DestroyElemFn)d
  * @param map   Map to insert into. Must not be NULL.
  * @param key   Pointer to `key_size` bytes identifying the entry. Must not be NULL.
  * @param value Pointer to `value_size` bytes to store. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if any argument is NULL,
- *         ::D_ERR_ALLOC on allocation failure (e.g. during rehash).
+ * @return ::D_OK, ::D_ERR_ALLOC on allocation failure (e.g. during rehash).
  *
  * @code{.c}
  *   int32 k = 1; int v = 100;
@@ -242,8 +240,7 @@ void *d_unordered_map_get(const DUnorderedMap *map, void *key);
  *                           Must not be NULL; must be at least @c key_size bytes.
  * @param    slot_value Buffer that receives the stored value bytes.
  *                           Must not be NULL; must be at least @c value_size bytes.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if any argument is NULL,
- *         ::D_ERR_NOT_EXIST if the key is not in the map.
+ * @return ::D_OK, ::D_ERR_NOT_EXIST if the key is not in the map.
  *
  * @code{.c}
  *   int32 k = 1, out_k = 0; int out_v = 0;
@@ -260,8 +257,7 @@ DResult d_unordered_map_remove(DUnorderedMap *map, void *key, void *slot_key, vo
  *
  * @param map The map to delete from. Must not be NULL.
  * @param     key Pointer to the key to remove. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL,
- *         ::D_ERR_NOT_EXIST if the key is not in the map.
+ * @return ::D_OK, ::D_ERR_NOT_EXIST if the key is not in the map.
  *
  * @code{.c}
  *   int32 k = 1;
@@ -286,7 +282,7 @@ void d_unordered_map_destroy(DUnorderedMap *map);
  *
  * @param  d_unordered_map Map to query. Must not be NULL.
  * @param size            Receives the entry count. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_unordered_map_get_size(const DUnorderedMap *d_unordered_map, usize *size);
 
@@ -295,7 +291,7 @@ DResult d_unordered_map_get_size(const DUnorderedMap *d_unordered_map, usize *si
  *
  * @param  d_unordered_map Map to query. Must not be NULL.
  * @param capacity        Receives the capacity. Must not be NULL.
- * @return ::D_OK, ::D_ERR_INVALID_ARG if either argument is NULL.
+ * @return ::D_OK.
  */
 DResult d_unordered_map_get_capacity(const DUnorderedMap *d_unordered_map, usize *capacity);
 
