@@ -33,7 +33,7 @@
 
 #include <stdbool.h>
 #include "d_error.h"
-#include "raw_ring_buffer.h"
+#include "../src/container/raw_ring_buffer.h"
 
 /**
  * @brief Auto-growing double-ended queue.
