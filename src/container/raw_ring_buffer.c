@@ -13,15 +13,6 @@
 typedef void (*PushFn)(RawRingBuffer *, const void *elem);
 typedef void (*PopFn)(RawRingBuffer *, void *out_elem);
 
-static void raw_ring_buffer_destroy(RawRingBuffer *raw_ring_buffer)
-{
-    if (raw_ring_buffer == NULL)
-        return;
-    raw_ring_buffer_free(raw_ring_buffer);
-    free(raw_ring_buffer->data);
-    memset(raw_ring_buffer, 0, sizeof(RawRingBuffer));
-}
-
 DResult raw_ring_buffer_init(RawRingBuffer *raw_ring_buffer, usize head, usize tail, usize capacity, usize elem_size, DestroyElemFn free_fn, CopyElemFn copy_fn)
 {
     assert(elem_size != 0);
@@ -62,7 +53,7 @@ DResult raw_ring_buffer_copy(RawRingBuffer *dst, const RawRingBuffer *src)
             void *copy = copy_fn(raw_ring_buffer_get_elem_at(src, i));
             if (copy == NULL || raw_ring_buffer_push_back(dst, copy) != D_OK)
             {
-                raw_ring_buffer_destroy(dst);
+                raw_ring_buffer_free(dst);
                 return D_ERR_ALLOC;
             }
         }
