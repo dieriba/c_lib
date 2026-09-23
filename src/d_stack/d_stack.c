@@ -46,5 +46,4 @@ void d_stack_destroy(DStack *d_stack)
     if (d_stack == NULL)
         return;
     raw_ring_buffer_free((RawRingBuffer *)d_stack);
-    memset(d_stack, 0, sizeof(DStack));
 }

@@ -46,5 +46,4 @@ void d_queue_destroy(DQueue *d_queue)
     if (d_queue == NULL)
         return;
     raw_ring_buffer_free((RawRingBuffer *)d_queue);
-    memset(d_queue, 0, sizeof(DQueue));
 }
