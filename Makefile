@@ -23,7 +23,7 @@ INC_DIRS += $(shell find $(SRC_DIRS) -type d)
 INC_DIRS += $(shell find $(VENDOR_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CPPFLAGS := $(INC_FLAGS) -MMD -MP -Wall -Werror -Wextra
+CFLAGS := $(INC_FLAGS) -MMD -MP -Wall -Werror -Wextra
 
 all: $(BUILD_LIB)
 
@@ -33,7 +33,7 @@ $(BUILD_LIB): $(OBJS)
 
 $(BUILD_DIR)/%.o: %.c
 	mkdir -p $(dir $@)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(CFLAGS) -c $< -o $@
 
 tests: $(BIN_TESTS) 
 .PHONY: tests
