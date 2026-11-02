@@ -8,6 +8,14 @@ SRC_DIRS := src
 SRCS := $(shell find $(SRC_DIRS) -name '*.c')
 OBJS := $(addprefix $(BUILD_DIR)/, $(SRCS:.c=.o))
 
+INC_DIRS := ./includes
+INC_DIRS += $(shell find $(SRC_DIRS) -type d)
+INC_DIRS += $(shell find $(VENDOR_DIRS) -type d)
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+
+
+CFLAGS := $(INC_FLAGS) -MMD -MP -Wall -Werror -Wextra
+
 
 TEST_DIRS = tests
 SRCS_TEST := $(shell find $(TEST_DIRS) -name '*.c')
@@ -18,12 +26,7 @@ VENDOR_DIRS := vendor
 
 DEPS := $(OBJS:.o=.d) $(OBJS_TESTS:.o=.d)
 
-INC_DIRS := ./includes
-INC_DIRS += $(shell find $(SRC_DIRS) -type d)
-INC_DIRS += $(shell find $(VENDOR_DIRS) -type d)
-INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CFLAGS := $(INC_FLAGS) -MMD -MP -Wall -Werror -Wextra
 
 all: $(BUILD_LIB)
 
