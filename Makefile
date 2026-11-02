@@ -16,6 +16,9 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CFLAGS := $(INC_FLAGS) -MMD -MP -Wall -Werror -Wextra
 
+ifeq ($(PIC),1)
+	CFLAGS += -fPIC
+endif
 
 TEST_DIRS = tests
 SRCS_TEST := $(shell find $(TEST_DIRS) -name '*.c')
